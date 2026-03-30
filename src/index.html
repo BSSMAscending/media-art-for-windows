@@ -2,11 +2,21 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
+    <title>Binary Media Art</title>
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+    <video id="videoElement" playsinline muted style="display: none;"></video>
+    <canvas id="hiddenCanvas" style="display: none;"></canvas>
+
+    <div id="overlayUI" class="overlay-ui">
+      <div id="titleText" class="title-text">BINARY MEDIA ART</div>
+      <button id="startButton" class="start-button">START CAMERA</button>
+      <div id="errorText" class="error-text" style="display: none;"></div>
+    </div>
+
+    <canvas id="binaryCanvas" class="binary-canvas" style="display: none;"></canvas>
+
+    <script src="renderer.js"></script>
   </body>
 </html>
