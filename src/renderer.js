@@ -4,6 +4,8 @@ let hasStarted = false;
 let bodyPixModel = null;
 let requestId = 0;
 let tf, bodyPix;
+let availableCameras = [];
+let selectedCameraId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   videoElement = document.getElementById('videoElement');
@@ -11,11 +13,55 @@ document.addEventListener('DOMContentLoaded', async () => {
   hiddenCanvasElement = document.getElementById('hiddenCanvas');
 
   const startButton = document.getElementById('startButton');
+  const cameraSelect = document.getElementById('cameraSelect');
 
   startButton.addEventListener('click', startCamera);
+  cameraSelect.addEventListener('change', (event) => {
+    selectedCameraId = event.target.value;
+  });
 
+  await getCameraDevices();
   loadModel();
 });
+
+async function getCameraDevices() {
+  try {
+    // Request initial permission to enumerate devices
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach(track => track.stop());
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    availableCameras = devices.filter(device => device.kind === 'videoinput');
+
+    const cameraSelect = document.getElementById('cameraSelect');
+    cameraSelect.innerHTML = '';
+
+    if (availableCameras.length === 0) {
+      cameraSelect.innerHTML = '<option value="">카메라를 찾을 수 없습니다</option>';
+      return;
+    }
+
+    // Add default option
+    cameraSelect.innerHTML = '<option value="">기본 카메라</option>';
+
+    // Add camera options
+    availableCameras.forEach((camera, index) => {
+      const option = document.createElement('option');
+      option.value = camera.deviceId;
+      option.textContent = camera.label || `카메라 ${index + 1}`;
+      cameraSelect.appendChild(option);
+    });
+
+    // Set first camera as default if available
+    if (availableCameras.length > 0) {
+      selectedCameraId = '';
+    }
+  } catch (error) {
+    console.error('Failed to get camera devices:', error);
+    const cameraSelect = document.getElementById('cameraSelect');
+    cameraSelect.innerHTML = '<option value="">카메라 권한이 필요합니다</option>';
+  }
+}
 
 async function loadModel() {
   try {
@@ -56,13 +102,21 @@ async function startCamera() {
   }
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const constraints = {
       video: {
-        facingMode: 'user',
         width: { ideal: 640 },
         height: { ideal: 480 }
       }
-    });
+    };
+
+    // Use selected camera if available
+    if (selectedCameraId) {
+      constraints.video.deviceId = { exact: selectedCameraId };
+    } else {
+      constraints.video.facingMode = 'user';
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
     videoElement.srcObject = stream;
     await videoElement.play();
@@ -74,7 +128,7 @@ async function startCamera() {
     requestId = requestAnimationFrame(drawFrame);
   } catch (error) {
     console.error('Camera access failed:', error);
-    showError('카메라 권한을 허용해주세요.');
+    showError('선택한 카메라에 접근할 수 없습니다. 다른 카메라를 선택해보세요.');
   }
 }
 
