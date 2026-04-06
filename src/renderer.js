@@ -6,6 +6,7 @@ let requestId = 0;
 let tf, bodyPix;
 let availableCameras = [];
 let selectedCameraId = null;
+let selectedVersion = 'original';
 
 document.addEventListener('DOMContentLoaded', async () => {
   videoElement = document.getElementById('videoElement');
@@ -14,10 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const startButton = document.getElementById('startButton');
   const cameraSelect = document.getElementById('cameraSelect');
+  const versionSelect = document.getElementById('versionSelect');
 
   startButton.addEventListener('click', startCamera);
   cameraSelect.addEventListener('change', (event) => {
     selectedCameraId = event.target.value;
+  });
+  versionSelect.addEventListener('change', (event) => {
+    selectedVersion = event.target.value;
   });
 
   await getCameraDevices();
@@ -75,10 +80,9 @@ async function loadModel() {
     console.log('TensorFlow.js loaded');
 
     bodyPixModel = await bodyPix.load({
-      architecture: 'MobileNetV1',
+      architecture: 'ResNet50',
       outputStride: 16,
-      multiplier: 0.75,
-      quantBytes: 2
+      quantBytes: 4
     });
     console.log('BodyPix Model loaded');
 
@@ -167,11 +171,14 @@ async function drawFrame() {
   }
 
   try {
-    // Perform person segmentation
+    // Perform person segmentation with higher accuracy settings
     const segmentation = await bodyPixModel.segmentPerson(videoElement, {
       flipHorizontal: false,
-      internalResolution: 'medium',
-      segmentationThreshold: 0.7
+      internalResolution: 'high',
+      segmentationThreshold: 0.5,
+      maxDetections: 1,
+      scoreThreshold: 0.5,
+      nmsRadius: 20
     });
 
     // Draw video frame to hidden canvas (mirrored)
@@ -197,12 +204,58 @@ async function drawFrame() {
       return;
     }
 
+    // Handle black and white version with smooth silhouette
+    if (selectedVersion === 'blackwhite') {
+      // Fill entire canvas with black background
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+      // Create smooth white silhouette using segmentation mask
+      const maskData = new ImageData(segmentation.width, segmentation.height);
+
+      // Fill mask data: white for person, transparent for background
+      for (let i = 0; i < segmentation.data.length; i++) {
+        const baseIndex = i * 4;
+        if (segmentation.data[i] === 1) {
+          maskData.data[baseIndex] = 255;     // R
+          maskData.data[baseIndex + 1] = 255; // G
+          maskData.data[baseIndex + 2] = 255; // B
+          maskData.data[baseIndex + 3] = 255; // A
+        } else {
+          maskData.data[baseIndex + 3] = 0;   // Transparent
+        }
+      }
+
+      // Create temporary canvas for mask
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = segmentation.width;
+      tempCanvas.height = segmentation.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.putImageData(maskData, 0, 0);
+
+      // Draw mirrored mask to main canvas
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(tempCanvas, -canvasElement.width, 0, canvasElement.width, canvasElement.height);
+      ctx.restore();
+
+      requestId = requestAnimationFrame(drawFrame);
+      return;
+    }
+
     // Set font for binary text
     ctx.font = `bold ${FONT_SIZE}px 'Courier New', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Draw binary text overlay only on person areas
+    // Handle binary version with dark background
+    if (selectedVersion === 'binary') {
+      // Fill entire canvas with dark background first
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    }
+
+    // Draw content based on selected version
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
         // Map to segmentation data with mirroring
@@ -211,44 +264,73 @@ async function drawFrame() {
         const mirroredMaskX = segmentation.width - 1 - maskX;
         const isPerson = segmentation.data[maskY * segmentation.width + mirroredMaskX] === 1;
 
-        if (!isPerson) continue;
+        if (selectedVersion === 'original') {
+          // Original version: binary text overlay only on person areas
+          if (!isPerson) continue;
 
-        const i = (y * hiddenCanvasElement.width + x) * 4;
-        const r = pixels[i];
-        const g = pixels[i + 1];
-        const b = pixels[i + 2];
+          const i = (y * hiddenCanvasElement.width + x) * 4;
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
 
-        // Dark background for person area
-        ctx.fillStyle = '#020205';
-        ctx.fillRect(x * FONT_SIZE, y * FONT_SIZE, FONT_SIZE, FONT_SIZE);
+          // Dark background for person area
+          ctx.fillStyle = '#020205';
+          ctx.fillRect(x * FONT_SIZE, y * FONT_SIZE, FONT_SIZE, FONT_SIZE);
 
-        // Calculate luminance and determine binary character
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        const char = luminance > 0.4 ? '1' : '0';
+          // Calculate luminance and determine binary character
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const char = luminance > 0.4 ? '1' : '0';
 
-        // Apply cyan color effect
-        const cyanInfluence = 0.8;
-        const outR = Math.floor(r * (1 - cyanInfluence) + 0 * cyanInfluence);
-        const outG = Math.floor(g * (1 - cyanInfluence) + 255 * cyanInfluence);
-        const outB = Math.floor(b * (1 - cyanInfluence) + 255 * cyanInfluence);
+          // Apply cyan color effect
+          const cyanInfluence = 0.8;
+          const outR = Math.floor(r * (1 - cyanInfluence) + 0 * cyanInfluence);
+          const outG = Math.floor(g * (1 - cyanInfluence) + 255 * cyanInfluence);
+          const outB = Math.floor(b * (1 - cyanInfluence) + 255 * cyanInfluence);
 
-        const alpha = Math.max(0.4, luminance * 1.5);
-        ctx.fillStyle = `rgba(${outR}, ${outG}, ${outB}, ${alpha})`;
+          const alpha = Math.max(0.4, luminance * 1.5);
+          ctx.fillStyle = `rgba(${outR}, ${outG}, ${outB}, ${alpha})`;
 
-        // Add glow effect for bright areas
-        if (luminance > 0.7) {
-          ctx.shadowBlur = 8;
-          ctx.shadowColor = `rgba(${outR}, ${outG}, ${outB}, 1)`;
-        } else {
+          // Add glow effect for bright areas
+          if (luminance > 0.7) {
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = `rgba(${outR}, ${outG}, ${outB}, 1)`;
+          } else {
+            ctx.shadowBlur = 0;
+          }
+
+          // Draw binary character
+          ctx.fillText(
+            char,
+            x * FONT_SIZE + FONT_SIZE / 2,
+            y * FONT_SIZE + FONT_SIZE / 2
+          );
+        } else if (selectedVersion === 'blackwhite') {
+          // Black and white version: smooth silhouette without pixel blocks
+          continue; // Skip pixel-by-pixel processing for smooth silhouette
+        } else if (selectedVersion === 'binary') {
+          // Binary version: 0/1 characters only on person areas
+          if (!isPerson) continue;
+
+          const i = (y * hiddenCanvasElement.width + x) * 4;
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+
+          // Calculate luminance and determine binary character
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const char = luminance > 0.4 ? '1' : '0';
+
+          // White text on dark background (no need to fill rect since background is already dark)
+          ctx.fillStyle = '#ffffff';
           ctx.shadowBlur = 0;
-        }
 
-        // Draw binary character
-        ctx.fillText(
-          char,
-          x * FONT_SIZE + FONT_SIZE / 2,
-          y * FONT_SIZE + FONT_SIZE / 2
-        );
+          // Draw binary character
+          ctx.fillText(
+            char,
+            x * FONT_SIZE + FONT_SIZE / 2,
+            y * FONT_SIZE + FONT_SIZE / 2
+          );
+        }
       }
     }
   } catch (error) {
