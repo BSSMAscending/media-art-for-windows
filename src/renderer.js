@@ -1,4 +1,4 @@
-const FONT_SIZE = 14;
+const FONT_SIZE = 8;
 let videoElement, canvasElement, hiddenCanvasElement;
 let hasStarted = false;
 let bodyPixModel = null;
@@ -248,8 +248,8 @@ async function drawFrame() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Handle binary version with dark background
-    if (selectedVersion === 'binary') {
+    // Handle binary and numeric versions with dark background
+    if (selectedVersion === 'binary' || selectedVersion === 'numeric') {
       // Fill entire canvas with dark background first
       ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
@@ -325,6 +325,41 @@ async function drawFrame() {
           ctx.shadowBlur = 0;
 
           // Draw binary character
+          ctx.fillText(
+            char,
+            x * FONT_SIZE + FONT_SIZE / 2,
+            y * FONT_SIZE + FONT_SIZE / 2
+          );
+        } else if (selectedVersion === 'numeric') {
+          // Numeric version: 0-9 characters based on density
+          if (!isPerson) continue;
+
+          const i = (y * hiddenCanvasElement.width + x) * 4;
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+
+          // Calculate luminance and map to 0-9 based on density
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+          // Map luminance to numbers based on visual density (densest = brightest areas)
+          // Dense numbers (8,9,6,4) for bright areas, sparse numbers (1,7,0,3) for dark areas
+          let char;
+          if (luminance < 0.1) char = '1';      // Darkest - most sparse
+          else if (luminance < 0.2) char = '7'; // Very dark - sparse
+          else if (luminance < 0.3) char = '0'; // Dark - very sparse
+          else if (luminance < 0.4) char = '3'; // Medium dark - sparse
+          else if (luminance < 0.5) char = '2'; // Medium - medium sparse
+          else if (luminance < 0.6) char = '5'; // Medium bright - medium
+          else if (luminance < 0.7) char = '4'; // Bright - medium dense
+          else if (luminance < 0.8) char = '6'; // Brighter - dense
+          else if (luminance < 0.9) char = '9'; // Very bright - dense
+          else char = '8';                      // Brightest - very dense
+
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowBlur = 0;
+
+          // Draw numeric character
           ctx.fillText(
             char,
             x * FONT_SIZE + FONT_SIZE / 2,
