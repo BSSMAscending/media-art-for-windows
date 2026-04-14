@@ -248,8 +248,8 @@ async function drawFrame() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Handle binary and numeric versions with dark background
-    if (selectedVersion === 'binary' || selectedVersion === 'numeric') {
+    // Handle binary, numeric and busan versions with dark background
+    if (selectedVersion === 'binary' || selectedVersion === 'numeric' || selectedVersion === 'busan') {
       // Fill entire canvas with dark background first
       ctx.fillStyle = '#0a0a0a';
       ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
@@ -360,6 +360,37 @@ async function drawFrame() {
           ctx.shadowBlur = 0;
 
           // Draw numeric character
+          ctx.fillText(
+            char,
+            x * FONT_SIZE + FONT_SIZE / 2,
+            y * FONT_SIZE + FONT_SIZE / 2
+          );
+        } else if (selectedVersion === 'busan') {
+          // Busan theme: '부산수학문화관' characters based on luminance
+          if (!isPerson) continue;
+
+          const i = (y * hiddenCanvasElement.width + x) * 4;
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+
+          // Calculate luminance
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+          // Map luminance to '부산수학문화관' characters (7 characters total)
+          let char;
+          if (luminance < 0.14) char = '부';      // Darkest
+          else if (luminance < 0.28) char = '산'; // Very dark
+          else if (luminance < 0.42) char = '수'; // Dark
+          else if (luminance < 0.56) char = '학'; // Medium
+          else if (luminance < 0.70) char = '문'; // Medium bright
+          else if (luminance < 0.84) char = '화'; // Bright
+          else char = '관';                       // Brightest
+
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowBlur = 0;
+
+          // Draw Busan character
           ctx.fillText(
             char,
             x * FONT_SIZE + FONT_SIZE / 2,
