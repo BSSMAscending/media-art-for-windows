@@ -1,13 +1,24 @@
-const { FONT_SIZE, COLORS } = require('../config');
+const { COLORS } = require('../config');
 const { runSegmentation } = require('./segmentation');
+const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
+const { cleanMask } = require('./morphology');
 const { renderOriginal } = require('../modes/original');
 const { renderBlackWhite } = require('../modes/blackwhite');
 const { renderBinary } = require('../modes/binary');
 const { renderNumeric } = require('../modes/numeric');
 const { renderBusan } = require('../modes/busan');
+const { renderPixelValue } = require('../modes/pixelvalue');
+const { renderColorRgb } = require('../modes/colorrgb');
+const { renderGrayscale8bit } = require('../modes/grayscale8bit');
+const { renderColor4k } = require('../modes/color4k');
 
-function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode }) {
+const SEG_SKIP = 2;
+
+function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats }) {
   let rafId = null;
+  let lastSegmentation = null;
+  let frameCount = 0;
+  let lastFrameTime = performance.now();
 
   async function drawFrame() {
     if (!videoEl || !canvasEl || !hiddenCanvasEl) {
@@ -33,8 +44,10 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode }) 
       canvasEl.height = window.innerHeight;
     }
 
-    const cols = Math.floor(canvasEl.width / FONT_SIZE);
-    const rows = Math.floor(canvasEl.height / FONT_SIZE);
+    const fontSz = getFontSize ? getFontSize() : 8;
+
+    const cols = Math.floor(canvasEl.width / fontSz);
+    const rows = Math.floor(canvasEl.height / fontSz);
 
     if (hiddenCanvasEl.width !== cols || hiddenCanvasEl.height !== rows) {
       hiddenCanvasEl.width = cols;
@@ -42,29 +55,51 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode }) 
     }
 
     try {
-      const segmentation = await runSegmentation(model, videoEl);
+      if (frameCount % SEG_SKIP === 0 || !lastSegmentation) {
+        lastSegmentation = await runSegmentation(model, videoEl);
+      }
+      const segmentation = lastSegmentation;
 
       hiddenCtx.save();
       hiddenCtx.scale(-1, 1);
-      hiddenCtx.drawImage(
-        videoEl,
-        -hiddenCanvasEl.width,
-        0,
-        hiddenCanvasEl.width,
-        hiddenCanvasEl.height
-      );
+      hiddenCtx.drawImage(videoEl, -hiddenCanvasEl.width, 0, hiddenCanvasEl.width, hiddenCanvasEl.height);
       hiddenCtx.restore();
 
       const imgData = hiddenCtx.getImageData(0, 0, hiddenCanvasEl.width, hiddenCanvasEl.height);
-      const pixels = imgData.data;
 
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.drawImage(videoEl, -canvasEl.width, 0, canvasEl.width, canvasEl.height);
-      ctx.restore();
+      const filters = getFilters ? getFilters() : { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false };
+      const filtersActive = filters.brightness !== 0 || filters.blur > 0 || filters.sharpen > 0;
+      const pixels = filtersActive ? new Uint8ClampedArray(imgData.data) : imgData.data;
 
-      const hasPerson = segmentation.data.some((v) => v === 1);
+      if (filtersActive) {
+        if (filters.brightness !== 0) applyBrightness(pixels, cols, rows, filters.brightness);
+        if (filters.blur > 0) applyGaussianBlur(pixels, cols, rows, filters.blur);
+        if (filters.sharpen > 0) applySharpen(pixels, cols, rows, filters.sharpen);
+      }
+
+      let edgeData = null;
+      if (filters.edgeOverlay) {
+        edgeData = applySobelEdge(pixels, cols, rows);
+      }
+
+      let activeSeg = segmentation;
+      if (filters.maskClean) {
+        const cleanedData = cleanMask(segmentation.data, segmentation.width, segmentation.height);
+        activeSeg = { data: cleanedData, width: segmentation.width, height: segmentation.height };
+      }
+
+      const bgMode = getBgMode ? getBgMode() : 'off';
+      if (bgMode === 'blue') {
+        ctx.fillStyle = '#000033';
+        ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+      } else if (bgMode === 'off' || bgMode === 'matrix') {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
+      }
+
+      const hasPerson = activeSeg.data.some((v) => v === 1);
       if (!hasPerson) {
+        frameCount++;
         rafId = requestAnimationFrame(drawFrame);
         return;
       }
@@ -72,31 +107,49 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode }) 
       const mode = getMode();
 
       if (mode === 'blackwhite') {
-        renderBlackWhite(ctx, canvasEl, segmentation);
+        renderBlackWhite(ctx, canvasEl, activeSeg);
       } else {
-        ctx.font = `bold ${FONT_SIZE}px 'Courier New', monospace`;
+        ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        if (mode === 'binary' || mode === 'numeric' || mode === 'busan') {
+        if (mode === 'binary' || mode === 'numeric' || mode === 'busan' || mode === 'pixelvalue' || mode === 'grayscale8bit' || mode === 'color4k') {
           ctx.fillStyle = COLORS.binaryBg;
           ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
         }
 
         if (mode === 'original') {
-          renderOriginal(ctx, cols, rows, FONT_SIZE, segmentation, pixels, hiddenCanvasEl.width);
+          renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
         } else if (mode === 'binary') {
-          renderBinary(ctx, cols, rows, FONT_SIZE, segmentation, pixels, hiddenCanvasEl.width);
+          renderBinary(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
         } else if (mode === 'numeric') {
-          renderNumeric(ctx, cols, rows, FONT_SIZE, segmentation, pixels, hiddenCanvasEl.width);
+          renderNumeric(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
         } else if (mode === 'busan') {
-          renderBusan(ctx, cols, rows, FONT_SIZE, segmentation, pixels, hiddenCanvasEl.width);
+          renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
+        } else if (mode === 'pixelvalue') {
+          renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
+        } else if (mode === 'colorrgb') {
+          renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width, edgeData);
+        } else if (mode === 'grayscale8bit') {
+          renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
+        } else if (mode === 'color4k') {
+          renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
+        }
+      }
+
+      if (onStats) {
+        const now = performance.now();
+        const fps = Math.round(1000 / (now - lastFrameTime));
+        lastFrameTime = now;
+        if (frameCount % 15 === 0) {
+          onStats({ mode, fontSz, cols, rows, fps, filters });
         }
       }
     } catch (err) {
       console.error('Error in drawFrame:', err);
     }
 
+    frameCount++;
     rafId = requestAnimationFrame(drawFrame);
   }
 

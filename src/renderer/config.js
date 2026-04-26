@@ -1,4 +1,6 @@
 const FONT_SIZE = 8;
+const MIN_FONT_SIZE = 4;
+const MAX_FONT_SIZE = 32;
 const BODY_PIX_CONFIG = {
   architecture: 'ResNet50',
   outputStride: 16,
@@ -26,6 +28,8 @@ const BUSAN_CHARS = ['부', '산', '수', '학', '문', '화', '관'];
 
 module.exports = {
   FONT_SIZE,
+  MIN_FONT_SIZE,
+  MAX_FONT_SIZE,
   BODY_PIX_CONFIG,
   SEGMENTATION_OPTIONS,
   COLORS,

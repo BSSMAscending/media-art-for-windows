@@ -1,12 +1,21 @@
 const { getCameraDevices, openCameraStream } = require('./core/camera');
 const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
+const { createBackgroundEffects } = require('./ui/backgroundEffects');
+const { createInfoPanel } = require('./ui/infoPanel');
+const { createEducationalOverlay } = require('./ui/educationalText');
 
 const state = {
   model: null,
   selectedCameraId: null,
   selectedVersion: 'original',
+  currentFontSize: 8,
+  bgMode: 'off',
+  filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
   loop: null,
+  filterPanelVisible: false,
+  infoPanelVisible: false,
+  eduVisible: false,
 };
 
 function showError(message) {
@@ -19,22 +28,84 @@ document.addEventListener('DOMContentLoaded', async () => {
   const videoEl = document.getElementById('videoElement');
   const canvasEl = document.getElementById('binaryCanvas');
   const hiddenCanvasEl = document.getElementById('hiddenCanvas');
+  const bgCanvasEl = document.getElementById('bgCanvas');
   const titleEl = document.getElementById('titleText');
 
+  const bgEffects = createBackgroundEffects(bgCanvasEl);
+  const infoPanel = createInfoPanel();
+  const eduOverlay = createEducationalOverlay();
+
   document.getElementById('startButton').addEventListener('click', () =>
-    startCamera(videoEl, canvasEl, hiddenCanvasEl)
+    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel)
   );
+
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
     state.selectedCameraId = e.target.value;
   });
+
   document.getElementById('versionSelect').addEventListener('change', (e) => {
     state.selectedVersion = e.target.value;
+    if (state.eduVisible) eduOverlay.show(e.target.value);
+  });
+
+  const fontSizeSlider = document.getElementById('fontSizeSlider');
+  const fontSizeValueEl = document.getElementById('fontSizeValue');
+  fontSizeSlider.addEventListener('input', (e) => {
+    state.currentFontSize = parseInt(e.target.value);
+    fontSizeValueEl.textContent = state.currentFontSize;
+  });
+
+  document.getElementById('bgSelect').addEventListener('change', (e) => {
+    state.bgMode = e.target.value;
+    bgEffects.setMode(e.target.value);
+  });
+
+  document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+    state.filters.brightness = parseFloat(e.target.value);
+    document.getElementById('brightnessValue').textContent = e.target.value;
+  });
+  document.getElementById('blurSlider').addEventListener('input', (e) => {
+    state.filters.blur = parseInt(e.target.value);
+    document.getElementById('blurValue').textContent = e.target.value;
+  });
+  document.getElementById('sharpenSlider').addEventListener('input', (e) => {
+    state.filters.sharpen = parseFloat(e.target.value);
+    document.getElementById('sharpenValue').textContent = parseFloat(e.target.value).toFixed(1);
+  });
+  document.getElementById('edgeOverlayCheck').addEventListener('change', (e) => {
+    state.filters.edgeOverlay = e.target.checked;
+  });
+  document.getElementById('maskCleanCheck').addEventListener('change', (e) => {
+    state.filters.maskClean = e.target.checked;
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+      state.filterPanelVisible = !state.filterPanelVisible;
+      document.getElementById('filterPanel').style.display = state.filterPanelVisible ? 'block' : 'none';
+    }
+    if (e.key === 'i' || e.key === 'I') {
+      state.infoPanelVisible = !state.infoPanelVisible;
+      document.getElementById('infoPanel').style.display = state.infoPanelVisible ? 'block' : 'none';
+    }
+    if (e.key === 'e' || e.key === 'E') {
+      state.eduVisible = !state.eduVisible;
+      if (state.eduVisible) {
+        eduOverlay.show(state.selectedVersion);
+      } else {
+        eduOverlay.hide();
+      }
+    }
   });
 
   window.addEventListener('resize', () => {
     if (canvasEl) {
       canvasEl.width = window.innerWidth;
       canvasEl.height = window.innerHeight;
+    }
+    if (bgCanvasEl) {
+      bgCanvasEl.width = window.innerWidth;
+      bgCanvasEl.height = window.innerHeight;
     }
   });
 
@@ -50,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
@@ -70,6 +141,12 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl) {
       hiddenCanvasEl,
       model: state.model,
       getMode: () => state.selectedVersion,
+      getFontSize: () => state.currentFontSize,
+      getFilters: () => state.filters,
+      getBgMode: () => state.bgMode,
+      onStats: (stats) => {
+        if (state.infoPanelVisible) infoPanel.update(stats);
+      },
     });
     state.loop.start();
   } catch (err) {
