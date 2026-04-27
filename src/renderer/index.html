@@ -19,6 +19,10 @@
           <option value="binary">바이너리버전 (0/1 집합)</option>
           <option value="numeric">숫자버전 (0-9 집합)</option>
           <option value="busan">부산버전 (부산수학문화관)</option>
+          <option value="pixelvalue">픽셀 수치 (0-255)</option>
+          <option value="colorrgb">원본 컬러 (RGB 24bit)</option>
+          <option value="grayscale8bit">흑백 8bit (0-255)</option>
+          <option value="color4k">4천 컬러 (4096색)</option>
         </select>
       </div>
       <div id="cameraSelection" class="camera-selection">
@@ -27,11 +31,50 @@
           <option value="">카메라 목록 로딩 중...</option>
         </select>
       </div>
+      <div id="pixelSizeSelection" class="pixel-size-selection">
+        <label for="fontSizeSlider">픽셀 크기: <span id="fontSizeValue">8</span>px</label>
+        <input type="range" id="fontSizeSlider" class="font-size-slider" min="4" max="32" step="2" value="8" />
+      </div>
+      <div id="bgSelection" class="bg-selection">
+        <label for="bgSelect">배경 효과:</label>
+        <select id="bgSelect" class="bg-select">
+          <option value="off">없음 (검정)</option>
+          <option value="blue">파란 배경</option>
+          <option value="matrix">매트릭스 숫자 흐름</option>
+        </select>
+      </div>
       <button id="startButton" class="start-button">START CAMERA</button>
+      <div class="key-hints">
+        [F] 필터 패널 &nbsp;|&nbsp; [I] 정보 패널 &nbsp;|&nbsp; [E] 설명 보기
+      </div>
       <div id="errorText" class="error-text" style="display: none;"></div>
     </div>
 
+    <canvas id="bgCanvas" class="bg-canvas"></canvas>
     <canvas id="binaryCanvas" class="binary-canvas" style="display: none;"></canvas>
+
+    <div id="filterPanel" class="filter-panel" style="display: none;">
+      <div class="filter-title">이미지 필터 [F키]</div>
+      <div class="filter-row">
+        <label>밝기: <span id="brightnessValue">0.00</span></label>
+        <input type="range" id="brightnessSlider" min="-1" max="1" step="0.05" value="0" />
+      </div>
+      <div class="filter-row">
+        <label>블러: <span id="blurValue">0</span></label>
+        <input type="range" id="blurSlider" min="0" max="2" step="1" value="0" />
+      </div>
+      <div class="filter-row">
+        <label>샤프닝: <span id="sharpenValue">0.0</span></label>
+        <input type="range" id="sharpenSlider" min="0" max="1" step="0.1" value="0" />
+      </div>
+      <div class="filter-row">
+        <label><input type="checkbox" id="edgeOverlayCheck" /> 엣지 오버레이</label>
+      </div>
+      <div class="filter-row">
+        <label><input type="checkbox" id="maskCleanCheck" /> 마스크 정제</label>
+      </div>
+      <div class="filter-hint">[F] 패널 닫기</div>
+    </div>
 
     <script src="renderer.js"></script>
   </body>
