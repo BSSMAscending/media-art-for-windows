@@ -13,6 +13,7 @@ module.exports = [
         navigator: 'readonly',
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
+        performance: 'readonly',
         ImageData: 'readonly',
         console: 'readonly',
         require: 'readonly',
