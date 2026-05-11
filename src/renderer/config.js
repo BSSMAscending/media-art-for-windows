@@ -1,18 +1,45 @@
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+
+const projectRoot = path.resolve(__dirname, '..', '..');
+
+const localWasmDir = path.join(projectRoot, 'node_modules', '@mediapipe', 'tasks-vision', 'wasm');
+const localSelfieDir = path.join(projectRoot, 'node_modules', '@mediapipe', 'selfie_segmentation');
+const localHandModel = path.join(__dirname, 'assets', 'hand_landmarker.task');
+
+function toFileURL(p) {
+  return pathToFileURL(p).href;
+}
+
 const FONT_SIZE = 8;
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
-const BODY_PIX_CONFIG = {
-  architecture: 'ResNet50',
-  outputStride: 16,
-  quantBytes: 4,
+const VISION_TASKS_CONFIG = {
+  wasmPath: toFileURL(localWasmDir),
+  selfieSolutionPath: toFileURL(localSelfieDir),
+  handLandmarkerModelPath: toFileURL(localHandModel),
 };
-const SEGMENTATION_OPTIONS = {
-  flipHorizontal: false,
-  internalResolution: 'high',
-  segmentationThreshold: 0.5,
-  maxDetections: 1,
-  scoreThreshold: 0.5,
-  nmsRadius: 20,
+const BODY_SEGMENTATION_CONFIG = {
+  modelType: 'general',
+  personAlphaThreshold: 128,
+};
+const HAND_LANDMARKER_OPTIONS = {
+  runningMode: 'VIDEO',
+  numHands: 2,
+  minHandDetectionConfidence: 0.35,
+  minHandPresenceConfidence: 0.3,
+  minTrackingConfidence: 0.3,
+};
+const HAND_REFINEMENT = {
+  smoothing: 0.65,
+  overlapAnchorRadius: 2,
+  minOverlapAnchors: 2,
+  connectorRadiusFactor: 0.04,
+  palmRadiusFactor: 0.055,
+  jointRadiusFactor: 0.045,
+  fingertipRadiusFactor: 0.035,
+  minRadius: 1,
+  maxRadius: 6,
 };
 const COLORS = {
   cyan: '#00ffff',
@@ -30,8 +57,10 @@ module.exports = {
   FONT_SIZE,
   MIN_FONT_SIZE,
   MAX_FONT_SIZE,
-  BODY_PIX_CONFIG,
-  SEGMENTATION_OPTIONS,
+  VISION_TASKS_CONFIG,
+  BODY_SEGMENTATION_CONFIG,
+  HAND_LANDMARKER_OPTIONS,
+  HAND_REFINEMENT,
   COLORS,
   LUMINANCE_THRESHOLD,
   LUMINANCE_GLOW_THRESHOLD,

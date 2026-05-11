@@ -1,3 +1,2 @@
-// Node integration is enabled, so we can access require directly
-window.tf = require('@tensorflow/tfjs');
-window.bodyPix = require('@tensorflow-models/body-pix');
+// Renderer uses Node integration directly.
+// Keep preload intentionally light so model packages are only loaded when needed.
