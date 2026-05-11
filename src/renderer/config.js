@@ -1,23 +1,18 @@
-const path = require('node:path');
-const { pathToFileURL } = require('node:url');
+const WASM_REL = 'node_modules/@mediapipe/tasks-vision/wasm';
+const SELFIE_REL = 'node_modules/@mediapipe/selfie_segmentation';
+const HAND_MODEL_REL = 'src/renderer/assets/hand_landmarker.task';
 
-const projectRoot = path.resolve(__dirname, '..', '..');
-
-const localWasmDir = path.join(projectRoot, 'node_modules', '@mediapipe', 'tasks-vision', 'wasm');
-const localSelfieDir = path.join(projectRoot, 'node_modules', '@mediapipe', 'selfie_segmentation');
-const localHandModel = path.join(__dirname, 'assets', 'hand_landmarker.task');
-
-function toFileURL(p) {
-  return pathToFileURL(p).href;
+function toLocalURL(relPath) {
+  return `local-assets:///${relPath}`;
 }
 
 const FONT_SIZE = 8;
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
 const VISION_TASKS_CONFIG = {
-  wasmPath: toFileURL(localWasmDir),
-  selfieSolutionPath: toFileURL(localSelfieDir),
-  handLandmarkerModelPath: toFileURL(localHandModel),
+  wasmPath: toLocalURL(WASM_REL),
+  selfieSolutionPath: toLocalURL(SELFIE_REL),
+  handLandmarkerModelPath: toLocalURL(HAND_MODEL_REL),
 };
 const BODY_SEGMENTATION_CONFIG = {
   modelType: 'general',
