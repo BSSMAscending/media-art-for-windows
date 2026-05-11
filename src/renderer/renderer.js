@@ -7,6 +7,7 @@ const { createEducationalOverlay } = require('./ui/educationalText');
 
 const state = {
   model: null,
+  stream: null,
   selectedCameraId: null,
   selectedVersion: 'original',
   currentFontSize: 8,
@@ -113,11 +114,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     titleEl.textContent = 'AI 모델 로딩 중...';
-    state.model = await loadModel();
+    state.model = await loadModel((stage) => {
+      titleEl.textContent = stage;
+    });
     titleEl.textContent = 'BINARY MEDIA ART';
   } catch (err) {
     console.error('Failed to load model:', err);
-    showError('AI 모델을 불러오지 못했습니다.');
+    showError('AI 모델 로딩 실패: ' + (err.message || err));
   }
 });
 
@@ -128,7 +131,18 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel) {
   }
 
   try {
+    if (state.loop) {
+      state.loop.stop();
+      state.loop = null;
+    }
+
+    if (state.stream) {
+      state.stream.getTracks().forEach((track) => track.stop());
+      state.stream = null;
+    }
+
     const stream = await openCameraStream(state.selectedCameraId);
+    state.stream = stream;
     videoEl.srcObject = stream;
     await videoEl.play();
 
