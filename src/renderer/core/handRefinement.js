@@ -1,4 +1,4 @@
-const { HAND_REFINEMENT } = require('../config');
+const { HAND_REFINEMENT, HAND_GRID_REFINEMENT } = require('../config');
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -8,6 +8,14 @@ const HAND_CONNECTIONS = [
   [13, 17], [17, 18], [18, 19], [19, 20],
   [0, 17],
 ];
+
+const FINGER_SEGMENTS = {
+  thumb: [1, 2, 3, 4],
+  index: [5, 6, 7, 8],
+  middle: [9, 10, 11, 12],
+  ring: [13, 14, 15, 16],
+  pinky: [17, 18, 19, 20],
+};
 
 const PALM_ANCHOR_INDICES = [0, 5, 9, 13, 17];
 const FINGERTIP_INDICES = new Set([4, 8, 12, 16, 20]);
@@ -208,4 +216,119 @@ function reinforceHandMask(maskData, width, height, handLandmarks) {
   return maskData;
 }
 
-module.exports = { smoothHandLandmarks, reinforceHandMask };
+function getJointRadiusForGrid(index, palmR, jointR, tipR) {
+  if (FINGERTIP_INDICES.has(index)) return tipR;
+  if (PALM_INDICES.has(index)) return palmR;
+  return jointR;
+}
+
+function drawTaperedLine(maskData, width, height, startX, startY, endX, endY, startR, endR) {
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))));
+
+  for (let step = 0; step <= steps; step++) {
+    const t = step / steps;
+    const x = startX + dx * t;
+    const y = startY + dy * t;
+    const r = startR + (endR - startR) * t;
+    drawCircle(maskData, width, height, x, y, Math.max(1, Math.round(r)));
+  }
+}
+
+function extendFingertip(maskData, width, height, landmarks, tipIndex, handSpan) {
+  const fingerEntries = Object.values(FINGER_SEGMENTS);
+  const segment = fingerEntries.find((s) => s[s.length - 1] === tipIndex);
+  if (!segment || segment.length < 2) return;
+
+  const dipIdx = segment[segment.length - 2];
+  const tip = landmarks[tipIndex];
+  const dip = landmarks[dipIdx];
+
+  const dirX = (tip.x - dip.x) * (width - 1);
+  const dirY = (tip.y - dip.y) * (height - 1);
+  const len = Math.sqrt(dirX * dirX + dirY * dirY);
+  if (len < 0.5) return;
+
+  const extLen = handSpan * HAND_GRID_REFINEMENT.fingertipExtensionFactor;
+  const tipPx = tip.x * (width - 1);
+  const tipPy = tip.y * (height - 1);
+  const endPx = tipPx + (dirX / len) * extLen;
+  const endPy = tipPy + (dirY / len) * extLen;
+
+  const tipR = clamp(Math.round(handSpan * HAND_GRID_REFINEMENT.fingertipRadiusFactor), HAND_GRID_REFINEMENT.minRadius, HAND_GRID_REFINEMENT.maxRadius);
+
+  const steps = Math.max(1, Math.ceil(extLen));
+  for (let step = 0; step <= steps; step++) {
+    const t = step / steps;
+    const x = tipPx + (endPx - tipPx) * t;
+    const y = tipPy + (endPy - tipPy) * t;
+    const r = Math.max(1, Math.round(tipR * (1 - t * 0.7)));
+    drawCircle(maskData, width, height, x, y, r);
+  }
+}
+
+function gridHandOverlapsMask(gridMask, cols, rows, landmarks) {
+  let anchorOverlaps = 0;
+  const r = HAND_GRID_REFINEMENT.overlapAnchorRadius;
+  for (const index of PALM_ANCHOR_INDICES) {
+    const landmark = landmarks[index];
+    const cx = Math.round(landmark.x * (cols - 1));
+    const cy = Math.round(landmark.y * (rows - 1));
+    const minX = Math.max(0, cx - r);
+    const maxX = Math.min(cols - 1, cx + r);
+    const minY = Math.max(0, cy - r);
+    const maxY = Math.min(rows - 1, cy + r);
+    let found = false;
+    for (let py = minY; py <= maxY && !found; py++) {
+      for (let px = minX; px <= maxX && !found; px++) {
+        if (gridMask[py * cols + px] === 1) found = true;
+      }
+    }
+    if (found) anchorOverlaps++;
+    if (anchorOverlaps >= HAND_GRID_REFINEMENT.minOverlapAnchors) return true;
+  }
+  return false;
+}
+
+function reinforceGridHandMask(gridMask, cols, rows, handLandmarks) {
+  for (const landmarks of handLandmarks) {
+    if (!gridHandOverlapsMask(gridMask, cols, rows, landmarks)) continue;
+    const handSpan = estimateHandSpan(landmarks, cols, rows);
+
+    const palmR = clamp(Math.round(handSpan * HAND_GRID_REFINEMENT.palmRadiusFactor), HAND_GRID_REFINEMENT.minRadius, HAND_GRID_REFINEMENT.maxRadius);
+    const jointR = clamp(Math.round(handSpan * HAND_GRID_REFINEMENT.jointRadiusFactor), HAND_GRID_REFINEMENT.minRadius, HAND_GRID_REFINEMENT.maxRadius);
+    const tipR = clamp(Math.round(handSpan * HAND_GRID_REFINEMENT.fingertipRadiusFactor), HAND_GRID_REFINEMENT.minRadius, HAND_GRID_REFINEMENT.maxRadius);
+
+    for (const [startIdx, endIdx] of HAND_CONNECTIONS) {
+      const start = landmarks[startIdx];
+      const end = landmarks[endIdx];
+      const startR = getJointRadiusForGrid(startIdx, palmR, jointR, tipR);
+      const endR = getJointRadiusForGrid(endIdx, palmR, jointR, tipR);
+      drawTaperedLine(
+        gridMask,
+        cols,
+        rows,
+        start.x * (cols - 1),
+        start.y * (rows - 1),
+        end.x * (cols - 1),
+        end.y * (rows - 1),
+        startR,
+        endR
+      );
+    }
+
+    landmarks.forEach((landmark, index) => {
+      const r = getJointRadiusForGrid(index, palmR, jointR, tipR);
+      drawCircle(gridMask, cols, rows, landmark.x * (cols - 1), landmark.y * (rows - 1), r);
+    });
+
+    for (const tipIdx of FINGERTIP_INDICES) {
+      extendFingertip(gridMask, cols, rows, landmarks, tipIdx, handSpan);
+    }
+  }
+
+  return gridMask;
+}
+
+module.exports = { smoothHandLandmarks, reinforceHandMask, reinforceGridHandMask };

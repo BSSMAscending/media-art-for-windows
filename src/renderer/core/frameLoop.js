@@ -1,7 +1,8 @@
 const { COLORS } = require('../config');
 const { runSegmentation } = require('./segmentation');
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
-const { cleanMask } = require('./morphology');
+const { cleanMask, removeSmallRegions } = require('./morphology');
+const { reinforceGridHandMask } = require('./handRefinement');
 const { renderOriginal } = require('../modes/original');
 const { renderBlackWhite } = require('../modes/blackwhite');
 const { renderBinary } = require('../modes/binary');
@@ -13,6 +14,18 @@ const { renderGrayscale8bit } = require('../modes/grayscale8bit');
 const { renderColor4k } = require('../modes/color4k');
 
 const SEG_SKIP = 2;
+
+function upsampleMaskToGrid(segmentation, cols, rows) {
+  const grid = new Uint8Array(cols * rows);
+  for (let y = 0; y < rows; y++) {
+    const maskY = Math.floor((y / rows) * segmentation.height);
+    for (let x = 0; x < cols; x++) {
+      const maskX = Math.floor((x / cols) * segmentation.width);
+      grid[y * cols + x] = segmentation.data[maskY * segmentation.width + maskX];
+    }
+  }
+  return grid;
+}
 
 function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats }) {
   let rafId = null;
@@ -58,7 +71,8 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       if (frameCount % SEG_SKIP === 0 || !lastSegmentation) {
         lastSegmentation = await runSegmentation(model, videoEl);
       }
-      const segmentation = lastSegmentation;
+      const { data: segData, width: segW, height: segH, handLandmarks } = lastSegmentation;
+      const segmentation = { data: segData, width: segW, height: segH };
 
       hiddenCtx.save();
       hiddenCtx.scale(-1, 1);
@@ -82,11 +96,19 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
         edgeData = applySobelEdge(pixels, cols, rows);
       }
 
-      let activeSeg = segmentation;
+      let gridData = upsampleMaskToGrid(segmentation, cols, rows);
+
+      gridData = removeSmallRegions(gridData, cols, rows, 0.008);
+
       if (filters.maskClean) {
-        const cleanedData = cleanMask(segmentation.data, segmentation.width, segmentation.height);
-        activeSeg = { data: cleanedData, width: segmentation.width, height: segmentation.height };
+        gridData = cleanMask(gridData, cols, rows);
       }
+
+      if (handLandmarks && handLandmarks.length > 0) {
+        reinforceGridHandMask(gridData, cols, rows, handLandmarks);
+      }
+
+      const activeSeg = { data: gridData, width: cols, height: rows };
 
       const bgMode = getBgMode ? getBgMode() : 'off';
       if (bgMode === 'blue') {

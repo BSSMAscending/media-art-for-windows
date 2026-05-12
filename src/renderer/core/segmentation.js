@@ -5,7 +5,7 @@ const {
   BODY_SEGMENTATION_CONFIG,
   HAND_LANDMARKER_OPTIONS,
 } = require('../config');
-const { smoothHandLandmarks, reinforceHandMask } = require('./handRefinement');
+const { smoothHandLandmarks } = require('./handRefinement');
 
 async function extractPersonMask(segmenter, videoEl) {
   const people = await segmenter.segmentPeople(videoEl, {
@@ -74,7 +74,7 @@ async function runSegmentation(model, videoEl) {
 
   const segmentation = await extractPersonMask(model.segmenter, videoEl);
   if (!segmentation) {
-    return { data: new Uint8Array(0), width: 0, height: 0 };
+    return { data: new Uint8Array(0), width: 0, height: 0, handLandmarks: [] };
   }
 
   const handResult = model.handLandmarker.detectForVideo(videoEl, timestamp);
@@ -87,11 +87,7 @@ async function runSegmentation(model, videoEl) {
 
   model.previousHands = smoothedHands;
 
-  if (smoothedHands.length > 0) {
-    reinforceHandMask(segmentation.data, segmentation.width, segmentation.height, smoothedHands);
-  }
-
-  return segmentation;
+  return { data: segmentation.data, width: segmentation.width, height: segmentation.height, handLandmarks: smoothedHands };
 }
 
 module.exports = { loadModel, runSegmentation };
