@@ -21,14 +21,14 @@ const VISION_TASKS_CONFIG = {
 };
 const BODY_SEGMENTATION_CONFIG = {
   modelType: 'general',
-  personAlphaThreshold: 128,
+  personAlphaThreshold: 160,
 };
 const HAND_LANDMARKER_OPTIONS = {
   runningMode: 'VIDEO',
   numHands: 2,
-  minHandDetectionConfidence: 0.35,
-  minHandPresenceConfidence: 0.3,
-  minTrackingConfidence: 0.3,
+  minHandDetectionConfidence: 0.5,
+  minHandPresenceConfidence: 0.5,
+  minTrackingConfidence: 0.5,
 };
 const HAND_REFINEMENT = {
   smoothing: 0.65,
@@ -40,6 +40,18 @@ const HAND_REFINEMENT = {
   fingertipRadiusFactor: 0.035,
   minRadius: 1,
   maxRadius: 6,
+};
+
+const HAND_GRID_REFINEMENT = {
+  palmRadiusFactor: 0.045,
+  jointRadiusFactor: 0.032,
+  fingertipRadiusFactor: 0.022,
+  connectorRadiusFactor: 0.025,
+  fingertipExtensionFactor: 0.018,
+  minRadius: 1,
+  maxRadius: 8,
+  minOverlapAnchors: 1,
+  overlapAnchorRadius: 2,
 };
 const COLORS = {
   cyan: '#00ffff',
@@ -61,6 +73,7 @@ module.exports = {
   BODY_SEGMENTATION_CONFIG,
   HAND_LANDMARKER_OPTIONS,
   HAND_REFINEMENT,
+  HAND_GRID_REFINEMENT,
   COLORS,
   LUMINANCE_THRESHOLD,
   LUMINANCE_GLOW_THRESHOLD,
