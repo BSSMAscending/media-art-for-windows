@@ -27,6 +27,24 @@ function upsampleMaskToGrid(segmentation, cols, rows) {
   return grid;
 }
 
+function computePixelStats(pixels, segGrid, cols, rows) {
+  let sum = 0, min = 255, max = 0, count = 0;
+  for (let y = 0; y < rows; y += 2) {
+    for (let x = 0; x < cols; x += 2) {
+      if (segGrid[y * cols + x] === 1) {
+        const i = (y * cols + x) * 4;
+        const lum = Math.round(0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2]);
+        sum += lum;
+        if (lum < min) min = lum;
+        if (lum > max) max = lum;
+        count++;
+      }
+    }
+  }
+  if (count === 0) return null;
+  return { avg: Math.round(sum / count), min, max };
+}
+
 function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats }) {
   let rafId = null;
   let lastSegmentation = null;
@@ -164,7 +182,8 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
         const fps = Math.round(1000 / (now - lastFrameTime));
         lastFrameTime = now;
         if (frameCount % 15 === 0) {
-          onStats({ mode, fontSz, cols, rows, fps, filters });
+          const pixelStats = computePixelStats(pixels, activeSeg.data, cols, rows);
+          onStats({ mode, fontSz, cols, rows, fps, filters, pixelStats });
         }
       }
     } catch (err) {
