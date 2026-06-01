@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mathPanel = createMathPanel();
 
   document.getElementById('startButton').addEventListener('click', () =>
-    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel)
+    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel)
   );
 
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;

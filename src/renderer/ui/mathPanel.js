@@ -16,7 +16,6 @@ function createMathPanel() {
   panel.style.display = 'none';
   document.body.appendChild(panel);
 
-  let lastMode = null;
   let framesSinceUpdate = 0;
 
   function renderKernel(kernel) {
@@ -77,16 +76,13 @@ function createMathPanel() {
 
     panel.innerHTML = `
       <div class="math-panel-title">수학 정보</div>
-
       <div class="math-section">
         <div class="math-section-title">현재 모드</div>
         <div class="math-mode-name">${desc.title || stats.mode}</div>
         <div class="math-formula">${desc.formula || ''}</div>
         <div class="math-desc">${desc.desc || ''}</div>
       </div>
-
       ${pixelHtml}
-
       <div class="math-section">
         <div class="math-section-title">색상 단계 (색&amp;숫자의 관계)</div>
         <table class="math-stage-table">
@@ -94,9 +90,7 @@ function createMathPanel() {
           ${stagesHtml}
         </table>
       </div>
-
       ${kernelHtml}
-
       <div class="math-hint">[M] 닫기</div>
     `;
   }
