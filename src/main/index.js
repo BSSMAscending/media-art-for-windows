@@ -1,9 +1,27 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, protocol, net } = require('electron');
 const path = require('node:path');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+// Register custom protocol before app.ready (required by Electron)
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'local-assets',
+    privileges: {
+      bypassCSP: true,
+      stream: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+    },
+  },
+]);
+
+// GPU acceleration flags — must be set before app.ready
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -35,6 +53,12 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+  const projectRoot = path.resolve(__dirname, '..', '..');
+  protocol.handle('local-assets', (request) => {
+    const urlPath = new URL(request.url).pathname;
+    return net.fetch(`file://${path.join(projectRoot, urlPath)}`);
+  });
+
   createWindow();
 
   app.on('activate', () => {

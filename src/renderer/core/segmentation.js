@@ -49,13 +49,22 @@ async function loadModel(onProgress) {
     });
 
     onProgress?.('손 인식 모델 로딩...');
-    const handLandmarker = await HandLandmarker.createFromOptions(vision, {
-      ...HAND_LANDMARKER_OPTIONS,
-      baseOptions: {
-        modelAssetPath: VISION_TASKS_CONFIG.handLandmarkerModelPath,
-        delegate: 'GPU',
-      },
-    });
+    const handLandmarkerBaseOptions = {
+      modelAssetPath: VISION_TASKS_CONFIG.handLandmarkerModelPath,
+    };
+    let handLandmarker;
+    try {
+      handLandmarker = await HandLandmarker.createFromOptions(vision, {
+        ...HAND_LANDMARKER_OPTIONS,
+        baseOptions: { ...handLandmarkerBaseOptions, delegate: 'GPU' },
+      });
+    } catch (gpuErr) {
+      console.warn('HandLandmarker GPU delegate 실패, CPU로 폴백:', gpuErr.message);
+      handLandmarker = await HandLandmarker.createFromOptions(vision, {
+        ...HAND_LANDMARKER_OPTIONS,
+        baseOptions: { ...handLandmarkerBaseOptions, delegate: 'CPU' },
+      });
+    }
 
     onProgress?.('완료!');
     return {
