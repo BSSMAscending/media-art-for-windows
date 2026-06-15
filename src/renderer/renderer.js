@@ -6,6 +6,7 @@ const { createBackgroundEffects } = require('./ui/backgroundEffects');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createEducationalOverlay } = require('./ui/educationalText');
 const { createMathPanel } = require('./ui/mathPanel');
+const { createHeartOverlay } = require('./ui/heartOverlay');
 
 const state = {
   model: null,
@@ -49,9 +50,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const infoPanel = createInfoPanel();
   const eduOverlay = createEducationalOverlay();
   const mathPanel = createMathPanel();
+  const heartOverlay = createHeartOverlay();
 
   document.getElementById('startButton').addEventListener('click', () =>
-    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel)
+    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay)
   );
 
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
@@ -110,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (state.loop) {
-        stopCamera(videoEl, canvasEl, mathPanel, eduOverlay);
+        stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay);
       } else {
         ipcRenderer.send('quit-app');
       }
@@ -184,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
@@ -225,6 +227,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
         if (state.infoPanelVisible) infoPanel.update(stats);
         mathPanel.update(stats);
       },
+      onGesture: () => heartOverlay.show(),
     });
     state.loop.start();
   } catch (err) {
@@ -233,7 +236,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
   }
 }
 
-function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay) {
+function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay) {
   if (state.loop) {
     state.loop.stop();
     state.loop = null;
@@ -247,6 +250,8 @@ function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay) {
   document.getElementById('cameraHud').style.display = 'none';
   document.getElementById('pixelSizeHud').style.display = 'none';
   document.getElementById('overlayUI').style.display = '';
+
+  heartOverlay.hide();
 
   if (state.mathPanelVisible) {
     mathPanel.toggle();

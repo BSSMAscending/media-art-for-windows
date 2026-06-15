@@ -646,3 +646,39 @@ body {
 .px-btn:hover {
   background: rgba(0, 255, 255, 0.15);
 }
+
+.heart-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.heart-overlay--visible {
+  opacity: 1;
+}
+
+.heart-overlay--fading {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.heart-banner {
+  font-family: 'Courier New', monospace;
+  font-size: 52px;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow:
+    0 0 24px rgba(0, 255, 255, 0.9),
+    0 0 48px rgba(0, 255, 255, 0.5);
+  letter-spacing: 0.12em;
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  padding: 24px 48px;
+  border-radius: 4px;
+}
