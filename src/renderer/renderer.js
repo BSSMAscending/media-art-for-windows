@@ -33,6 +33,11 @@ function showError(message) {
   el.style.display = 'block';
 }
 
+function updatePixelSizeHud(size) {
+  document.getElementById('pxSlider').value = size;
+  document.getElementById('pxDisplay').textContent = size + 'px';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const videoEl = document.getElementById('videoElement');
   const canvasEl = document.getElementById('binaryCanvas');
@@ -89,6 +94,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.filters.maskClean = e.target.checked;
   });
 
+  document.getElementById('pxSlider').addEventListener('input', (e) => {
+    state.currentFontSize = parseInt(e.target.value);
+    document.getElementById('pxDisplay').textContent = state.currentFontSize + 'px';
+  });
+  document.getElementById('pxDecrease').addEventListener('click', () => {
+    state.currentFontSize = Math.max(4, state.currentFontSize - 2);
+    updatePixelSizeHud(state.currentFontSize);
+  });
+  document.getElementById('pxIncrease').addEventListener('click', () => {
+    state.currentFontSize = Math.min(32, state.currentFontSize + 2);
+    updatePixelSizeHud(state.currentFontSize);
+  });
+
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (state.loop) {
@@ -108,6 +126,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (state.eduVisible) eduOverlay.show(mode);
       }
       return;
+    }
+
+    if (e.key === '[' && state.loop) {
+      state.currentFontSize = Math.max(4, state.currentFontSize - 2);
+      updatePixelSizeHud(state.currentFontSize);
+    }
+    if (e.key === ']' && state.loop) {
+      state.currentFontSize = Math.min(32, state.currentFontSize + 2);
+      updatePixelSizeHud(state.currentFontSize);
     }
 
     if (e.key === 'f' || e.key === 'F') {
@@ -180,6 +207,9 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
     await videoEl.play();
 
     document.getElementById('overlayUI').style.display = 'none';
+    document.getElementById('cameraHud').style.display = 'block';
+    document.getElementById('pixelSizeHud').style.display = 'flex';
+    updatePixelSizeHud(state.currentFontSize);
     canvasEl.style.display = 'block';
 
     state.loop = createFrameLoop({
@@ -214,6 +244,8 @@ function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay) {
   }
   videoEl.srcObject = null;
   canvasEl.style.display = 'none';
+  document.getElementById('cameraHud').style.display = 'none';
+  document.getElementById('pixelSizeHud').style.display = 'none';
   document.getElementById('overlayUI').style.display = '';
 
   if (state.mathPanelVisible) {
