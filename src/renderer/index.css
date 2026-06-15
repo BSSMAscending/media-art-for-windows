@@ -580,3 +580,17 @@ body {
   font-size: 0.7rem;
   margin-top: 0.5rem;
 }
+
+.camera-hud {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(0, 255, 255, 0.45);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 100;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}

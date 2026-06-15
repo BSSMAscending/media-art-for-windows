@@ -1,3 +1,4 @@
+const { ipcRenderer } = require('electron');
 const { getCameraDevices, openCameraStream } = require('./core/camera');
 const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
@@ -20,6 +21,11 @@ const state = {
   eduVisible: false,
   mathPanelVisible: false,
 };
+
+const MODES = [
+  'original', 'blackwhite', 'binary', 'numeric', 'busan',
+  'pixelvalue', 'colorrgb', 'grayscale8bit', 'color4k',
+];
 
 function showError(message) {
   const el = document.getElementById('errorText');
@@ -84,6 +90,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (state.loop) {
+        stopCamera(videoEl, canvasEl, mathPanel, eduOverlay);
+      } else {
+        ipcRenderer.send('quit-app');
+      }
+      return;
+    }
+
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= 9 && state.loop) {
+      const mode = MODES[num - 1];
+      if (mode) {
+        state.selectedVersion = mode;
+        document.getElementById('versionSelect').value = mode;
+        if (state.eduVisible) eduOverlay.show(mode);
+      }
+      return;
+    }
+
     if (e.key === 'f' || e.key === 'F') {
       state.filterPanelVisible = !state.filterPanelVisible;
       document.getElementById('filterPanel').style.display = state.filterPanelVisible ? 'block' : 'none';
@@ -155,8 +181,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
 
     document.getElementById('overlayUI').style.display = 'none';
     canvasEl.style.display = 'block';
-    state.mathPanelVisible = true;
-    mathPanel.show();
 
     state.loop = createFrameLoop({
       videoEl,
@@ -176,5 +200,36 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
   } catch (err) {
     console.error('Camera access failed:', err);
     showError('선택한 카메라에 접근할 수 없습니다. 다른 카메라를 선택해보세요.');
+  }
+}
+
+function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay) {
+  if (state.loop) {
+    state.loop.stop();
+    state.loop = null;
+  }
+  if (state.stream) {
+    state.stream.getTracks().forEach((track) => track.stop());
+    state.stream = null;
+  }
+  videoEl.srcObject = null;
+  canvasEl.style.display = 'none';
+  document.getElementById('overlayUI').style.display = '';
+
+  if (state.mathPanelVisible) {
+    mathPanel.toggle();
+    state.mathPanelVisible = false;
+  }
+  if (state.eduVisible) {
+    eduOverlay.hide();
+    state.eduVisible = false;
+  }
+  if (state.infoPanelVisible) {
+    document.getElementById('infoPanel').style.display = 'none';
+    state.infoPanelVisible = false;
+  }
+  if (state.filterPanelVisible) {
+    document.getElementById('filterPanel').style.display = 'none';
+    state.filterPanelVisible = false;
   }
 }

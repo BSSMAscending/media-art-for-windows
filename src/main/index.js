@@ -1,11 +1,10 @@
-const { app, BrowserWindow, protocol, net } = require('electron');
+const { app, BrowserWindow, protocol, net, ipcMain } = require('electron');
 const path = require('node:path');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-// Register custom protocol before app.ready (required by Electron)
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'local-assets',
@@ -44,12 +43,6 @@ const createWindow = () => {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
-
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.key === 'Escape') {
-      app.quit();
-    }
-  });
 };
 
 app.whenReady().then(() => {
@@ -58,6 +51,8 @@ app.whenReady().then(() => {
     const urlPath = new URL(request.url).pathname;
     return net.fetch(`file://${path.join(projectRoot, urlPath)}`);
   });
+
+  ipcMain.on('quit-app', () => app.quit());
 
   createWindow();
 
