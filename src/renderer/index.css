@@ -415,3 +415,168 @@ body {
   color: #006666;
   text-align: right;
 }
+
+/* ── 수학 정보 패널 ── */
+.math-panel {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 20, 0.92);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  padding: 1rem;
+  z-index: 100;
+  width: 260px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.math-panel-title {
+  font-size: 0.95rem;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 0.15rem;
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid #004444;
+  padding-bottom: 0.5rem;
+}
+
+.math-section {
+  margin-bottom: 0.9rem;
+}
+
+.math-section-title {
+  font-size: 0.7rem;
+  color: #006666;
+  letter-spacing: 0.08rem;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+}
+
+.math-mode-name {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #00ffff;
+  margin-bottom: 0.2rem;
+}
+
+.math-formula {
+  font-size: 0.8rem;
+  color: #00ffcc;
+  background: rgba(0, 255, 255, 0.05);
+  padding: 0.3rem 0.5rem;
+  border-left: 2px solid #00ffff;
+  margin-bottom: 0.3rem;
+}
+
+.math-desc {
+  font-size: 0.72rem;
+  color: #00aaaa;
+  line-height: 1.4;
+}
+
+.math-pixel-stats {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.math-pixel-stats b {
+  color: #ffffff;
+}
+
+.math-pixel-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.math-pixel-bar {
+  flex: 1;
+  height: 6px;
+  background: #001a1a;
+  border: 1px solid #003333;
+  overflow: hidden;
+}
+
+.math-pixel-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #003333, #00ffff);
+  transition: width 0.3s ease;
+}
+
+.math-pixel-pct {
+  font-size: 0.7rem;
+  color: #00aaaa;
+  min-width: 2rem;
+  text-align: right;
+}
+
+.math-pixel-label {
+  font-size: 0.68rem;
+  color: #006666;
+  font-style: italic;
+}
+
+.math-stage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.math-stage-table th {
+  color: #006666;
+  text-align: left;
+  padding: 0.2rem 0.3rem;
+  border-bottom: 1px solid #002222;
+}
+
+.math-stage-table td {
+  padding: 0.2rem 0.3rem;
+  color: #008888;
+  border-bottom: 1px solid #001111;
+}
+
+.math-stage-active td {
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.08);
+  font-weight: bold;
+}
+
+.math-kernel {
+  background: rgba(0, 255, 255, 0.05);
+  padding: 0.4rem;
+  font-size: 0.75rem;
+  color: #00ffcc;
+  border: 1px solid #003333;
+  margin-bottom: 0.3rem;
+}
+
+.math-kernel-label {
+  font-size: 0.68rem;
+  color: #006666;
+  line-height: 1.3;
+}
+
+.math-stats-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.68rem;
+  color: #004444;
+  border-top: 1px solid #002222;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.math-hint {
+  text-align: center;
+  color: #004444;
+  font-size: 0.7rem;
+  margin-top: 0.5rem;
+}

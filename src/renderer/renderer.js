@@ -4,6 +4,7 @@ const { createFrameLoop } = require('./core/frameLoop');
 const { createBackgroundEffects } = require('./ui/backgroundEffects');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createEducationalOverlay } = require('./ui/educationalText');
+const { createMathPanel } = require('./ui/mathPanel');
 
 const state = {
   model: null,
@@ -17,6 +18,7 @@ const state = {
   filterPanelVisible: false,
   infoPanelVisible: false,
   eduVisible: false,
+  mathPanelVisible: false,
 };
 
 function showError(message) {
@@ -35,9 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bgEffects = createBackgroundEffects(bgCanvasEl);
   const infoPanel = createInfoPanel();
   const eduOverlay = createEducationalOverlay();
+  const mathPanel = createMathPanel();
 
   document.getElementById('startButton').addEventListener('click', () =>
-    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel)
+    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel)
   );
 
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
@@ -97,6 +100,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         eduOverlay.hide();
       }
     }
+    if (e.key === 'm' || e.key === 'M') {
+      state.mathPanelVisible = !state.mathPanelVisible;
+      mathPanel.toggle();
+    }
   });
 
   window.addEventListener('resize', () => {
@@ -124,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
@@ -148,6 +155,8 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel) {
 
     document.getElementById('overlayUI').style.display = 'none';
     canvasEl.style.display = 'block';
+    state.mathPanelVisible = true;
+    mathPanel.show();
 
     state.loop = createFrameLoop({
       videoEl,
@@ -160,6 +169,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel) {
       getBgMode: () => state.bgMode,
       onStats: (stats) => {
         if (state.infoPanelVisible) infoPanel.update(stats);
+        mathPanel.update(stats);
       },
     });
     state.loop.start();
