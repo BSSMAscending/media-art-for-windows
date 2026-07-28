@@ -1,3 +1,4 @@
+const { ipcRenderer } = require('electron');
 const { getCameraDevices, openCameraStream } = require('./core/camera');
 const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
@@ -5,6 +6,7 @@ const { createBackgroundEffects } = require('./ui/backgroundEffects');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createEducationalOverlay } = require('./ui/educationalText');
 const { createMathPanel } = require('./ui/mathPanel');
+const { createHeartOverlay } = require('./ui/heartOverlay');
 
 const state = {
   model: null,
@@ -21,10 +23,20 @@ const state = {
   mathPanelVisible: false,
 };
 
+const MODES = [
+  'original', 'blackwhite', 'binary', 'numeric', 'busan',
+  'pixelvalue', 'colorrgb', 'grayscale8bit', 'color4k',
+];
+
 function showError(message) {
   const el = document.getElementById('errorText');
   el.textContent = message;
   el.style.display = 'block';
+}
+
+function updatePixelSizeHud(size) {
+  document.getElementById('pxSlider').value = size;
+  document.getElementById('pxDisplay').textContent = size + 'px';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -38,9 +50,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const infoPanel = createInfoPanel();
   const eduOverlay = createEducationalOverlay();
   const mathPanel = createMathPanel();
+  const heartOverlay = createHeartOverlay();
 
   document.getElementById('startButton').addEventListener('click', () =>
-    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel)
+    startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay)
   );
 
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
@@ -83,7 +96,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.filters.maskClean = e.target.checked;
   });
 
+  document.getElementById('pxSlider').addEventListener('input', (e) => {
+    state.currentFontSize = parseInt(e.target.value);
+    document.getElementById('pxDisplay').textContent = state.currentFontSize + 'px';
+  });
+  document.getElementById('pxDecrease').addEventListener('click', () => {
+    state.currentFontSize = Math.max(4, state.currentFontSize - 2);
+    updatePixelSizeHud(state.currentFontSize);
+  });
+  document.getElementById('pxIncrease').addEventListener('click', () => {
+    state.currentFontSize = Math.min(32, state.currentFontSize + 2);
+    updatePixelSizeHud(state.currentFontSize);
+  });
+
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (state.loop) {
+        stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay);
+      } else {
+        ipcRenderer.send('quit-app');
+      }
+      return;
+    }
+
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= 9 && state.loop) {
+      const mode = MODES[num - 1];
+      if (mode) {
+        state.selectedVersion = mode;
+        document.getElementById('versionSelect').value = mode;
+        if (state.eduVisible) eduOverlay.show(mode);
+      }
+      return;
+    }
+
+    if (e.key === '[' && state.loop) {
+      state.currentFontSize = Math.max(4, state.currentFontSize - 2);
+      updatePixelSizeHud(state.currentFontSize);
+    }
+    if (e.key === ']' && state.loop) {
+      state.currentFontSize = Math.min(32, state.currentFontSize + 2);
+      updatePixelSizeHud(state.currentFontSize);
+    }
+
     if (e.key === 'f' || e.key === 'F') {
       state.filterPanelVisible = !state.filterPanelVisible;
       document.getElementById('filterPanel').style.display = state.filterPanelVisible ? 'block' : 'none';
@@ -131,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
@@ -154,9 +209,10 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
     await videoEl.play();
 
     document.getElementById('overlayUI').style.display = 'none';
+    document.getElementById('cameraHud').style.display = 'block';
+    document.getElementById('pixelSizeHud').style.display = 'flex';
+    updatePixelSizeHud(state.currentFontSize);
     canvasEl.style.display = 'block';
-    state.mathPanelVisible = true;
-    mathPanel.show();
 
     state.loop = createFrameLoop({
       videoEl,
@@ -171,10 +227,46 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
         if (state.infoPanelVisible) infoPanel.update(stats);
         mathPanel.update(stats);
       },
+      onGesture: () => heartOverlay.show(),
     });
     state.loop.start();
   } catch (err) {
     console.error('Camera access failed:', err);
     showError('선택한 카메라에 접근할 수 없습니다. 다른 카메라를 선택해보세요.');
+  }
+}
+
+function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay) {
+  if (state.loop) {
+    state.loop.stop();
+    state.loop = null;
+  }
+  if (state.stream) {
+    state.stream.getTracks().forEach((track) => track.stop());
+    state.stream = null;
+  }
+  videoEl.srcObject = null;
+  canvasEl.style.display = 'none';
+  document.getElementById('cameraHud').style.display = 'none';
+  document.getElementById('pixelSizeHud').style.display = 'none';
+  document.getElementById('overlayUI').style.display = '';
+
+  heartOverlay.hide();
+
+  if (state.mathPanelVisible) {
+    mathPanel.toggle();
+    state.mathPanelVisible = false;
+  }
+  if (state.eduVisible) {
+    eduOverlay.hide();
+    state.eduVisible = false;
+  }
+  if (state.infoPanelVisible) {
+    document.getElementById('infoPanel').style.display = 'none';
+    state.infoPanelVisible = false;
+  }
+  if (state.filterPanelVisible) {
+    document.getElementById('filterPanel').style.display = 'none';
+    state.filterPanelVisible = false;
   }
 }

@@ -3,6 +3,7 @@ const { runSegmentation } = require('./segmentation');
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
 const { cleanMask, removeSmallRegions } = require('./morphology');
 const { reinforceGridHandMask } = require('./handRefinement');
+const { createGestureDetector } = require('./gestureDetector');
 const { renderOriginal } = require('../modes/original');
 const { renderBlackWhite } = require('../modes/blackwhite');
 const { renderBinary } = require('../modes/binary');
@@ -45,11 +46,13 @@ function computePixelStats(pixels, segGrid, cols, rows) {
   return { avg: Math.round(sum / count), min, max };
 }
 
-function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats }) {
+function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats, onGesture }) {
   let rafId = null;
   let lastSegmentation = null;
   let frameCount = 0;
   let lastFrameTime = performance.now();
+
+  const gestureDetector = onGesture ? createGestureDetector(onGesture) : null;
 
   async function drawFrame() {
     if (!videoEl || !canvasEl || !hiddenCanvasEl) {
@@ -91,6 +94,8 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       }
       const { data: segData, width: segW, height: segH, handLandmarks } = lastSegmentation;
       const segmentation = { data: segData, width: segW, height: segH };
+
+      if (gestureDetector) gestureDetector.detect(handLandmarks);
 
       hiddenCtx.save();
       hiddenCtx.scale(-1, 1);
