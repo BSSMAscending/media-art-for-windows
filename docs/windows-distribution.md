@@ -40,6 +40,6 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 2. `dev`에서 `release: vX.Y.Z` 제목의 PR을 `main`으로 병합합니다.
 3. 병합된 `main` 커밋에 `vX.Y.Z` 태그를 푸시합니다.
 
-태그 푸시의 `publish-windows-release.yml`은 Windows에서 `npm install`, `npm run make -- --platform=win32 --arch=x64`를 실행하고 `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release에 업로드합니다. 이 워크플로는 자동 업데이트 자산 형식을 이미 충족하므로 변경하지 않습니다.
+태그 푸시의 `publish-windows-release.yml`은 Windows에서 `npm install`, `npm run make -- --platform=win32 --arch=x64`를 실행하고 `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release에 업로드합니다. 생성되는 Release의 제목은 `vX.Y.Z Busan Mathematical Culture Center – Media Art`이며, 본문은 해당 태그 커밋의 `dev` → `main` release PR 본문을 그대로 사용합니다.
 
 현재 Windows 코드 서명 인증서는 사용하지 않습니다. 따라서 설치 또는 업데이트 실행 시 Microsoft SmartScreen 경고가 표시될 수 있으며, 자동 업데이트 구현만으로 이 경고는 제거되지 않습니다.
