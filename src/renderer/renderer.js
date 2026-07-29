@@ -32,9 +32,7 @@ const state = {
   filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
   loop: null,
   filterPanelVisible: false,
-  infoPanelVisible: false,
   eduVisible: false,
-  mathPanelVisible: false,
 };
 
 const MODES = [
@@ -223,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Escape') {
       if (state.loop) {
         e.preventDefault();
-        stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay);
+        stopCamera(videoEl, canvasEl, infoPanel, mathPanel, eduOverlay, heartOverlay);
       }
       return;
     }
@@ -233,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mode = MODES[num - 1];
       if (mode) {
         state.selectedVersion = mode;
-        document.getElementById('versionSelect').value = mode;
+        updateModeUI(mathPanel);
         if (state.eduVisible) eduOverlay.show(mode);
       }
       return;
@@ -245,12 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? 'block'
         : 'none';
     }
-    if (e.key === 'i' || e.key === 'I') {
-      state.infoPanelVisible = !state.infoPanelVisible;
-      document.getElementById('infoPanel').style.display = state.infoPanelVisible
-        ? 'block'
-        : 'none';
-    }
     if (e.key === 'e' || e.key === 'E') {
       state.eduVisible = !state.eduVisible;
       if (state.eduVisible) {
@@ -258,10 +250,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         eduOverlay.hide();
       }
-    }
-    if (e.key === 'm' || e.key === 'M') {
-      state.mathPanelVisible = !state.mathPanelVisible;
-      mathPanel.toggle();
     }
   });
 
@@ -310,12 +298,9 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
     document.getElementById('modeControls').style.display = 'block';
     canvasEl.style.display = 'block';
     resizeCanvases(canvasEl, document.getElementById('bgCanvas'));
-    state.infoPanelVisible = true;
     infoPanel.show();
-    state.mathPanelVisible = true;
     mathPanel.show();
     mathPanel.updateMode(state.selectedVersion);
-    document.getElementById('cameraHud').style.display = 'block';
     canvasEl.style.display = 'block';
 
     state.loop = createFrameLoop({
@@ -328,7 +313,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
       getFilters: () => state.filters,
       getBgMode: () => state.bgMode,
       onStats: (stats) => {
-        if (state.infoPanelVisible) infoPanel.update(stats);
         mathPanel.update(stats);
       },
       onGesture: () => heartOverlay.show(),
@@ -340,7 +324,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
   }
 }
 
-function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay) {
+function stopCamera(videoEl, canvasEl, infoPanel, mathPanel, eduOverlay, heartOverlay) {
   if (state.loop) {
     state.loop.stop();
     state.loop = null;
@@ -352,23 +336,16 @@ function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay) {
   videoEl.srcObject = null;
   canvasEl.style.display = 'none';
   document.getElementById('modeControls').style.display = 'none';
-  document.getElementById('cameraHud').style.display = 'none';
   document.getElementById('overlayUI').style.display = '';
 
   heartOverlay.hide();
 
-  if (state.mathPanelVisible) {
-    mathPanel.toggle();
-    state.mathPanelVisible = false;
-  }
+  mathPanel.hide();
   if (state.eduVisible) {
     eduOverlay.hide();
     state.eduVisible = false;
   }
-  if (state.infoPanelVisible) {
-    document.getElementById('infoPanel').style.display = 'none';
-    state.infoPanelVisible = false;
-  }
+  infoPanel.hide();
   if (state.filterPanelVisible) {
     document.getElementById('filterPanel').style.display = 'none';
     state.filterPanelVisible = false;
