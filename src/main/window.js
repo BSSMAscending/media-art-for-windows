@@ -35,14 +35,28 @@ function createMainWindow({ BrowserWindow, htmlPath, preloadPath, sendUpdateStat
   return mainWindow;
 }
 
-function toggleFullscreen(mainWindow) {
+function getFullscreenState(mainWindow, platform = process.platform) {
   if (!mainWindow || mainWindow.isDestroyed()) {
     return false;
   }
 
-  const isFullscreen = !mainWindow.isFullScreen();
+  return platform === 'darwin' ? mainWindow.isSimpleFullScreen() : mainWindow.isFullScreen();
+}
+
+function toggleFullscreen(mainWindow, platform = process.platform) {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return false;
+  }
+
+  const isFullscreen = !getFullscreenState(mainWindow, platform);
+
+  if (platform === 'darwin') {
+    mainWindow.setSimpleFullScreen(isFullscreen);
+    return isFullscreen;
+  }
+
   mainWindow.setFullScreen(isFullscreen);
   return isFullscreen;
 }
 
-module.exports = { createMainWindow, toggleFullscreen };
+module.exports = { createMainWindow, getFullscreenState, toggleFullscreen };

@@ -1,7 +1,7 @@
 const { app, autoUpdater, BrowserWindow, protocol, net, ipcMain } = require('electron');
 const path = require('node:path');
 const { createUpdateController } = require('./updater');
-const { createMainWindow, toggleFullscreen } = require('./window');
+const { createMainWindow, getFullscreenState, toggleFullscreen } = require('./window');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -57,8 +57,16 @@ app.whenReady().then(() => {
 
   ipcMain.on('quit-app', () => app.quit());
   ipcMain.handle('restart-and-install-update', () => updateController?.quitAndInstall() ?? false);
-  ipcMain.handle('get-fullscreen-state', () => mainWindow?.isFullScreen() ?? false);
-  ipcMain.handle('toggle-fullscreen', () => toggleFullscreen(mainWindow));
+  ipcMain.handle('get-fullscreen-state', () => getFullscreenState(mainWindow));
+  ipcMain.handle('toggle-fullscreen', () => {
+    const isFullscreen = toggleFullscreen(mainWindow);
+
+    if (process.platform === 'darwin' && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('fullscreen-changed', isFullscreen);
+    }
+
+    return isFullscreen;
+  });
 
   createWindow();
 

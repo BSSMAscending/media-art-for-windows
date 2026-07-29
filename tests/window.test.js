@@ -8,10 +8,12 @@ function createBrowserWindow() {
     instance: {
       isDestroyed: vi.fn(() => false),
       isFullScreen: vi.fn(() => false),
+      isSimpleFullScreen: vi.fn(() => false),
       loadFile: vi.fn(),
       on: vi.fn((event, callback) => events.set(event, callback)),
       once: vi.fn((event, callback) => events.set(event, callback)),
       setFullScreen: vi.fn(),
+      setSimpleFullScreen: vi.fn(),
       show: vi.fn(),
       webContents: {
         on: vi.fn(),
@@ -51,13 +53,21 @@ describe('main window', () => {
   it('switches fullscreen on and off using the current window state', () => {
     const window = createBrowserWindow();
 
-    expect(toggleFullscreen(window.instance)).toBe(true);
+    expect(toggleFullscreen(window.instance, 'win32')).toBe(true);
     expect(window.instance.setFullScreen).toHaveBeenLastCalledWith(true);
 
     window.instance.isFullScreen.mockReturnValue(true);
 
-    expect(toggleFullscreen(window.instance)).toBe(false);
+    expect(toggleFullscreen(window.instance, 'win32')).toBe(false);
     expect(window.instance.setFullScreen).toHaveBeenLastCalledWith(false);
+  });
+
+  it('uses macOS simple fullscreen for an immediate native transition', () => {
+    const window = createBrowserWindow();
+
+    expect(toggleFullscreen(window.instance, 'darwin')).toBe(true);
+    expect(window.instance.setSimpleFullScreen).toHaveBeenCalledWith(true);
+    expect(window.instance.setFullScreen).not.toHaveBeenCalled();
   });
 
   it('announces fullscreen state changes to the renderer', () => {

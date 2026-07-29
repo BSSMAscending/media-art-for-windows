@@ -188,8 +188,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     fullscreenButton.textContent = isFullscreen ? '창 모드로 전환' : '전체 화면으로 전환';
   };
 
-  fullscreenButton.addEventListener('click', () => {
-    ipcRenderer.invoke('toggle-fullscreen');
+  fullscreenButton.addEventListener('click', async () => {
+    updateFullscreenButton(await ipcRenderer.invoke('toggle-fullscreen'));
   });
   ipcRenderer.on('fullscreen-changed', (_event, isFullscreen) => {
     updateFullscreenButton(isFullscreen);
