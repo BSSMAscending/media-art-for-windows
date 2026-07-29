@@ -1,0 +1,36 @@
+name: Validate release pull request
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  release-policy:
+    name: release-policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate source branch and release version
+        shell: bash
+        env:
+          PR_HEAD_BRANCH: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ "$PR_HEAD_BRANCH" != "dev" ]]; then
+            echo "main에는 dev 브랜치에서 만든 release PR만 병합할 수 있습니다."
+            exit 1
+          fi
+
+          if [[ ! "$PR_TITLE" =~ ^release:[[:space:]]+v?[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "PR 제목은 'release: v1.2.3' 형식이어야 합니다."
+            exit 1
+          fi
