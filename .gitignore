@@ -90,3 +90,7 @@ typings/
 
 # Electron-Forge
 out/
+
+# Local IDE and agent workspace settings
+.idea/
+.omo/
