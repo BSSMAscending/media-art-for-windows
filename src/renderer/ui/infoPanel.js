@@ -1,49 +1,16 @@
-const { mathDescriptions } = require('../data/mathDescriptions');
-
 function createInfoPanel() {
-  const panel = document.createElement('div');
+  const panel = document.createElement('aside');
   panel.id = 'infoPanel';
   panel.className = 'info-panel';
-  panel.style.display = 'none';
+  panel.setAttribute('aria-label', '미디어 아트 프로젝트 설명');
+  panel.innerHTML = `
+    <div class="panel-eyebrow">PROJECT NOTE</div>
+    <div class="info-mode">미디어 아트란?</div>
+    <p class="info-desc">카메라로 포착한 움직임을 작은 픽셀 데이터로 바꾸고, 숫자와 색의 규칙으로 다시 그려내는 작업입니다.</p>
+    <p class="info-note">움직임이 화면의 언어가 되는 순간을 천천히 관찰해보세요.</p>
+    <div class="info-hint">[I] 설명 패널 닫기</div>
+  `;
   document.body.appendChild(panel);
-
-  let framesSinceUpdate = 0;
-
-  function renderKernel(kernel) {
-    return kernel.map((row) => row.map((v) => String(v).padStart(3)).join(' ')).join('\n');
-  }
-
-  function update(stats) {
-    framesSinceUpdate++;
-    if (framesSinceUpdate < 15) return;
-    framesSinceUpdate = 0;
-
-    const desc = mathDescriptions[stats.mode] || {};
-    const activeFilter =
-      stats.filters.blur > 0 ? 'gaussian'
-      : stats.filters.sharpen > 0 ? 'sharpen'
-      : stats.filters.edgeOverlay ? 'sobel'
-      : null;
-    const filterDesc = activeFilter ? mathDescriptions[activeFilter] : null;
-
-    let kernelHtml = '';
-    if (filterDesc && filterDesc.kernel) {
-      kernelHtml = `<div class="info-kernel"><pre>${renderKernel(filterDesc.kernel)}</pre><div class="info-kernel-label">${filterDesc.title}</div></div>`;
-    }
-
-    panel.innerHTML = `
-      <div class="info-mode">${desc.title || stats.mode}</div>
-      <div class="info-desc">${desc.desc || ''}</div>
-      <div class="info-stats">
-        <span>그리드: ${stats.cols}×${stats.rows}</span>
-        <span>FPS: ${stats.fps}</span>
-        <span>픽셀크기: ${stats.fontSz}px</span>
-        <span>색심도: ${desc.colorDepth || '-'}</span>
-      </div>
-      ${kernelHtml}
-      <div class="info-hint">[I] 패널 닫기</div>
-    `;
-  }
 
   return {
     show() { panel.style.display = 'block'; },
@@ -51,7 +18,6 @@ function createInfoPanel() {
     toggle() {
       panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     },
-    update,
   };
 }
 

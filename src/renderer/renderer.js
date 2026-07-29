@@ -5,13 +5,27 @@ const { createBackgroundEffects } = require('./ui/backgroundEffects');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createEducationalOverlay } = require('./ui/educationalText');
 const { createMathPanel } = require('./ui/mathPanel');
+const { FONT_SIZE } = require('./config');
+
+const MODE_OPTIONS = [
+  { key: 'original', label: '원본', caption: '0 / 1 실루엣' },
+  { key: 'blackwhite', label: '흑백', caption: '선명한 윤곽' },
+  { key: 'binary', label: '바이너리', caption: '0 / 1 문자' },
+  { key: 'numeric', label: '숫자', caption: '0 ~ 9 계조' },
+];
+
+const SIZE_OPTIONS = [
+  { value: 8, label: '작게', caption: '8 px' },
+  { value: 12, label: '기본', caption: '12 px' },
+  { value: 16, label: '크게', caption: '16 px' },
+];
 
 const state = {
   model: null,
   stream: null,
   selectedCameraId: null,
   selectedVersion: 'original',
-  currentFontSize: 8,
+  currentFontSize: FONT_SIZE,
   bgMode: 'off',
   filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
   loop: null,
@@ -27,17 +41,86 @@ function showError(message) {
   el.style.display = 'block';
 }
 
+function resizeCanvases(canvasEl, bgCanvasEl) {
+  const stage = document.getElementById('visualStage');
+  const width = Math.max(1, Math.floor(stage?.clientWidth || window.innerWidth));
+  const height = Math.max(1, Math.floor(stage?.clientHeight || window.innerHeight));
+
+  canvasEl.width = width;
+  canvasEl.height = height;
+  bgCanvasEl.width = width;
+  bgCanvasEl.height = height;
+}
+
+function renderModeButtons(container, onSelect) {
+  MODE_OPTIONS.forEach((option) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mode-button';
+    button.dataset.mode = option.key;
+    button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
+    button.addEventListener('click', () => onSelect(option.key));
+    container.appendChild(button);
+  });
+}
+
+function updateModeUI(mathPanel) {
+  document.querySelectorAll('.mode-button').forEach((button) => {
+    const isSelected = button.dataset.mode === state.selectedVersion;
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
+  });
+  mathPanel.updateMode(state.selectedVersion);
+}
+
+function renderSizeButtons(container) {
+  SIZE_OPTIONS.forEach((option) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'size-button';
+    button.dataset.size = String(option.value);
+    button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
+    button.addEventListener('click', () => {
+      state.currentFontSize = option.value;
+      updateSizeUI();
+    });
+    container.appendChild(button);
+  });
+}
+
+function updateSizeUI() {
+  document.querySelectorAll('.size-button').forEach((button) => {
+    const isSelected = Number(button.dataset.size) === state.currentFontSize;
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const videoEl = document.getElementById('videoElement');
   const canvasEl = document.getElementById('binaryCanvas');
   const hiddenCanvasEl = document.getElementById('hiddenCanvas');
   const bgCanvasEl = document.getElementById('bgCanvas');
-  const titleEl = document.getElementById('titleText');
+  const modelStatusEl = document.getElementById('modelStatus');
 
   const bgEffects = createBackgroundEffects(bgCanvasEl);
   const infoPanel = createInfoPanel();
   const eduOverlay = createEducationalOverlay();
   const mathPanel = createMathPanel();
+
+  renderModeButtons(document.getElementById('setupModeButtons'), (mode) => {
+    state.selectedVersion = mode;
+    updateModeUI(mathPanel);
+  });
+  renderModeButtons(document.getElementById('liveModeButtons'), (mode) => {
+    state.selectedVersion = mode;
+    updateModeUI(mathPanel);
+  });
+  renderSizeButtons(document.getElementById('setupSizeButtons'));
+  renderSizeButtons(document.getElementById('liveSizeButtons'));
+  updateModeUI(mathPanel);
+  updateSizeUI();
+  resizeCanvases(canvasEl, bgCanvasEl);
 
   document.getElementById('startButton').addEventListener('click', () =>
     startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel)
@@ -45,18 +128,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
     state.selectedCameraId = e.target.value;
-  });
-
-  document.getElementById('versionSelect').addEventListener('change', (e) => {
-    state.selectedVersion = e.target.value;
-    if (state.eduVisible) eduOverlay.show(e.target.value);
-  });
-
-  const fontSizeSlider = document.getElementById('fontSizeSlider');
-  const fontSizeValueEl = document.getElementById('fontSizeValue');
-  fontSizeSlider.addEventListener('input', (e) => {
-    state.currentFontSize = parseInt(e.target.value);
-    fontSizeValueEl.textContent = state.currentFontSize;
   });
 
   document.getElementById('bgSelect').addEventListener('change', (e) => {
@@ -107,26 +178,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   window.addEventListener('resize', () => {
-    if (canvasEl) {
-      canvasEl.width = window.innerWidth;
-      canvasEl.height = window.innerHeight;
-    }
-    if (bgCanvasEl) {
-      bgCanvasEl.width = window.innerWidth;
-      bgCanvasEl.height = window.innerHeight;
-    }
+    resizeCanvases(canvasEl, bgCanvasEl);
   });
 
   await getCameraDevices(document.getElementById('cameraSelect'));
 
   try {
-    titleEl.textContent = 'AI 모델 로딩 중...';
+    modelStatusEl.textContent = 'AI 모델 로딩 중...';
     state.model = await loadModel((stage) => {
-      titleEl.textContent = stage;
+      modelStatusEl.textContent = stage;
     });
-    titleEl.textContent = 'BINARY MEDIA ART';
+    modelStatusEl.textContent = 'AI 모델 준비 완료';
   } catch (err) {
     console.error('Failed to load model:', err);
+    modelStatusEl.textContent = 'AI 모델을 불러오지 못했습니다.';
     showError('AI 모델 로딩 실패: ' + (err.message || err));
   }
 });
@@ -154,9 +219,14 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
     await videoEl.play();
 
     document.getElementById('overlayUI').style.display = 'none';
+    document.getElementById('modeControls').style.display = 'block';
     canvasEl.style.display = 'block';
+    resizeCanvases(canvasEl, document.getElementById('bgCanvas'));
+    state.infoPanelVisible = true;
+    infoPanel.show();
     state.mathPanelVisible = true;
     mathPanel.show();
+    mathPanel.updateMode(state.selectedVersion);
 
     state.loop = createFrameLoop({
       videoEl,
@@ -168,7 +238,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
       getFilters: () => state.filters,
       getBgMode: () => state.bgMode,
       onStats: (stats) => {
-        if (state.infoPanelVisible) infoPanel.update(stats);
         mathPanel.update(stats);
       },
     });

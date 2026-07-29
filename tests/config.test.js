@@ -1,8 +1,8 @@
 const config = require('../src/renderer/config');
 
 describe('config constants', () => {
-  it('FONT_SIZE is 8', () => {
-    expect(config.FONT_SIZE).toBe(8);
+  it('FONT_SIZE is 12', () => {
+    expect(config.FONT_SIZE).toBe(12);
   });
 
   it('BUSAN_CHARS has 7 characters', () => {
