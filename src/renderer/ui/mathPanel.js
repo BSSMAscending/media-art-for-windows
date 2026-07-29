@@ -20,7 +20,6 @@ function createMathPanel() {
         <p class="math-desc">${desc.shortDesc || desc.desc || ''}</p>
         <div class="math-metric">${desc.metric || desc.colorDepth || ''}${liveMetric}</div>
       </div>
-      <div class="math-hint">[M] 현재 모드 닫기</div>
     `;
   }
 
@@ -31,9 +30,6 @@ function createMathPanel() {
   return {
     show() { panel.style.display = 'block'; },
     hide() { panel.style.display = 'none'; },
-    toggle() {
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    },
     updateMode,
     update,
   };
