@@ -50,6 +50,18 @@
       <canvas id="binaryCanvas" class="binary-canvas" style="display: none;"></canvas>
     </div>
 
+    <aside id="updateNotice" class="update-notice" aria-live="polite" style="display: none;">
+      <div class="update-notice__eyebrow">SYSTEM UPDATE</div>
+      <div id="updateNoticeTitle" class="update-notice__title"></div>
+      <p id="updateNoticeDetail" class="update-notice__detail"></p>
+      <div id="updateNoticeActions" class="update-notice__actions" style="display: none;">
+        <button id="restartUpdateButton" class="update-notice__button update-notice__button--primary" type="button">
+          지금 재시작
+        </button>
+        <button id="laterUpdateButton" class="update-notice__button" type="button">나중에</button>
+      </div>
+    </aside>
+
     <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
       <div class="mode-cue">변하고 싶은 미디어 아트 모드를 선택해주세요</div>
       <div class="live-controls-row">

@@ -1,5 +1,6 @@
-const { app, BrowserWindow, protocol, net, ipcMain } = require('electron');
+const { app, autoUpdater, BrowserWindow, protocol, net, ipcMain } = require('electron');
 const path = require('node:path');
+const { createUpdateController } = require('./updater');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -23,7 +24,7 @@ app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 
 const createWindow = () => {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     fullscreen: true,
     width: 1920,
     height: 1080,
@@ -38,12 +39,29 @@ const createWindow = () => {
     backgroundColor: '#000000',
   });
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (latestUpdateStatus) {
+      mainWindow.webContents.send('update-status', latestUpdateStatus);
+    }
+  });
+
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
 };
+
+let mainWindow;
+let latestUpdateStatus;
+
+function sendUpdateStatus(status) {
+  latestUpdateStatus = status;
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', status);
+  }
+}
 
 app.whenReady().then(() => {
   const projectRoot = path.resolve(__dirname, '..', '..');
@@ -53,8 +71,16 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('quit-app', () => app.quit());
+  ipcMain.handle('restart-and-install-update', () => updateController?.quitAndInstall() ?? false);
 
   createWindow();
+
+  updateController = createUpdateController({
+    app,
+    autoUpdater,
+    sendStatus: sendUpdateStatus,
+  });
+  updateController.start();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -62,6 +88,8 @@ app.whenReady().then(() => {
     }
   });
 });
+
+let updateController;
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

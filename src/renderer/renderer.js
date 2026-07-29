@@ -115,6 +115,38 @@ function updatePixelSizeHud(size) {
   document.getElementById('pxDisplay').textContent = size + 'px';
 }
 
+function setupUpdateNotice() {
+  const notice = document.getElementById('updateNotice');
+  const title = document.getElementById('updateNoticeTitle');
+  const detail = document.getElementById('updateNoticeDetail');
+  const actions = document.getElementById('updateNoticeActions');
+
+  document.getElementById('restartUpdateButton').addEventListener('click', () => {
+    ipcRenderer.invoke('restart-and-install-update');
+  });
+  document.getElementById('laterUpdateButton').addEventListener('click', () => {
+    notice.style.display = 'none';
+  });
+
+  ipcRenderer.on('update-status', (_event, update) => {
+    const version = update.version ? ` ${update.version}` : '';
+    notice.style.display = 'block';
+
+    if (update.status === 'downloading') {
+      title.textContent = `새 버전${version} 다운로드 중입니다`;
+      detail.textContent = '작품은 계속 사용할 수 있습니다.';
+      actions.style.display = 'none';
+      return;
+    }
+
+    if (update.status === 'downloaded') {
+      title.textContent = `새 버전${version} 다운로드가 완료되었습니다`;
+      detail.textContent = '지금 재시작하면 업데이트가 적용됩니다.';
+      actions.style.display = 'flex';
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const videoEl = document.getElementById('videoElement');
   const canvasEl = document.getElementById('binaryCanvas');
@@ -127,6 +159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const eduOverlay = createEducationalOverlay();
   const mathPanel = createMathPanel();
   const heartOverlay = createHeartOverlay();
+
+  setupUpdateNotice();
 
   renderModeButtons(document.getElementById('setupModeButtons'), (mode) => {
     state.selectedVersion = mode;
