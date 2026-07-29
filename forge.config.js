@@ -9,7 +9,10 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        certificateFile: process.env.WINDOWS_CERTIFICATE_PATH,
+        certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD,
+      },
     },
     {
       name: '@electron-forge/maker-zip',
