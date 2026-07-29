@@ -20,6 +20,8 @@ module.exports = [
         module: 'writable',
         __dirname: 'readonly',
         process: 'readonly',
+        URL: 'readonly',
+        setTimeout: 'readonly',
       },
     },
     rules: {
@@ -38,6 +40,7 @@ module.exports = [
         it: 'readonly',
         expect: 'readonly',
         beforeEach: 'readonly',
+        vi: 'readonly',
       },
     },
   },

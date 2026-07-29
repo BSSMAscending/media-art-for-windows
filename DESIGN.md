@@ -113,6 +113,16 @@ All spacing derives from a base of `4px`.
 - **Motion**: content changes without layout animation.
 - **Layout**: pinned below the information panel.
 
+### Update Notice
+
+- **Structure**: a small status panel with a version message and, after download, `지금 재시작` and `나중에` buttons.
+- **Variants**: downloading, downloaded, dismissed.
+- **Spacing**: `--space-4` padding and `--space-2` internal rhythm.
+- **States**: hidden when no update exists; downloading has no action; downloaded exposes both action buttons.
+- **Accessibility**: a polite live region announces the status; both actions are native buttons with visible focus.
+- **Motion**: no decorative motion, so the notice remains quiet over the artwork.
+- **Layout**: pinned to the upper-left, outside the right-side information rail and lower control shelf.
+
 ## 6. Motion & Interaction
 
 | Type     | Duration | Easing        | Usage                |
