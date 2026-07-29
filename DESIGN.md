@@ -93,6 +93,16 @@ All spacing derives from a base of `4px`.
 - **States**: default, hover, focus-visible, selected; `aria-pressed` reflects the selected size.
 - **Layout**: directly alongside the live mode cluster and below the setup mode selector.
 
+### Window Mode Button
+
+- **Structure**: a secondary native button on the setup overlay that toggles between windowed and fullscreen presentation.
+- **Variants**: `전체 화면으로 전환`, `창 모드로 전환`.
+- **Spacing**: `--space-2` top margin and `--space-2` by `--space-3` inset.
+- **States**: default, hover, focus-visible, selected (`aria-pressed="true"`).
+- **Accessibility**: native button semantics with an exposed pressed state and the same cyan focus ring as mode controls.
+- **Motion**: `150ms` color, border, and surface transitions only.
+- **Layout**: visible only on the setup overlay, directly below `START CAMERA`.
+
 ### Information Panel
 
 - **Structure**: title, short project explanation, quiet keyboard hint.
