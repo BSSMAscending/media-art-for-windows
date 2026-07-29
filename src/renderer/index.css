@@ -879,6 +879,10 @@ select:focus-visible {
   margin: var(--space-4) auto 0;
 }
 
+.size-selection .setup-label {
+  text-align: center;
+}
+
 .size-button-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1157,59 +1161,6 @@ select:focus-visible {
   z-index: 100;
   letter-spacing: 0.05em;
   white-space: nowrap;
-}
-
-.pixel-size-hud {
-  position: fixed;
-  bottom: calc(var(--control-shelf-height) + var(--space-4));
-  left: var(--space-4);
-  right: auto;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  padding: 8px 14px;
-  border-radius: 4px;
-  z-index: 100;
-}
-
-.px-label {
-  color: rgba(0, 255, 255, 0.6);
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-}
-
-.px-value {
-  color: #00ffff;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  min-width: 30px;
-  text-align: right;
-}
-
-.px-slider {
-  width: 100px;
-  accent-color: #00ffff;
-  cursor: pointer;
-}
-
-.px-btn {
-  background: transparent;
-  border: 1px solid rgba(0, 255, 255, 0.4);
-  color: #00ffff;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  width: 22px;
-  height: 22px;
-  cursor: pointer;
-  border-radius: 2px;
-  line-height: 1;
-  padding: 0;
-}
-
-.px-btn:hover {
-  background: rgba(0, 255, 255, 0.15);
 }
 
 .heart-overlay {
