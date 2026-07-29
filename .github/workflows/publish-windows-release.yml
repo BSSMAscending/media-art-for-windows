@@ -7,13 +7,15 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   publish:
     runs-on: windows-latest
     env:
       RELEASE_REPOSITORY: BSSMAscending/media-art-for-windows-releases
-      GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+      RELEASE_GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+      SOURCE_GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Check out tagged source
@@ -24,7 +26,7 @@ jobs:
       - name: Verify release version and source branch
         shell: pwsh
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+          if ([string]::IsNullOrWhiteSpace($env:RELEASE_GH_TOKEN)) {
             throw 'RELEASES_REPOSITORY_TOKEN GitHub Secret is not configured.'
           }
 
@@ -59,9 +61,27 @@ jobs:
             throw 'No Windows release artifacts were generated.'
           }
 
+          $env:GH_TOKEN = $env:SOURCE_GH_TOKEN
+          $releasePullRequests = @(
+            gh api "repos/$env:GITHUB_REPOSITORY/commits/$env:GITHUB_SHA/pulls" --paginate |
+              ConvertFrom-Json
+          )
+          $releasePullRequest = $releasePullRequests |
+            Where-Object { $_.base.ref -eq 'main' -and $_.head.ref -eq 'dev' -and $_.merged_at } |
+            Select-Object -First 1
+
+          if ($null -eq $releasePullRequest) {
+            throw 'No merged dev-to-main release pull request was found for this release tag.'
+          }
+
+          $releaseNotesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          Set-Content -LiteralPath $releaseNotesPath -Value $releasePullRequest.body -NoNewline
+          $releaseTitle = "$env:GITHUB_REF_NAME Busan Mathematical Culture Center – Media Art"
+
+          $env:GH_TOKEN = $env:RELEASE_GH_TOKEN
           gh release view $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY --title "Binary Media Art for Windows $env:GITHUB_REF_NAME" --notes "Unsigned Windows installer."
+            gh release create $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY --title $releaseTitle --notes-file $releaseNotesPath
           }
 
           gh release upload $env:GITHUB_REF_NAME $files --repo $env:RELEASE_REPOSITORY --clobber
