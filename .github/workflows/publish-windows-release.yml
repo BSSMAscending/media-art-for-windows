@@ -1,0 +1,67 @@
+name: Publish Windows release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    env:
+      RELEASE_REPOSITORY: BSSMAscending/media-art-for-windows-releases
+      GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify release version and source branch
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+            throw 'RELEASES_REPOSITORY_TOKEN GitHub Secret is not configured.'
+          }
+
+          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$packageVersion") {
+            throw "Tag $env:GITHUB_REF_NAME does not match package.json version $packageVersion."
+          }
+
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Release tags must point to a commit already merged into main.'
+          }
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build unsigned installer
+        run: npm run make -- --platform=win32 --arch=x64
+
+      - name: Publish public release assets
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem out/make/squirrel.windows/x64 -File | ForEach-Object FullName
+          if ($files.Count -eq 0) {
+            throw 'No Windows release artifacts were generated.'
+          }
+
+          gh release view $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY --title "Binary Media Art for Windows $env:GITHUB_REF_NAME" --notes "Unsigned Windows installer."
+          }
+
+          gh release upload $env:GITHUB_REF_NAME $files --repo $env:RELEASE_REPOSITORY --clobber
