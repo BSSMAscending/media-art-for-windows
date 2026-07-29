@@ -6,7 +6,7 @@ function toLocalURL(relPath) {
   return `local-assets:///${relPath}`;
 }
 
-const FONT_SIZE = 8;
+const FONT_SIZE = 12;
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
 const VISION_TASKS_CONFIG = {

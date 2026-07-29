@@ -10,30 +10,25 @@
     <canvas id="hiddenCanvas" style="display: none;"></canvas>
 
     <div id="overlayUI" class="overlay-ui">
-      <div id="titleText" class="title-text">BINARY MEDIA ART</div>
+      <div class="setup-copy">
+        <div id="titleText" class="title-text">BINARY MEDIA ART</div>
+        <div id="modelStatus" class="model-status" role="status">AI 모델 준비 중...</div>
+        <p class="setup-kicker">미디어 아트란?</p>
+        <p class="setup-description">카메라에 담긴 움직임을 픽셀과 숫자, 색의 언어로 다시 바라보는 인터랙티브 작업입니다.</p>
+      </div>
       <div id="versionSelection" class="version-selection">
-        <label for="versionSelect">아트 버전 선택:</label>
-        <select id="versionSelect" class="version-select">
-          <option value="original">현재버전 (시안 0/1)</option>
-          <option value="blackwhite">흑백버전 (검정배경/하얀사람)</option>
-          <option value="binary">바이너리버전 (0/1 집합)</option>
-          <option value="numeric">숫자버전 (0-9 집합)</option>
-          <option value="busan">부산버전 (부산수학문화관)</option>
-          <option value="pixelvalue">픽셀 수치 (0-255)</option>
-          <option value="colorrgb">원본 컬러 (RGB 24bit)</option>
-          <option value="grayscale8bit">흑백 8bit (0-255)</option>
-          <option value="color4k">4천 컬러 (4096색)</option>
-        </select>
+        <div class="setup-label">원하는 모드를 선택해주세요</div>
+        <div id="setupModeButtons" class="mode-button-grid" role="group" aria-label="미디어 아트 모드 선택"></div>
+        <div class="size-selection">
+          <div class="setup-label">문자 크기를 선택해주세요</div>
+          <div id="setupSizeButtons" class="size-button-grid" role="group" aria-label="문자 크기 선택"></div>
+        </div>
       </div>
       <div id="cameraSelection" class="camera-selection">
         <label for="cameraSelect">카메라 선택:</label>
         <select id="cameraSelect" class="camera-select">
           <option value="">카메라 목록 로딩 중...</option>
         </select>
-      </div>
-      <div id="pixelSizeSelection" class="pixel-size-selection">
-        <label for="fontSizeSlider">픽셀 크기: <span id="fontSizeValue">8</span>px</label>
-        <input type="range" id="fontSizeSlider" class="font-size-slider" min="4" max="32" step="2" value="8" />
       </div>
       <div id="bgSelection" class="bg-selection">
         <label for="bgSelect">배경 효과:</label>
@@ -45,13 +40,26 @@
       </div>
       <button id="startButton" class="start-button">START CAMERA</button>
       <div class="key-hints">
-        [F] 필터 패널 &nbsp;|&nbsp; [I] 정보 패널 &nbsp;|&nbsp; [E] 설명 보기 &nbsp;|&nbsp; [M] 수학 정보
+        [F] 필터 &nbsp;|&nbsp; [I] 프로젝트 설명 &nbsp;|&nbsp; [M] 현재 모드
       </div>
       <div id="errorText" class="error-text" style="display: none;"></div>
     </div>
 
-    <canvas id="bgCanvas" class="bg-canvas"></canvas>
-    <canvas id="binaryCanvas" class="binary-canvas" style="display: none;"></canvas>
+    <div id="visualStage" class="visual-stage">
+      <canvas id="bgCanvas" class="bg-canvas"></canvas>
+      <canvas id="binaryCanvas" class="binary-canvas" style="display: none;"></canvas>
+    </div>
+
+    <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
+      <div class="mode-cue">변하고 싶은 미디어 아트 모드를 선택해주세요</div>
+      <div class="live-controls-row">
+        <div id="liveModeButtons" class="mode-button-grid mode-button-grid--live" role="group" aria-label="미디어 아트 모드 선택"></div>
+        <div class="live-size-control">
+          <div class="control-label">문자 크기</div>
+          <div id="liveSizeButtons" class="size-button-grid" role="group" aria-label="문자 크기 선택"></div>
+        </div>
+      </div>
+    </div>
 
     <div id="filterPanel" class="filter-panel" style="display: none;">
       <div class="filter-title">이미지 필터 [F키]</div>

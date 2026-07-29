@@ -1,4 +1,4 @@
-const { COLORS } = require('../config');
+const { COLORS, FONT_SIZE } = require('../config');
 const { runSegmentation } = require('./segmentation');
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
 const { cleanMask, removeSmallRegions } = require('./morphology');
@@ -73,12 +73,14 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       return;
     }
 
-    if (canvasEl.width !== window.innerWidth || canvasEl.height !== window.innerHeight) {
-      canvasEl.width = window.innerWidth;
-      canvasEl.height = window.innerHeight;
+    const displayWidth = Math.max(1, Math.floor(canvasEl.clientWidth || window.innerWidth));
+    const displayHeight = Math.max(1, Math.floor(canvasEl.clientHeight || window.innerHeight));
+    if (canvasEl.width !== displayWidth || canvasEl.height !== displayHeight) {
+      canvasEl.width = displayWidth;
+      canvasEl.height = displayHeight;
     }
 
-    const fontSz = getFontSize ? getFontSize() : 8;
+    const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
 
     const cols = Math.floor(canvasEl.width / fontSz);
     const rows = Math.floor(canvasEl.height / fontSz);
