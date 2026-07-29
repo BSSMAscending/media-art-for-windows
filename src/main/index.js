@@ -1,6 +1,7 @@
 const { app, autoUpdater, BrowserWindow, protocol, net, ipcMain } = require('electron');
 const path = require('node:path');
 const { createUpdateController } = require('./updater');
+const { createMainWindow, toggleFullscreen } = require('./window');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -24,31 +25,15 @@ app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 
 const createWindow = () => {
-  mainWindow = new BrowserWindow({
-    fullscreen: true,
-    width: 1920,
-    height: 1080,
-    webPreferences: {
-      preload: path.join(__dirname, '../preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false,
-      webSecurity: false,
+  mainWindow = createMainWindow({
+    BrowserWindow,
+    htmlPath: path.join(__dirname, '../renderer/index.html'),
+    preloadPath: path.join(__dirname, '../preload.js'),
+    sendUpdateStatus: () => {
+      if (latestUpdateStatus) {
+        mainWindow.webContents.send('update-status', latestUpdateStatus);
+      }
     },
-    frame: false,
-    show: false,
-    backgroundColor: '#000000',
-  });
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    if (latestUpdateStatus) {
-      mainWindow.webContents.send('update-status', latestUpdateStatus);
-    }
-  });
-
-  mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
   });
 };
 
@@ -72,6 +57,8 @@ app.whenReady().then(() => {
 
   ipcMain.on('quit-app', () => app.quit());
   ipcMain.handle('restart-and-install-update', () => updateController?.quitAndInstall() ?? false);
+  ipcMain.handle('get-fullscreen-state', () => mainWindow?.isFullScreen() ?? false);
+  ipcMain.handle('toggle-fullscreen', () => toggleFullscreen(mainWindow));
 
   createWindow();
 

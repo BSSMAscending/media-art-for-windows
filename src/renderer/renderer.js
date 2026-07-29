@@ -182,6 +182,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay)
     );
 
+  const fullscreenButton = document.getElementById('toggleFullscreenButton');
+  const updateFullscreenButton = (isFullscreen) => {
+    fullscreenButton.setAttribute('aria-pressed', String(isFullscreen));
+    fullscreenButton.textContent = isFullscreen ? '창 모드로 전환' : '전체 화면으로 전환';
+  };
+
+  fullscreenButton.addEventListener('click', () => {
+    ipcRenderer.invoke('toggle-fullscreen');
+  });
+  ipcRenderer.on('fullscreen-changed', (_event, isFullscreen) => {
+    updateFullscreenButton(isFullscreen);
+  });
+  updateFullscreenButton(await ipcRenderer.invoke('get-fullscreen-state'));
+
   document.getElementById('cameraSelect').addEventListener('change', (e) => {
     state.selectedCameraId = e.target.value;
   });
@@ -226,9 +240,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (state.loop) {
+        e.preventDefault();
         stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay);
-      } else {
-        ipcRenderer.send('quit-app');
       }
       return;
     }
@@ -367,6 +380,7 @@ function stopCamera(videoEl, canvasEl, mathPanel, eduOverlay, heartOverlay) {
   }
   videoEl.srcObject = null;
   canvasEl.style.display = 'none';
+  document.getElementById('modeControls').style.display = 'none';
   document.getElementById('cameraHud').style.display = 'none';
   document.getElementById('pixelSizeHud').style.display = 'none';
   document.getElementById('overlayUI').style.display = '';

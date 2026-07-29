@@ -768,6 +768,36 @@ select:focus-visible {
   font-size: 14px;
 }
 
+.window-mode-button {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.window-mode-button:hover,
+.window-mode-button:focus-visible,
+.window-mode-button[aria-pressed='true'] {
+  border-color: var(--accent-primary);
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.window-mode-button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
 .key-hints {
   margin-top: var(--space-4);
   color: var(--text-muted);
@@ -1117,7 +1147,7 @@ select:focus-visible {
 
 .camera-hud {
   position: fixed;
-  bottom: 12px;
+  bottom: calc(var(--control-shelf-height) + var(--space-2));
   left: 50%;
   transform: translateX(-50%);
   color: rgba(0, 255, 255, 0.45);
@@ -1131,8 +1161,9 @@ select:focus-visible {
 
 .pixel-size-hud {
   position: fixed;
-  bottom: 40px;
-  right: 20px;
+  bottom: calc(var(--control-shelf-height) + var(--space-4));
+  left: var(--space-4);
+  right: auto;
   align-items: center;
   gap: 8px;
   background: rgba(0, 0, 0, 0.65);
