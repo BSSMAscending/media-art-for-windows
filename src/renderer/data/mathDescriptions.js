@@ -10,7 +10,7 @@ const mathDescriptions = {
   binary: {
     title: '바이너리 (0/1)',
     desc: '밝기(luminance)를 계산하여 밝으면 1, 어두우면 0으로 표시합니다.',
-    shortDesc: '실루엣 안의 밝기를 0과 1로 바꿉니다.',
+    shortDesc: '실루엣 안의 밝기를 0과\u00a01로\u00a0바꿉니다.',
     metric: '밝기 2단계',
     formula: 'L = 0.299R + 0.587G + 0.114B',
     colorDepth: '1bit (2색)',
