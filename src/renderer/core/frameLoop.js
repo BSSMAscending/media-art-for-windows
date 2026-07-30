@@ -1,5 +1,6 @@
 const { COLORS, FONT_SIZE } = require('../config');
 const { runSegmentation } = require('./segmentation');
+const { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover } = require('./coverCrop');
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
 const { cleanMask, removeSmallRegions } = require('./morphology');
 const { reinforceGridHandMask } = require('./handRefinement');
@@ -15,18 +16,6 @@ const { renderGrayscale8bit } = require('../modes/grayscale8bit');
 const { renderColor4k } = require('../modes/color4k');
 
 const SEG_SKIP = 2;
-
-function upsampleMaskToGrid(segmentation, cols, rows) {
-  const grid = new Uint8Array(cols * rows);
-  for (let y = 0; y < rows; y++) {
-    const maskY = Math.floor((y / rows) * segmentation.height);
-    for (let x = 0; x < cols; x++) {
-      const maskX = Math.floor((x / cols) * segmentation.width);
-      grid[y * cols + x] = segmentation.data[maskY * segmentation.width + maskX];
-    }
-  }
-  return grid;
-}
 
 function computePixelStats(pixels, segGrid, cols, rows) {
   let sum = 0, min = 255, max = 0, count = 0;
@@ -90,6 +79,14 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       hiddenCanvasEl.height = rows;
     }
 
+    const sourceWidth = videoEl.videoWidth;
+    const sourceHeight = videoEl.videoHeight;
+    const crop = getCoverCrop(sourceWidth, sourceHeight, hiddenCanvasEl.width, hiddenCanvasEl.height);
+    if (!crop) {
+      rafId = requestAnimationFrame(drawFrame);
+      return;
+    }
+
     try {
       if (frameCount % SEG_SKIP === 0 || !lastSegmentation) {
         lastSegmentation = await runSegmentation(model, videoEl);
@@ -101,7 +98,17 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
 
       hiddenCtx.save();
       hiddenCtx.scale(-1, 1);
-      hiddenCtx.drawImage(videoEl, -hiddenCanvasEl.width, 0, hiddenCanvasEl.width, hiddenCanvasEl.height);
+      hiddenCtx.drawImage(
+        videoEl,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        -hiddenCanvasEl.width,
+        0,
+        hiddenCanvasEl.width,
+        hiddenCanvasEl.height
+      );
       hiddenCtx.restore();
 
       const imgData = hiddenCtx.getImageData(0, 0, hiddenCanvasEl.width, hiddenCanvasEl.height);
@@ -121,7 +128,7 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
         edgeData = applySobelEdge(pixels, cols, rows);
       }
 
-      let gridData = upsampleMaskToGrid(segmentation, cols, rows);
+      let gridData = upsampleCoverMaskToGrid(segmentation, crop, sourceWidth, sourceHeight, cols, rows);
 
       gridData = removeSmallRegions(gridData, cols, rows, 0.008);
 
@@ -130,7 +137,7 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       }
 
       if (handLandmarks && handLandmarks.length > 0) {
-        reinforceGridHandMask(gridData, cols, rows, handLandmarks);
+        reinforceGridHandMask(gridData, cols, rows, mapLandmarksToCover(handLandmarks, crop, sourceWidth, sourceHeight));
       }
 
       const activeSeg = { data: gridData, width: cols, height: rows };
