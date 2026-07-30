@@ -77,6 +77,7 @@ All spacing derives from a base of `4px`.
 ### Rules
 
 - The camera stage never sits behind the mode shelf; the reserved lower space keeps the artwork visually above the controls.
+- Camera framing uses a responsive centered `cover` crop: each frame preserves its source aspect ratio, fills the current artwork stage in either windowed or fullscreen mode, and crops only the overflow at opposing edges.
 - The right rail is aligned to the upper-right and mid-right zones.
 - At wide exhibition resolutions, the right rail, panel height, shelf, control row, and typography scale from the same 1280×720 baseline rather than retaining a fixed-pixel composition.
 
