@@ -15,12 +15,6 @@ const MODE_OPTIONS = [
   { key: 'numeric', label: '숫자', caption: '0 ~ 9 계조' },
 ];
 
-const SIZE_OPTIONS = [
-  { value: 8, label: '작게', caption: '8 px' },
-  { value: 12, label: '기본', caption: '12 px' },
-  { value: 16, label: '크게', caption: '16 px' },
-];
-
 const state = {
   model: null,
   stream: null,
@@ -82,29 +76,6 @@ function updateModeUI(mathPanel) {
   mathPanel.updateMode(state.selectedVersion);
 }
 
-function renderSizeButtons(container) {
-  SIZE_OPTIONS.forEach((option) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'size-button';
-    button.dataset.size = String(option.value);
-    button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
-    button.addEventListener('click', () => {
-      state.currentFontSize = option.value;
-      updateSizeUI();
-    });
-    container.appendChild(button);
-  });
-}
-
-function updateSizeUI() {
-  document.querySelectorAll('.size-button').forEach((button) => {
-    const isSelected = Number(button.dataset.size) === state.currentFontSize;
-    button.classList.toggle('is-selected', isSelected);
-    button.setAttribute('aria-pressed', String(isSelected));
-  });
-}
-
 function setupUpdateNotice() {
   const notice = document.getElementById('updateNotice');
   const title = document.getElementById('updateNoticeTitle');
@@ -143,8 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const hiddenCanvasEl = document.getElementById('hiddenCanvas');
   const bgCanvasEl = document.getElementById('bgCanvas');
 
-  createInfoPanel();
-  const mathPanel = createMathPanel();
+  const panelCards = document.getElementById('panelCards');
+  createInfoPanel(panelCards);
+  const mathPanel = createMathPanel(panelCards);
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
 
@@ -154,9 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.selectedVersion = mode;
     updateModeUI(mathPanel);
   });
-  renderSizeButtons(document.getElementById('liveSizeButtons'));
   updateModeUI(mathPanel);
-  updateSizeUI();
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
 
