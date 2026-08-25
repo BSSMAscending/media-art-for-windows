@@ -6,7 +6,8 @@ function toLocalURL(relPath) {
   return `local-assets:///${relPath}`;
 }
 
-const FONT_SIZE = 12;
+// 기본 문자 크기(px). UI 선택기는 제거되었으므로 이 값을 코드에서 조절합니다.
+const FONT_SIZE = 16;
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
 const VISION_TASKS_CONFIG = {

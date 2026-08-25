@@ -1,7 +1,4 @@
 function renderBlackWhite(ctx, canvasEl, segmentation) {
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-
   const maskData = new ImageData(segmentation.width, segmentation.height);
   for (let i = 0; i < segmentation.data.length; i++) {
     const base = i * 4;

@@ -1,4 +1,4 @@
-const { COLORS, FONT_SIZE } = require('../config');
+const { FONT_SIZE } = require('../config');
 const { runSegmentation } = require('./segmentation');
 const { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover } = require('./coverCrop');
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
@@ -36,7 +36,7 @@ function computePixelStats(pixels, segGrid, cols, rows) {
   return { avg: Math.round(sum / count), min, max };
 }
 
-function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats }) {
+function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, onStats }) {
   let rafId = null;
   let lastSegmentation = null;
   let frameCount = 0;
@@ -56,7 +56,7 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       return;
     }
 
-    const ctx = canvasEl.getContext('2d', { alpha: false });
+    const ctx = canvasEl.getContext('2d', { alpha: true });
     const hiddenCtx = hiddenCanvasEl.getContext('2d', { willReadFrequently: true });
 
     if (!ctx || !hiddenCtx) {
@@ -70,6 +70,11 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       canvasEl.width = displayWidth;
       canvasEl.height = displayHeight;
     }
+
+    // The visualization canvas sits above the UI, so only the person artwork
+    // should be opaque. Clearing each frame keeps panels and controls visible
+    // everywhere outside the current silhouette.
+    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
     const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
 
@@ -145,15 +150,6 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
 
       const activeSeg = { data: gridData, width: cols, height: rows };
 
-      const bgMode = getBgMode ? getBgMode() : 'off';
-      if (bgMode === 'blue') {
-        ctx.fillStyle = '#000033';
-        ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-      } else if (bgMode === 'off' || bgMode === 'matrix') {
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-      }
-
       const hasPerson = activeSeg.data.some((v) => v === 1);
       if (!hasPerson) {
         frameCount++;
@@ -169,11 +165,6 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
         ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-
-        if (mode === 'binary' || mode === 'numeric' || mode === 'busan' || mode === 'pixelvalue' || mode === 'grayscale8bit' || mode === 'color4k') {
-          ctx.fillStyle = COLORS.binaryBg;
-          ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
-        }
 
         if (mode === 'original') {
           renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);

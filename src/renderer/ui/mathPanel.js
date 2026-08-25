@@ -1,12 +1,12 @@
 const { mathDescriptions } = require('../data/mathDescriptions');
 
-function createMathPanel() {
+function createMathPanel(container = document.body) {
   const panel = document.createElement('div');
   panel.id = 'mathPanel';
   panel.className = 'math-panel';
   panel.setAttribute('aria-live', 'polite');
   panel.setAttribute('aria-label', '현재 선택한 미디어 아트 모드');
-  document.body.appendChild(panel);
+  container.appendChild(panel);
 
   function updateMode(modeKey, stats) {
     const desc = mathDescriptions[modeKey] || {};
