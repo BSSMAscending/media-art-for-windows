@@ -4,7 +4,8 @@ const { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover } = require('
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
 const { cleanMask, removeSmallRegions } = require('./morphology');
 const { reinforceGridHandMask } = require('./handRefinement');
-const { createGestureDetector } = require('./gestureDetector');
+// 손하트 감지 기능은 현재 비활성화했습니다. 기존 구현은 재활성화를 위해 보존합니다.
+// const { createGestureDetector } = require('./gestureDetector');
 const { renderOriginal } = require('../modes/original');
 const { renderBlackWhite } = require('../modes/blackwhite');
 const { renderBinary } = require('../modes/binary');
@@ -35,13 +36,14 @@ function computePixelStats(pixels, segGrid, cols, rows) {
   return { avg: Math.round(sum / count), min, max };
 }
 
-function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats, onGesture }) {
+function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, getBgMode, onStats }) {
   let rafId = null;
   let lastSegmentation = null;
   let frameCount = 0;
   let lastFrameTime = performance.now();
 
-  const gestureDetector = onGesture ? createGestureDetector(onGesture) : null;
+  // 손하트 감지기는 패널 기능과 함께 비활성화했습니다.
+  // const gestureDetector = onGesture ? createGestureDetector(onGesture) : null;
 
   async function drawFrame() {
     if (!videoEl || !canvasEl || !hiddenCanvasEl) {
@@ -94,7 +96,8 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       const { data: segData, width: segW, height: segH, handLandmarks } = lastSegmentation;
       const segmentation = { data: segData, width: segW, height: segH };
 
-      if (gestureDetector) gestureDetector.detect(handLandmarks);
+      // 손하트 감지 호출은 현재 비활성화했습니다.
+      // if (gestureDetector) gestureDetector.detect(handLandmarks);
 
       hiddenCtx.save();
       hiddenCtx.scale(-1, 1);

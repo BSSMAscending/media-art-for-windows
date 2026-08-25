@@ -4,7 +4,8 @@ const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
-const { createHeartOverlay } = require('./ui/heartOverlay');
+// 손하트 안내 패널 기능은 일시적으로 비활성화했습니다.
+// const { createHeartOverlay } = require('./ui/heartOverlay');
 const { FONT_SIZE } = require('./config');
 
 const MODE_OPTIONS = [
@@ -144,7 +145,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   createInfoPanel();
   const mathPanel = createMathPanel();
-  const heartOverlay = createHeartOverlay();
+  // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
+  // const heartOverlay = createHeartOverlay();
 
   setupUpdateNotice();
 
@@ -208,14 +210,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     state.model = await loadModel();
-    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, heartOverlay);
+    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel);
   } catch (err) {
     console.error('Failed to load model:', err);
     showError('AI 모델 로딩 실패: ' + (err.message || err));
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, heartOverlay) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
@@ -255,7 +257,8 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, heartOv
       onStats: (stats) => {
         mathPanel.update(stats);
       },
-      onGesture: () => heartOverlay.show(),
+      // 손하트 감지 및 안내 패널 호출은 현재 비활성화했습니다.
+      // onGesture: () => heartOverlay.show(),
     });
     state.loop.start();
   } catch (err) {

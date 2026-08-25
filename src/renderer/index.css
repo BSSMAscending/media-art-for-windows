@@ -826,6 +826,7 @@ body {
   }
 }
 
+/* 손하트 안내 패널 기능 비활성화. 관련 스타일은 재활성화를 위해 보존합니다.
 .heart-overlay {
   position: fixed;
   inset: 0;
@@ -861,6 +862,7 @@ body {
   padding: 24px 48px;
   border-radius: 4px;
 }
+*/
 
 .update-notice {
   position: fixed;

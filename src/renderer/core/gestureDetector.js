@@ -1,3 +1,4 @@
+// 손하트 감지 기능은 현재 frameLoop 연결부에서 비활성화했습니다.
 // Detects Korean mini heart gesture (손하트):
 // thumb tip (4) and index tip (8) pinched close while other fingers extended.
 
