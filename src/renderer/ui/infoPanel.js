@@ -10,11 +10,6 @@ function createInfoPanel() {
     <p class="info-note">움직임이 화면의 언어가 되는 순간을 천천히&nbsp;관찰해보세요.</p>
   `;
   document.body.appendChild(panel);
-
-  return {
-    show() { panel.style.display = 'block'; },
-    hide() { panel.style.display = 'none'; },
-  };
 }
 
 module.exports = { createInfoPanel };
