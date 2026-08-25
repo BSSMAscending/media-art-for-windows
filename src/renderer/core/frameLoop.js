@@ -1,13 +1,12 @@
-const { FONT_SIZE } = require('../config');
+const { FONT_SIZE, RENDERING_CONFIG } = require('../config');
 const { runSegmentation } = require('./segmentation');
 const { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover } = require('./coverCrop');
 const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
 const { cleanMask, removeSmallRegions } = require('./morphology');
 const { reinforceGridHandMask } = require('./handRefinement');
-// 손하트 감지 기능은 현재 비활성화했습니다. 기존 구현은 재활성화를 위해 보존합니다.
-// const { createGestureDetector } = require('./gestureDetector');
+const { FrameBuffers } = require('./frameBuffers');
 const { renderOriginal } = require('../modes/original');
-const { renderBlackWhite } = require('../modes/blackwhite');
+const { createBlackWhiteRenderer } = require('../modes/blackwhite');
 const { renderBinary } = require('../modes/binary');
 const { renderNumeric } = require('../modes/numeric');
 const { renderBusan } = require('../modes/busan');
@@ -16,10 +15,11 @@ const { renderColorRgb } = require('../modes/colorrgb');
 const { renderGrayscale8bit } = require('../modes/grayscale8bit');
 const { renderColor4k } = require('../modes/color4k');
 
-const SEG_SKIP = 2;
-
 function computePixelStats(pixels, segGrid, cols, rows) {
-  let sum = 0, min = 255, max = 0, count = 0;
+  let sum = 0,
+    min = 255,
+    max = 0,
+    count = 0;
   for (let y = 0; y < rows; y += 2) {
     for (let x = 0; x < cols; x += 2) {
       if (segGrid[y * cols + x] === 1) {
@@ -36,33 +36,89 @@ function computePixelStats(pixels, segGrid, cols, rows) {
   return { avg: Math.round(sum / count), min, max };
 }
 
-function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, getFontSize, getFilters, onStats }) {
+function hasActivePixels(data) {
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] === 1) return true;
+  }
+  return false;
+}
+
+function createFrameLoop({
+  videoEl,
+  canvasEl,
+  hiddenCanvasEl,
+  model,
+  getMode,
+  getFontSize,
+  getFilters,
+  onStats,
+}) {
   let rafId = null;
+  let isRunning = false;
+  let segmentationInFlight = false;
   let lastSegmentation = null;
-  let frameCount = 0;
+  let lastSegmentationTime = Number.NEGATIVE_INFINITY;
+  let lastRenderTime = Number.NEGATIVE_INFINITY;
   let lastFrameTime = performance.now();
+  let frameCount = 0;
+  let ctx = null;
+  let hiddenCtx = null;
+  const buffers = new FrameBuffers();
+  const renderBlackWhite = createBlackWhiteRenderer();
+  const renderInterval = 1000 / RENDERING_CONFIG.targetFps;
+  const segmentationInterval = 1000 / RENDERING_CONFIG.segmentationFps;
 
-  // 손하트 감지기는 패널 기능과 함께 비활성화했습니다.
-  // const gestureDetector = onGesture ? createGestureDetector(onGesture) : null;
+  function updateSegmentation() {
+    if (segmentationInFlight) return;
+    segmentationInFlight = true;
+    runSegmentation(model, videoEl)
+      .then((segmentation) => {
+        if (!isRunning) return;
+        lastSegmentation = segmentation;
+        lastSegmentationTime = performance.now();
+      })
+      .catch(() => {
+        // Avoid retrying on every animation callback after a transient failure.
+        lastSegmentationTime = performance.now();
+      })
+      .finally(() => {
+        segmentationInFlight = false;
+      });
+  }
 
-  async function drawFrame() {
-    if (!videoEl || !canvasEl || !hiddenCanvasEl) {
-      rafId = requestAnimationFrame(drawFrame);
+  function scheduleNextFrame() {
+    if (isRunning) rafId = requestAnimationFrame(drawFrame);
+  }
+
+  function drawFrame(now) {
+    if (!isRunning) return;
+
+    if (
+      !videoEl ||
+      !canvasEl ||
+      !hiddenCanvasEl ||
+      videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA
+    ) {
+      scheduleNextFrame();
       return;
     }
 
-    if (videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA) {
-      rafId = requestAnimationFrame(drawFrame);
-      return;
-    }
-
-    const ctx = canvasEl.getContext('2d', { alpha: true });
-    const hiddenCtx = hiddenCanvasEl.getContext('2d', { willReadFrequently: true });
-
+    ctx ||= canvasEl.getContext('2d', { alpha: true });
+    hiddenCtx ||= hiddenCanvasEl.getContext('2d', { willReadFrequently: true });
     if (!ctx || !hiddenCtx) {
-      rafId = requestAnimationFrame(drawFrame);
+      scheduleNextFrame();
       return;
     }
+
+    if (!segmentationInFlight && now - lastSegmentationTime >= segmentationInterval) {
+      updateSegmentation();
+    }
+
+    if (now - lastRenderTime < renderInterval) {
+      scheduleNextFrame();
+      return;
+    }
+    lastRenderTime = now;
 
     const displayWidth = Math.max(1, Math.floor(canvasEl.clientWidth || window.innerWidth));
     const displayHeight = Math.max(1, Math.floor(canvasEl.clientHeight || window.innerHeight));
@@ -70,95 +126,105 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
       canvasEl.width = displayWidth;
       canvasEl.height = displayHeight;
     }
-
-    // The visualization canvas sits above the UI, so only the person artwork
-    // should be opaque. Clearing each frame keeps panels and controls visible
-    // everywhere outside the current silhouette.
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
     const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
-
     const cols = Math.floor(canvasEl.width / fontSz);
     const rows = Math.floor(canvasEl.height / fontSz);
-
     if (hiddenCanvasEl.width !== cols || hiddenCanvasEl.height !== rows) {
       hiddenCanvasEl.width = cols;
       hiddenCanvasEl.height = rows;
     }
+    buffers.ensure(cols, rows);
+
+    if (!lastSegmentation || !lastSegmentation.width || !lastSegmentation.height) {
+      scheduleNextFrame();
+      return;
+    }
 
     const sourceWidth = videoEl.videoWidth;
     const sourceHeight = videoEl.videoHeight;
-    const crop = getCoverCrop(sourceWidth, sourceHeight, hiddenCanvasEl.width, hiddenCanvasEl.height);
+    const crop = getCoverCrop(sourceWidth, sourceHeight, cols, rows);
     if (!crop) {
-      rafId = requestAnimationFrame(drawFrame);
+      scheduleNextFrame();
       return;
     }
 
     try {
-      if (frameCount % SEG_SKIP === 0 || !lastSegmentation) {
-        lastSegmentation = await runSegmentation(model, videoEl);
-      }
-      const { data: segData, width: segW, height: segH, handLandmarks } = lastSegmentation;
-      const segmentation = { data: segData, width: segW, height: segH };
-
-      // 손하트 감지 호출은 현재 비활성화했습니다.
-      // if (gestureDetector) gestureDetector.detect(handLandmarks);
-
       hiddenCtx.save();
       hiddenCtx.scale(-1, 1);
-      hiddenCtx.drawImage(
-        videoEl,
-        crop.x,
-        crop.y,
-        crop.width,
-        crop.height,
-        -hiddenCanvasEl.width,
-        0,
-        hiddenCanvasEl.width,
-        hiddenCanvasEl.height
-      );
+      hiddenCtx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, -cols, 0, cols, rows);
       hiddenCtx.restore();
 
-      const imgData = hiddenCtx.getImageData(0, 0, hiddenCanvasEl.width, hiddenCanvasEl.height);
-
-      const filters = getFilters ? getFilters() : { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false };
+      const imgData = hiddenCtx.getImageData(0, 0, cols, rows);
+      const filters = getFilters
+        ? getFilters()
+        : { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false };
       const filtersActive = filters.brightness !== 0 || filters.blur > 0 || filters.sharpen > 0;
-      const pixels = filtersActive ? new Uint8ClampedArray(imgData.data) : imgData.data;
+      const pixels = filtersActive ? buffers.copyPixels(imgData.data) : imgData.data;
 
       if (filtersActive) {
         if (filters.brightness !== 0) applyBrightness(pixels, cols, rows, filters.brightness);
-        if (filters.blur > 0) applyGaussianBlur(pixels, cols, rows, filters.blur);
-        if (filters.sharpen > 0) applySharpen(pixels, cols, rows, filters.sharpen);
+        if (filters.blur > 0)
+          applyGaussianBlur(pixels, cols, rows, filters.blur, buffers.filterScratch);
+        if (filters.sharpen > 0)
+          applySharpen(pixels, cols, rows, filters.sharpen, buffers.filterScratch);
       }
 
-      let edgeData = null;
-      if (filters.edgeOverlay) {
-        edgeData = applySobelEdge(pixels, cols, rows);
-      }
-
-      let gridData = upsampleCoverMaskToGrid(segmentation, crop, sourceWidth, sourceHeight, cols, rows);
-
-      gridData = removeSmallRegions(gridData, cols, rows, 0.008);
+      const edgeData = filters.edgeOverlay
+        ? applySobelEdge(pixels, cols, rows, buffers.edgeData)
+        : null;
+      const segmentation = {
+        data: lastSegmentation.data,
+        width: lastSegmentation.width,
+        height: lastSegmentation.height,
+      };
+      let gridData = upsampleCoverMaskToGrid(
+        segmentation,
+        crop,
+        sourceWidth,
+        sourceHeight,
+        cols,
+        rows,
+        buffers.gridRaw
+      );
+      gridData = removeSmallRegions(
+        gridData,
+        cols,
+        rows,
+        0.008,
+        buffers.gridFiltered,
+        buffers.regionVisited,
+        buffers.regionQueue
+      );
 
       if (filters.maskClean) {
-        gridData = cleanMask(gridData, cols, rows);
+        gridData = cleanMask(
+          gridData,
+          cols,
+          rows,
+          buffers.morphologyOutput,
+          buffers.morphologyScratch
+        );
       }
 
-      if (handLandmarks && handLandmarks.length > 0) {
-        reinforceGridHandMask(gridData, cols, rows, mapLandmarksToCover(handLandmarks, crop, sourceWidth, sourceHeight));
+      if (lastSegmentation.handLandmarks?.length > 0) {
+        reinforceGridHandMask(
+          gridData,
+          cols,
+          rows,
+          mapLandmarksToCover(lastSegmentation.handLandmarks, crop, sourceWidth, sourceHeight)
+        );
       }
 
-      const activeSeg = { data: gridData, width: cols, height: rows };
-
-      const hasPerson = activeSeg.data.some((v) => v === 1);
-      if (!hasPerson) {
+      if (!hasActivePixels(gridData)) {
         frameCount++;
-        rafId = requestAnimationFrame(drawFrame);
+        scheduleNextFrame();
         return;
       }
 
+      const activeSeg = { data: gridData, width: cols, height: rows };
       const mode = getMode();
-
       if (mode === 'blackwhite') {
         renderBlackWhite(ctx, canvasEl, activeSeg);
       } else {
@@ -166,51 +232,53 @@ function createFrameLoop({ videoEl, canvasEl, hiddenCanvasEl, model, getMode, ge
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        if (mode === 'original') {
-          renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        } else if (mode === 'binary') {
-          renderBinary(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        } else if (mode === 'numeric') {
-          renderNumeric(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        } else if (mode === 'busan') {
-          renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        } else if (mode === 'pixelvalue') {
-          renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        } else if (mode === 'colorrgb') {
-          renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width, edgeData);
-        } else if (mode === 'grayscale8bit') {
-          renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        } else if (mode === 'color4k') {
-          renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, hiddenCanvasEl.width);
-        }
+        if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+        else if (mode === 'binary') renderBinary(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+        else if (mode === 'numeric')
+          renderNumeric(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+        else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+        else if (mode === 'pixelvalue')
+          renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+        else if (mode === 'colorrgb')
+          renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols, edgeData);
+        else if (mode === 'grayscale8bit')
+          renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+        else if (mode === 'color4k')
+          renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
       }
 
-      if (onStats) {
-        const now = performance.now();
-        const fps = Math.round(1000 / (now - lastFrameTime));
-        lastFrameTime = now;
-        if (frameCount % 15 === 0) {
-          const pixelStats = computePixelStats(pixels, activeSeg.data, cols, rows);
-          onStats({ mode, fontSz, cols, rows, fps, filters, pixelStats });
-        }
+      const fps = Math.round(1000 / (now - lastFrameTime));
+      lastFrameTime = now;
+      if (onStats && frameCount % 15 === 0) {
+        onStats({
+          mode,
+          fontSz,
+          cols,
+          rows,
+          fps,
+          filters,
+          pixelStats: computePixelStats(pixels, gridData, cols, rows),
+        });
       }
     } catch (err) {
       console.error('Error in drawFrame:', err);
     }
 
     frameCount++;
-    rafId = requestAnimationFrame(drawFrame);
+    scheduleNextFrame();
   }
 
   return {
     start() {
-      rafId = requestAnimationFrame(drawFrame);
+      if (isRunning) return;
+      isRunning = true;
+      lastFrameTime = performance.now();
+      scheduleNextFrame();
     },
     stop() {
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
+      isRunning = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
     },
   };
 }
