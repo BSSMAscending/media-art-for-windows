@@ -26,6 +26,12 @@ const HAND_LANDMARKER_OPTIONS = {
   minHandPresenceConfidence: 0.5,
   minTrackingConfidence: 0.5,
 };
+const RENDERING_CONFIG = {
+  // Keep visual feedback smooth while preventing continuous AI inference from
+  // monopolising the renderer thread.
+  targetFps: 30,
+  segmentationFps: 12,
+};
 const HAND_REFINEMENT = {
   smoothing: 0.65,
   overlapAnchorRadius: 2,
@@ -68,6 +74,7 @@ module.exports = {
   VISION_TASKS_CONFIG,
   BODY_SEGMENTATION_CONFIG,
   HAND_LANDMARKER_OPTIONS,
+  RENDERING_CONFIG,
   HAND_REFINEMENT,
   HAND_GRID_REFINEMENT,
   COLORS,

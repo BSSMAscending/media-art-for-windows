@@ -1,26 +1,45 @@
-function renderBlackWhite(ctx, canvasEl, segmentation) {
-  const maskData = new ImageData(segmentation.width, segmentation.height);
-  for (let i = 0; i < segmentation.data.length; i++) {
-    const base = i * 4;
-    if (segmentation.data[i] === 1) {
-      maskData.data[base] = 255;
-      maskData.data[base + 1] = 255;
-      maskData.data[base + 2] = 255;
-      maskData.data[base + 3] = 255;
-    } else {
-      maskData.data[base + 3] = 0;
-    }
+function createBlackWhiteRenderer() {
+  let sourceCanvas = null;
+  let sourceCtx = null;
+  let maskImageData = null;
+  let width = 0;
+  let height = 0;
+
+  function ensureBuffer(nextWidth, nextHeight) {
+    if (width === nextWidth && height === nextHeight) return;
+
+    width = nextWidth;
+    height = nextHeight;
+    sourceCanvas = document.createElement('canvas');
+    sourceCanvas.width = width;
+    sourceCanvas.height = height;
+    sourceCtx = sourceCanvas.getContext('2d');
+    maskImageData = sourceCtx.createImageData(width, height);
   }
 
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = segmentation.width;
-  tempCanvas.height = segmentation.height;
-  tempCanvas.getContext('2d').putImageData(maskData, 0, 0);
+  return function renderBlackWhite(ctx, canvasEl, segmentation) {
+    ensureBuffer(segmentation.width, segmentation.height);
 
-  ctx.save();
-  ctx.scale(-1, 1);
-  ctx.drawImage(tempCanvas, -canvasEl.width, 0, canvasEl.width, canvasEl.height);
-  ctx.restore();
+    const data = maskImageData.data;
+    data.fill(0);
+    for (let i = 0; i < segmentation.data.length; i++) {
+      if (segmentation.data[i] !== 1) continue;
+      const base = i * 4;
+      data[base] = 255;
+      data[base + 1] = 255;
+      data[base + 2] = 255;
+      data[base + 3] = 255;
+    }
+    sourceCtx.putImageData(maskImageData, 0, 0);
+
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(sourceCanvas, -canvasEl.width, 0, canvasEl.width, canvasEl.height);
+    ctx.restore();
+  };
 }
 
-module.exports = { renderBlackWhite };
+// Keep the original function export for callers outside the frame loop.
+const renderBlackWhite = createBlackWhiteRenderer();
+
+module.exports = { createBlackWhiteRenderer, renderBlackWhite };

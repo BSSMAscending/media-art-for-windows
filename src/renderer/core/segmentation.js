@@ -7,7 +7,7 @@ const {
 } = require('../config');
 const { smoothHandLandmarks } = require('./handRefinement');
 
-async function extractPersonMask(segmenter, videoEl) {
+async function extractPersonMask(segmenter, videoEl, reusableBuffer) {
   const people = await segmenter.segmentPeople(videoEl, {
     flipHorizontal: false,
   });
@@ -20,7 +20,10 @@ async function extractPersonMask(segmenter, videoEl) {
   const imageData = await mask.toImageData();
   const { width, height, data } = imageData;
 
-  const binary = new Uint8Array(width * height);
+  const binary =
+    reusableBuffer && reusableBuffer.length === width * height
+      ? reusableBuffer
+      : new Uint8Array(width * height);
   for (let i = 0; i < width * height; i++) {
     const alphaProbability = data[i * 4 + 3];
     binary[i] = alphaProbability >= BODY_SEGMENTATION_CONFIG.personAlphaThreshold ? 1 : 0;
@@ -32,10 +35,7 @@ async function extractPersonMask(segmenter, videoEl) {
 async function loadModel(onProgress) {
   try {
     onProgress?.('WASM · 모델 준비 중...');
-    const {
-      SupportedModels,
-      createSegmenter,
-    } = require('@tensorflow-models/body-segmentation');
+    const { SupportedModels, createSegmenter } = require('@tensorflow-models/body-segmentation');
 
     const vision = await FilesetResolver.forVisionTasks(VISION_TASKS_CONFIG.wasmPath);
 
@@ -81,11 +81,12 @@ async function loadModel(onProgress) {
 async function runSegmentation(model, videoEl) {
   const timestamp = performance.now();
 
-  const segmentation = await extractPersonMask(model.segmenter, videoEl);
+  const segmentation = await extractPersonMask(model.segmenter, videoEl, model.personMaskBuffer);
   if (!segmentation) {
     return { data: new Uint8Array(0), width: 0, height: 0, handLandmarks: [] };
   }
 
+  model.personMaskBuffer = segmentation.data;
   const handResult = model.handLandmarker.detectForVideo(videoEl, timestamp);
   const smoothedHands = smoothHandLandmarks(
     model.previousHands,
@@ -96,7 +97,12 @@ async function runSegmentation(model, videoEl) {
 
   model.previousHands = smoothedHands;
 
-  return { data: segmentation.data, width: segmentation.width, height: segmentation.height, handLandmarks: smoothedHands };
+  return {
+    data: segmentation.data,
+    width: segmentation.width,
+    height: segmentation.height,
+    handLandmarks: smoothedHands,
+  };
 }
 
 module.exports = { loadModel, runSegmentation };
