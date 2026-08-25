@@ -24,7 +24,7 @@ function createBrowserWindow() {
 }
 
 describe('main window', () => {
-  it('opens as a framed window instead of fullscreen', () => {
+  it('opens directly in fullscreen without a window frame', () => {
     const window = createBrowserWindow();
     const BrowserWindow = vi.fn(function BrowserWindow() {
       return window.instance;
@@ -38,8 +38,8 @@ describe('main window', () => {
 
     expect(BrowserWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        frame: true,
-        fullscreen: false,
+        frame: false,
+        fullscreen: true,
         height: 720,
         width: 1280,
       })
@@ -47,7 +47,7 @@ describe('main window', () => {
 
     window.events.get('ready-to-show')();
 
-    expect(window.instance.setFullScreen).toHaveBeenCalledWith(false);
+    expect(window.instance.show).toHaveBeenCalled();
   });
 
   it('switches fullscreen on and off using the current window state', () => {
@@ -86,6 +86,10 @@ describe('main window', () => {
     window.events.get('leave-full-screen')();
 
     expect(window.instance.webContents.send).toHaveBeenNthCalledWith(1, 'fullscreen-changed', true);
-    expect(window.instance.webContents.send).toHaveBeenNthCalledWith(2, 'fullscreen-changed', false);
+    expect(window.instance.webContents.send).toHaveBeenNthCalledWith(
+      2,
+      'fullscreen-changed',
+      false
+    );
   });
 });

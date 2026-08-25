@@ -68,9 +68,9 @@ All spacing derives from a base of `4px`.
 
 ### Grid
 
-- Live artwork stage: full viewport width with `--control-shelf-height` reserved below it.
-- Right rail: `clamp(300px, 23.4375vw, 640px)` wide, inset `2.5vw` from the edge, and positioned on viewport-height ratios.
-- Live control shelf: `25.5556vh` tall with a `82.8125vw` inner control row; the character-size rail occupies `18.4375vw` of that row.
+- Live artwork stage: full viewport with the person silhouette rendered above the interface layers.
+- Information cards: two equal-width cards in a top row, inset `2.5vw` from the viewport edges.
+- Live control shelf: full-width lower row with the four mode buttons; character-size selection is configured in code.
 - Live control targets: `clamp(72px, 5.625vw, 144px)` tall so the control shelf retains its visual weight at high resolutions.
 - Breakpoints: `720px` compact and `1100px` standard.
 
@@ -78,8 +78,8 @@ All spacing derives from a base of `4px`.
 
 - The camera stage never sits behind the mode shelf; the reserved lower space keeps the artwork visually above the controls.
 - Camera framing uses a responsive centered `cover` crop: each frame preserves its source aspect ratio, fills the current artwork stage in either windowed or fullscreen mode, and crops only the overflow at opposing edges.
-- The right rail is aligned to the upper-right and mid-right zones.
-- At wide exhibition resolutions, the right rail, panel height, shelf, control row, and typography scale from the same 1280×720 baseline rather than retaining a fixed-pixel composition.
+- The two information cards share the upper row and scale from the same 1280×720 baseline rather than retaining a fixed-pixel composition.
+- The lower mode shelf spans the viewport and keeps its four mode buttons in one responsive row where space permits.
 
 ## 5. Components
 
@@ -92,16 +92,14 @@ All spacing derives from a base of `4px`.
 - **Accessibility**: native button semantics, `aria-pressed` reflects the selected mode, visible focus ring.
 - **Motion**: `150ms` color and border transition only.
 - **Layout**: horizontal cluster in the setup overlay and live control shelf.
-- **Responsive layout**: the live cluster uses a viewport-ratio width and character-size rail, preserving the same proportions on high-resolution displays; compact breakpoints retain their intrinsic grid layout.
+- **Responsive layout**: the live cluster uses a viewport-ratio width; compact breakpoints retain their intrinsic grid layout.
 - **Selected treatment**: cyan fill, dark text, 3px outline, and a restrained cyan glow.
 
-### Character Size Button
+### Character Size Configuration
 
-- **Structure**: three adjacent native buttons labelled `작게`, `기본`, and `크게` with their pixel value.
-- **Values**: `8px`, `12px`, and `16px`; `12px` is the default exhibition density.
-- **States**: default, hover, focus-visible, selected; `aria-pressed` reflects the selected size.
-- **Layout**: directly alongside the live mode cluster and below the setup mode selector.
-- **Selected treatment**: matches the mode button selected state.
+- **Location**: `src/renderer/config.js`.
+- **Value**: `FONT_SIZE` defaults to `16px`.
+- **Change**: edit the value in code and restart the app; there is no live size selector in the interface.
 
 ### Window Mode Button
 
@@ -119,7 +117,7 @@ All spacing derives from a base of `4px`.
 - **States**: visible throughout the live-camera session and hidden only when that session exits.
 - **Accessibility**: content is live DOM text and remains readable when the canvas is active.
 - **Motion**: no decorative motion.
-- **Layout**: pinned to the upper-right rail.
+- **Layout**: placed in the upper-left card of the two-card row.
 - **Responsive layout**: the panel uses a viewport-ratio rail width, inset, top offset, and minimum block size on wide displays; compact layouts return to fluid side insets.
 
 ### Mode Summary Panel
@@ -128,7 +126,7 @@ All spacing derives from a base of `4px`.
 - **States**: visible throughout the live-camera session; selected content updates with the active mode.
 - **Accessibility**: updates are announced through a polite live region.
 - **Motion**: content changes without layout animation.
-- **Layout**: pinned below the information panel.
+- **Layout**: placed in the upper-right card of the two-card row.
 - **Responsive layout**: the panel follows the same wide right-rail proportions and compact fallback as the information panel.
 
 ### Update Notice
@@ -149,7 +147,7 @@ All spacing derives from a base of `4px`.
 | Standard | `250ms` | `ease-in-out` | Panel visibility at live-session boundaries |
 
 - Mode selection updates the canvas mode, button state, and right-side summary together.
-- Character-size selection updates the next rendered canvas frame and its selected button state together.
+- Character size is read from `src/renderer/config.js` when the renderer starts.
 - The mode cue line is static orientation, not decorative animation.
 - `prefers-reduced-motion` disables non-essential transitions.
 

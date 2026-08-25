@@ -4,8 +4,8 @@ function createMainWindow({ BrowserWindow, htmlPath, preloadPath, sendUpdateStat
     height: 720,
     minWidth: 960,
     minHeight: 540,
-    fullscreen: false,
-    frame: true,
+    fullscreen: true,
+    frame: false,
     autoHideMenuBar: true,
     show: false,
     backgroundColor: '#000000',
@@ -21,7 +21,6 @@ function createMainWindow({ BrowserWindow, htmlPath, preloadPath, sendUpdateStat
     sendUpdateStatus?.();
   });
   mainWindow.once('ready-to-show', () => {
-    mainWindow.setFullScreen(false);
     mainWindow.show();
   });
   mainWindow.on('enter-full-screen', () => {

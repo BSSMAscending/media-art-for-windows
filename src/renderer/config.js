@@ -6,7 +6,8 @@ function toLocalURL(relPath) {
   return `local-assets:///${relPath}`;
 }
 
-const FONT_SIZE = 12;
+// 기본 문자 크기(px). UI 선택기는 제거되었으므로 이 값을 코드에서 조절합니다.
+const FONT_SIZE = 16;
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
 const VISION_TASKS_CONFIG = {
@@ -24,6 +25,12 @@ const HAND_LANDMARKER_OPTIONS = {
   minHandDetectionConfidence: 0.5,
   minHandPresenceConfidence: 0.5,
   minTrackingConfidence: 0.5,
+};
+const RENDERING_CONFIG = {
+  // Keep visual feedback smooth while preventing continuous AI inference from
+  // monopolising the renderer thread.
+  targetFps: 30,
+  segmentationFps: 12,
 };
 const HAND_REFINEMENT = {
   smoothing: 0.65,
@@ -67,6 +74,7 @@ module.exports = {
   VISION_TASKS_CONFIG,
   BODY_SEGMENTATION_CONFIG,
   HAND_LANDMARKER_OPTIONS,
+  RENDERING_CONFIG,
   HAND_REFINEMENT,
   HAND_GRID_REFINEMENT,
   COLORS,

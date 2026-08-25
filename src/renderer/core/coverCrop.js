@@ -15,8 +15,16 @@ function getCoverCrop(sourceWidth, sourceHeight, targetWidth, targetHeight) {
   return { x: 0, y: (sourceHeight - height) / 2, width: sourceWidth, height };
 }
 
-function upsampleCoverMaskToGrid(segmentation, crop, sourceWidth, sourceHeight, cols, rows) {
-  const grid = new Uint8Array(cols * rows);
+function upsampleCoverMaskToGrid(
+  segmentation,
+  crop,
+  sourceWidth,
+  sourceHeight,
+  cols,
+  rows,
+  output
+) {
+  const grid = output && output.length === cols * rows ? output : new Uint8Array(cols * rows);
   for (let y = 0; y < rows; y++) {
     const sourceY = crop.y + ((y + 0.5) / rows) * crop.height;
     const maskY = Math.min(

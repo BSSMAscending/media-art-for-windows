@@ -1,4 +1,4 @@
-function createInfoPanel() {
+function createInfoPanel(container = document.body) {
   const panel = document.createElement('aside');
   panel.id = 'infoPanel';
   panel.className = 'info-panel';
@@ -9,12 +9,7 @@ function createInfoPanel() {
     <p class="info-desc">카메라로 포착한 움직임을 작은 픽셀 데이터로 바꾸고, 숫자와 색의 규칙으로 다시 그려내는 작업입니다.</p>
     <p class="info-note">움직임이 화면의 언어가 되는 순간을 천천히&nbsp;관찰해보세요.</p>
   `;
-  document.body.appendChild(panel);
-
-  return {
-    show() { panel.style.display = 'block'; },
-    hide() { panel.style.display = 'none'; },
-  };
+  container.appendChild(panel);
 }
 
 module.exports = { createInfoPanel };
