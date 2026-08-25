@@ -6,7 +6,6 @@ function createMathPanel() {
   panel.className = 'math-panel';
   panel.setAttribute('aria-live', 'polite');
   panel.setAttribute('aria-label', '현재 선택한 미디어 아트 모드');
-  panel.style.display = 'none';
   document.body.appendChild(panel);
 
   function updateMode(modeKey, stats) {
@@ -28,8 +27,6 @@ function createMathPanel() {
   }
 
   return {
-    show() { panel.style.display = 'block'; },
-    hide() { panel.style.display = 'none'; },
     updateMode,
     update,
   };

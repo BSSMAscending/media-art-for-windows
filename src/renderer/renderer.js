@@ -1,10 +1,8 @@
 const { ipcRenderer } = require('electron');
-const { getCameraDevices, openCameraStream } = require('./core/camera');
+const { openCameraStream } = require('./core/camera');
 const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
-const { createBackgroundEffects } = require('./ui/backgroundEffects');
 const { createInfoPanel } = require('./ui/infoPanel');
-const { createEducationalOverlay } = require('./ui/educationalText');
 const { createMathPanel } = require('./ui/mathPanel');
 const { createHeartOverlay } = require('./ui/heartOverlay');
 const { FONT_SIZE } = require('./config');
@@ -25,14 +23,12 @@ const SIZE_OPTIONS = [
 const state = {
   model: null,
   stream: null,
-  selectedCameraId: null,
   selectedVersion: 'original',
   currentFontSize: FONT_SIZE,
   bgMode: 'off',
   filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
   loop: null,
   filterPanelVisible: false,
-  eduVisible: false,
 };
 
 const MODES = [
@@ -145,58 +141,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const canvasEl = document.getElementById('binaryCanvas');
   const hiddenCanvasEl = document.getElementById('hiddenCanvas');
   const bgCanvasEl = document.getElementById('bgCanvas');
-  const modelStatusEl = document.getElementById('modelStatus');
 
-  const bgEffects = createBackgroundEffects(bgCanvasEl);
-  const infoPanel = createInfoPanel();
-  const eduOverlay = createEducationalOverlay();
+  createInfoPanel();
   const mathPanel = createMathPanel();
   const heartOverlay = createHeartOverlay();
 
   setupUpdateNotice();
 
-  renderModeButtons(document.getElementById('setupModeButtons'), (mode) => {
-    state.selectedVersion = mode;
-    updateModeUI(mathPanel);
-  });
   renderModeButtons(document.getElementById('liveModeButtons'), (mode) => {
     state.selectedVersion = mode;
     updateModeUI(mathPanel);
   });
-  renderSizeButtons(document.getElementById('setupSizeButtons'));
   renderSizeButtons(document.getElementById('liveSizeButtons'));
   updateModeUI(mathPanel);
   updateSizeUI();
+  document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
-
-  document
-    .getElementById('startButton')
-    .addEventListener('click', () =>
-      startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay)
-    );
-
-  const fullscreenButton = document.getElementById('toggleFullscreenButton');
-  const updateFullscreenButton = (isFullscreen) => {
-    fullscreenButton.setAttribute('aria-pressed', String(isFullscreen));
-    fullscreenButton.textContent = isFullscreen ? '창 모드로 전환' : '전체 화면으로 전환';
-  };
-
-  fullscreenButton.addEventListener('click', async () => {
-    updateFullscreenButton(await ipcRenderer.invoke('toggle-fullscreen'));
-  });
-  ipcRenderer.on('fullscreen-changed', (_event, isFullscreen) => {
-    updateFullscreenButton(isFullscreen);
-  });
-  updateFullscreenButton(await ipcRenderer.invoke('get-fullscreen-state'));
-
-  document.getElementById('cameraSelect').addEventListener('change', (e) => {
-    state.selectedCameraId = e.target.value;
-  });
-
-  document.getElementById('bgSelect').addEventListener('change', (e) => {
-    state.bgMode = e.target.value;
-    bgEffects.setMode(e.target.value);
-  });
 
   document.getElementById('brightnessSlider').addEventListener('input', (e) => {
     state.filters.brightness = parseFloat(e.target.value);
@@ -219,10 +179,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (state.loop) {
-        e.preventDefault();
-        stopCamera(videoEl, canvasEl, infoPanel, mathPanel, eduOverlay, heartOverlay);
-      }
+      e.preventDefault();
+      ipcRenderer.send('quit-app');
       return;
     }
 
@@ -232,7 +190,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (mode) {
         state.selectedVersion = mode;
         updateModeUI(mathPanel);
-        if (state.eduVisible) eduOverlay.show(mode);
       }
       return;
     }
@@ -243,36 +200,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? 'block'
         : 'none';
     }
-    if (e.key === 'e' || e.key === 'E') {
-      state.eduVisible = !state.eduVisible;
-      if (state.eduVisible) {
-        eduOverlay.show(state.selectedVersion);
-      } else {
-        eduOverlay.hide();
-      }
-    }
   });
 
   window.addEventListener('resize', () => {
     resizeCanvases(canvasEl, bgCanvasEl);
   });
 
-  await getCameraDevices(document.getElementById('cameraSelect'));
-
   try {
-    modelStatusEl.textContent = 'AI 모델 로딩 중...';
-    state.model = await loadModel((stage) => {
-      modelStatusEl.textContent = stage;
-    });
-    modelStatusEl.textContent = 'AI 모델 준비 완료';
+    state.model = await loadModel();
+    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, heartOverlay);
   } catch (err) {
     console.error('Failed to load model:', err);
-    modelStatusEl.textContent = 'AI 모델을 불러오지 못했습니다.';
     showError('AI 모델 로딩 실패: ' + (err.message || err));
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPanel, heartOverlay) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, heartOverlay) {
   if (!state.model) {
     showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
@@ -289,17 +232,14 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
       state.stream = null;
     }
 
-    const stream = await openCameraStream(state.selectedCameraId);
+    const stream = await openCameraStream();
     state.stream = stream;
     videoEl.srcObject = stream;
     await videoEl.play();
 
-    document.getElementById('overlayUI').style.display = 'none';
     document.getElementById('modeControls').style.display = 'block';
     canvasEl.style.display = 'block';
     resizeCanvases(canvasEl, document.getElementById('bgCanvas'));
-    infoPanel.show();
-    mathPanel.show();
     mathPanel.updateMode(state.selectedVersion);
     canvasEl.style.display = 'block';
 
@@ -320,34 +260,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, infoPanel, mathPan
     state.loop.start();
   } catch (err) {
     console.error('Camera access failed:', err);
-    showError('선택한 카메라에 접근할 수 없습니다. 다른 카메라를 선택해보세요.');
-  }
-}
-
-function stopCamera(videoEl, canvasEl, infoPanel, mathPanel, eduOverlay, heartOverlay) {
-  if (state.loop) {
-    state.loop.stop();
-    state.loop = null;
-  }
-  if (state.stream) {
-    state.stream.getTracks().forEach((track) => track.stop());
-    state.stream = null;
-  }
-  videoEl.srcObject = null;
-  canvasEl.style.display = 'none';
-  document.getElementById('modeControls').style.display = 'none';
-  document.getElementById('overlayUI').style.display = '';
-
-  heartOverlay.hide();
-
-  mathPanel.hide();
-  if (state.eduVisible) {
-    eduOverlay.hide();
-    state.eduVisible = false;
-  }
-  infoPanel.hide();
-  if (state.filterPanelVisible) {
-    document.getElementById('filterPanel').style.display = 'none';
-    state.filterPanelVisible = false;
+    showError('카메라에 접근할 수 없습니다. 카메라 권한을 확인해보세요.');
   }
 }
