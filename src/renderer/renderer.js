@@ -253,7 +253,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getMode: () => state.selectedVersion,
       getFontSize: () => state.currentFontSize,
       getFilters: () => state.filters,
-      getBgMode: () => state.bgMode,
       onStats: (stats) => {
         mathPanel.update(stats);
       },
