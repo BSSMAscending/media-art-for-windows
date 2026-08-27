@@ -629,6 +629,11 @@ body {
   word-break: keep-all;
 }
 
+/* Keep the card height stable whether this text wraps on a given display. */
+.math-desc {
+  min-block-size: 3.2em;
+}
+
 .info-note {
   margin-top: auto;
   padding-top: var(--space-3);
