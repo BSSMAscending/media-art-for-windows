@@ -403,6 +403,8 @@ body {
   --live-panel-padding: clamp(0.75rem, 0.8vw, 1.25rem);
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
   --live-control-height: clamp(3rem, 3.75vw, 4.5rem);
+  --mode-controls-width: clamp(10rem, 14vw, 14rem);
+  --mode-cue-width: clamp(18rem, 22vw, 26rem);
 }
 
 body {
@@ -519,7 +521,12 @@ body {
 }
 
 .mode-controls {
-  position: relative;
+  position: fixed;
+  top: 50%;
+  right: var(--ui-cluster-right);
+  width: var(--mode-controls-width);
+  transform: translateY(-50%);
+  z-index: 20;
   display: block;
   padding: var(--live-control-padding);
   background: rgba(0, 0, 0, 0.94);
@@ -538,9 +545,10 @@ body {
 
 .mode-cue {
   position: relative;
+  left: 50%;
   z-index: 1;
-  width: fit-content;
-  margin: 0 auto var(--space-2);
+  width: var(--mode-cue-width);
+  margin: 0 0 var(--space-2);
   padding: 0 var(--space-2);
   background: rgba(0, 0, 0, 0.94);
   color: var(--text-secondary);
@@ -548,12 +556,14 @@ body {
   letter-spacing: 0.08em;
   line-height: 1.4;
   text-align: center;
+  transform: translateX(-50%);
   word-break: keep-all;
 }
 
 .mode-button-grid--live {
   position: relative;
   z-index: 1;
+  grid-template-columns: 1fr;
   width: 100%;
   margin: 0;
 }
@@ -680,6 +690,10 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .mode-controls {
+    right: 16px;
+  }
+
   .info-panel,
   .math-panel {
     width: auto;
@@ -692,11 +706,29 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mode-button-grid--live {
+    grid-template-columns: 1fr;
+  }
+
   .ui-cluster {
     top: 16px;
     right: 16px;
     left: 16px;
     width: auto;
+  }
+
+  .mode-controls {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: auto;
+    transform: none;
+  }
+
+  .mode-cue {
+    width: auto;
+    margin: 0 0 var(--space-2);
   }
 
   .panel-cards {
