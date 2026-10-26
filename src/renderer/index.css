@@ -396,13 +396,14 @@ body {
   --type-panel-note: clamp(0.8125rem, 1.015625vw, 1.125rem);
   --type-panel-eyebrow: clamp(0.75rem, 0.9375vw, 1.125rem);
   --type-panel-mode: clamp(1.0625rem, 1.328125vw, 1.625rem);
-  --side-column-inset: clamp(1rem, 2.5vw, 3rem);
+  --side-column-inset: clamp(1rem, 2vw, 2.5rem);
   --side-column-width: clamp(20rem, 32vw, 40rem);
   --ui-cluster-gap: clamp(0.5rem, 1vw, 1rem);
   --live-panel-padding: clamp(0.75rem, 1vw, 1.5rem);
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
-  --live-control-height: clamp(4rem, 5vw, 6rem);
-  --option-control-height: clamp(3.25rem, 4vw, 4.75rem);
+  --live-control-height: clamp(3.5rem, 4.2vw, 5rem);
+  --option-control-height: clamp(3rem, 3.4vw, 4rem);
+  --visual-height: clamp(7rem, 17vh, 13rem);
 }
 
 body {
@@ -666,58 +667,519 @@ body {
   letter-spacing: 0.14em;
 }
 
-.info-mode,
-.math-panel-title {
-  margin-bottom: var(--space-3);
+.info-mode {
+  margin-bottom: var(--space-2);
   color: var(--text-primary);
-  font-size: clamp(0.75rem, 0.9375vw, 1.1667rem);
+  font-size: clamp(0.875rem, 1.0156vw, 1.25rem);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 
-.info-desc,
-.math-desc {
+.info-desc {
   margin: 0;
   color: var(--text-secondary);
-  font-size: clamp(0.6667rem, 0.8333vw, 1rem);
+  font-size: clamp(0.8125rem, 0.8854vw, 1.0625rem);
   line-height: 1.6;
   word-break: keep-all;
 }
 
-/* Keep the card height stable whether this text wraps on a given display. */
-.math-desc {
-  min-block-size: 3.2em;
+/* Camera → cells → numbers → picture, lit one step at a time. */
+.info-pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin-top: var(--space-3);
+  padding: 0;
+  list-style: none;
 }
 
-.info-note {
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
+.info-pipeline li {
+  position: relative;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--type-control-meta);
+  white-space: nowrap;
+  animation: pipeline-step 4s ease-in-out infinite;
+  animation-delay: calc(var(--step) * 1s);
+}
+
+.info-pipeline li:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: var(--space-6);
   color: var(--text-muted);
+  content: '→';
+  text-align: center;
+  transform: translateY(-50%);
+}
+
+@keyframes pipeline-step {
+  0%,
+  22% {
+    border-color: var(--accent-primary);
+    background: var(--accent-soft);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.35);
+    color: var(--text-primary);
+  }
+  28%,
+  100% {
+    border-color: var(--border-subtle);
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-secondary);
+  }
+}
+
+.explain-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.explain-title {
+  color: var(--accent-primary);
+  font-size: var(--type-panel-mode);
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.explain-headline {
+  margin-top: var(--space-1);
+  color: var(--text-primary);
+  font-size: var(--type-control-label);
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.explain-visual {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--visual-height) + var(--space-3) * 2);
+  margin: var(--space-2) 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.explain-body {
+  margin: 0 0 var(--space-1);
+  color: var(--text-secondary);
   font-size: var(--type-panel-note);
   line-height: 1.5;
   word-break: keep-all;
 }
 
-.math-section {
+.explain-terms {
   display: flex;
-  flex: 1;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 
-.math-mode-name {
-  margin-bottom: var(--space-2);
-  color: var(--accent-primary);
-  font-size: var(--type-panel-mode);
+.explain-term {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-default);
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  font-size: var(--type-control-meta);
 }
 
 .math-metric {
-  margin-top: auto;
+  margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-left: 2px solid var(--accent-primary);
   background: var(--accent-soft);
   color: var(--text-primary);
+  font-size: var(--type-control-meta);
+}
+
+/* Keep the row's height while waiting for the first frame's grid size. */
+.math-metric:empty {
+  visibility: hidden;
+}
+
+.math-metric:empty::before {
+  content: '\00a0';
+}
+
+/* Original: a scan line finds the person and flips their cells from 0 to 1. */
+.explain-scan-grid {
+  --bit: calc((var(--visual-height) - 20px) / 11);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--bit));
+  gap: 2px;
+}
+
+.explain-bit {
+  position: relative;
+  width: var(--bit);
+  height: var(--bit);
+  background: rgba(0, 255, 255, 0.05);
+  color: var(--text-muted);
+  font-size: calc(var(--bit) * 0.8);
+  font-weight: 700;
+  line-height: var(--bit);
+  text-align: center;
+  animation: bit-check 4.8s ease-out infinite backwards;
+  animation-delay: calc(var(--row) * 110ms);
+}
+
+.explain-bit::before,
+.explain-bit::after {
+  position: absolute;
+  inset: 0;
+}
+
+.explain-bit::before {
+  content: '0';
+}
+
+.explain-bit.is-person {
+  background: var(--accent-primary);
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.55);
+  color: var(--control-selected-text);
+  animation-name: bit-light;
+}
+
+.explain-bit.is-person::before {
+  opacity: 0;
+  animation: bit-zero 4.8s infinite backwards;
+  animation-delay: inherit;
+}
+
+.explain-bit.is-person::after {
+  content: '1';
+  animation: bit-one 4.8s infinite backwards;
+  animation-delay: inherit;
+}
+
+.explain-scan-line {
+  position: absolute;
+  top: 100%;
+  right: -6px;
+  left: -6px;
+  height: 2px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-primary);
+  opacity: 0;
+  animation: scan-line 4.8s linear infinite;
+}
+
+@keyframes bit-check {
+  0% {
+    background: rgba(0, 255, 255, 0.05);
+  }
+  2% {
+    background: rgba(0, 255, 255, 0.3);
+  }
+  10%,
+  100% {
+    background: rgba(0, 255, 255, 0.05);
+  }
+}
+
+@keyframes bit-light {
+  0% {
+    background: rgba(0, 255, 255, 0.05);
+    box-shadow: none;
+    color: var(--text-muted);
+  }
+  2%,
+  75% {
+    background: var(--accent-primary);
+    box-shadow: 0 0 6px rgba(0, 255, 255, 0.55);
+    color: var(--control-selected-text);
+  }
+  82%,
+  100% {
+    background: rgba(0, 255, 255, 0.05);
+    box-shadow: none;
+    color: var(--text-muted);
+  }
+}
+
+@keyframes bit-zero {
+  0%,
+  1% {
+    opacity: 1;
+  }
+  2%,
+  77% {
+    opacity: 0;
+  }
+  80%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes bit-one {
+  0%,
+  1% {
+    opacity: 0;
+  }
+  2%,
+  77% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+  26% {
+    top: 100%;
+    opacity: 1;
+  }
+  30%,
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* RGB: three coloured lights overlap; where all three meet the light turns white. */
+.explain-light-mix {
+  position: relative;
+  height: var(--visual-height);
+  max-width: 100%;
+  aspect-ratio: 1.15;
+  isolation: isolate;
+}
+
+.explain-light {
+  position: absolute;
+  display: flex;
+  width: 58%;
+  aspect-ratio: 1;
+  padding: 14%;
+  border-radius: 50%;
+  color: #ffffff;
   font-size: var(--type-control-label);
+  font-weight: 700;
+  mix-blend-mode: screen;
+  text-shadow: 0 0 4px #000000;
+  animation: 6s ease-in-out infinite;
+}
+
+.explain-light--r {
+  top: 0;
+  left: 4%;
+  background: #ff0000;
+  animation-name: light-r;
+}
+
+.explain-light--g {
+  top: 0;
+  right: 4%;
+  justify-content: flex-end;
+  background: #00ff00;
+  animation-name: light-g;
+}
+
+.explain-light--b {
+  bottom: 0;
+  left: 21%;
+  align-items: flex-end;
+  justify-content: center;
+  background: #0000ff;
+  animation-name: light-b;
+}
+
+@keyframes light-r {
+  0%,
+  100% {
+    transform: translate(-10%, -8%);
+  }
+  40%,
+  60% {
+    transform: translate(29%, 25%);
+  }
+}
+
+@keyframes light-g {
+  0%,
+  100% {
+    transform: translate(10%, -8%);
+  }
+  40%,
+  60% {
+    transform: translate(-29%, 25%);
+  }
+}
+
+@keyframes light-b {
+  0%,
+  100% {
+    transform: translate(0, 8%);
+  }
+  40%,
+  60% {
+    transform: translate(0, -25%);
+  }
+}
+
+/* R/G/B: one light on a dimmer; the knob position is the 0-255 value. */
+.explain-dimmer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  width: min(100%, 24rem);
+}
+
+.explain-dimmer-lamp {
+  grid-row: 1 / span 2;
+  width: clamp(3.5rem, 4.5vw, 5.5rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--channel-color) 40%, transparent 72%);
+  animation: dimmer-lamp 4s ease-in-out infinite alternate;
+}
+
+.explain-dimmer-track {
+  position: relative;
+  height: 1.1rem;
+  border: 1px solid var(--border-default);
+  background: linear-gradient(90deg, #000000, var(--channel-color));
+}
+
+.explain-dimmer-knob {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: #000000;
+  transform: translate(-50%, -50%);
+  animation: dimmer-knob 4s ease-in-out infinite alternate;
+}
+
+.explain-dimmer-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: var(--type-control-meta);
+}
+
+@keyframes dimmer-lamp {
+  from {
+    opacity: 0.08;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dimmer-knob {
+  from {
+    left: 0%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+/* Levels: a smooth marker over real brightness, a stepped cursor over the chosen greys. */
+.explain-levels {
+  display: grid;
+  gap: var(--space-1);
+  width: min(100%, 28rem);
+}
+
+.explain-levels-label {
+  color: var(--text-secondary);
+  font-size: var(--type-control-meta);
+}
+
+.explain-levels-bar {
+  position: relative;
+  display: flex;
+  height: clamp(1.75rem, 2.4vw, 2.75rem);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--border-default);
+}
+
+.explain-levels-bar--smooth {
+  background: linear-gradient(90deg, #000000, #ffffff);
+}
+
+.explain-levels-step {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-width: 0;
+  font-size: var(--type-control-meta);
+  font-weight: 700;
+}
+
+.explain-levels-marker,
+.explain-levels-cursor {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  box-shadow: 0 0 10px var(--accent-primary);
+  animation: 5s infinite alternate;
+}
+
+.explain-levels-marker {
+  left: 50%;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--accent-primary);
+  animation-name: levels-marker;
+  animation-timing-function: linear;
+}
+
+.explain-levels-cursor {
+  left: calc(100% * var(--mid-step) / var(--levels));
+  width: calc(100% / var(--levels));
+  min-width: 3px;
+  border: 3px solid var(--accent-primary);
+  animation-name: levels-cursor;
+  animation-timing-function: steps(var(--levels), jump-none);
+}
+
+.explain-levels-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(var(--space-1) * -1);
+  color: var(--text-secondary);
+  font-size: var(--type-control-meta);
+}
+
+@keyframes levels-marker {
+  from {
+    left: 0%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes levels-cursor {
+  from {
+    left: 0%;
+  }
+  to {
+    left: calc(100% - 100% / var(--levels));
+  }
 }
 
 .error-text {
@@ -727,6 +1189,17 @@ body {
 @media (max-width: 1100px) {
   .side-column {
     width: min(44vw, 30rem);
+  }
+}
+
+/* Short windows: give the explanation card the room the project note used. */
+@media (max-height: 820px) {
+  :root {
+    --visual-height: clamp(6rem, 15vh, 13rem);
+  }
+
+  .info-panel {
+    display: none;
   }
 }
 

@@ -11,7 +11,7 @@ const { FONT_SIZE } = require('./config');
 
 const MODE_OPTIONS = [
   { key: 'original', label: '원본', caption: '0 / 1 실루엣' },
-  { key: 'rgb', label: '색 RGB', caption: '빨강 · 초록 · 파랑' },
+  { key: 'rgb', label: '색 RGB', caption: '빛의 삼원색' },
   { key: 'levels', label: '밝기 단계', caption: '2 · 10 · 256' },
 ];
 
@@ -94,6 +94,11 @@ function renderModeButtons(container, onSelect) {
   });
 }
 
+function getModeOption() {
+  const subOptions = MODE_SUB_OPTIONS[state.selectedVersion];
+  return subOptions ? state[subOptions.stateKey] : undefined;
+}
+
 function renderModeOptions(onSelect) {
   const container = document.getElementById('modeOptions');
   const label = document.getElementById('modeOptionsLabel');
@@ -134,7 +139,7 @@ function updateModeUI(mathPanel) {
     state[stateKey] = value;
     updateModeUI(mathPanel);
   });
-  mathPanel.updateMode(state.selectedVersion);
+  mathPanel.updateMode(state.selectedVersion, getModeOption());
 }
 
 function setupUpdateNotice() {
@@ -273,7 +278,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
     document.getElementById('modeControls').style.display = 'block';
     canvasEl.style.display = 'block';
     resizeCanvases(canvasEl, document.getElementById('bgCanvas'));
-    mathPanel.updateMode(state.selectedVersion);
+    mathPanel.updateMode(state.selectedVersion, getModeOption());
     canvasEl.style.display = 'block';
 
     state.loop = createFrameLoop({
