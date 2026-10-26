@@ -15,6 +15,7 @@ const { renderColor4k } = require('../modes/color4k');
 const { renderRgb } = require('../modes/rgb');
 const { renderLevels } = require('../modes/levels');
 const { createChannelTransition } = require('../modes/rgbTransition');
+const { canShowPixelValues } = require('../modes/valueView');
 
 // Modes that show the whole camera frame instead of the segmented person.
 const FULL_FRAME_MODES = new Set(['rgb', 'levels']);
@@ -55,6 +56,7 @@ function createFrameLoop({
   getMode,
   getRgbChannel,
   getLevels,
+  getShowValues,
   getArtworkArea,
   getFontSize,
   onStats,
@@ -204,18 +206,34 @@ function createFrameLoop({
   }
 
   function drawFullFrame(mode, grid, layers) {
-    resizeSampling(grid.cols, grid.rows);
-    const crop = getCoverCrop(videoEl.videoWidth, videoEl.videoHeight, grid.cols, grid.rows);
-    const pixels = samplePixels(crop, grid.cols, grid.rows);
     const overlay = getChannelOverlay();
-    if (mode === 'rgb') {
-      renderRgb(ctx, overlay, grid, pixels, getRgbChannel(), layers);
-    } else if (mode === 'levels') {
-      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels);
-      overlay.renderFlat(grid, buffers.levelPixels);
+    const channel = getRgbChannel ? getRgbChannel() : 'N';
+    const crop = getCoverCrop(videoEl.videoWidth, videoEl.videoHeight, grid.cols, grid.rows);
+
+    if (!(getShowValues?.() && canShowPixelValues(mode, channel))) {
+      // No AI work is needed here, so stream the camera at its own resolution.
+      const source = { video: videoEl, crop };
+      if (mode === 'rgb') overlay.renderLayers(grid, source, layers);
+      else if (mode === 'levels') overlay.renderFlat(grid, source, getLevels());
+      return {
+        cols: videoEl.videoWidth,
+        rows: videoEl.videoHeight,
+        unit: '픽셀',
+        pixelStats: null,
+      };
     }
 
-    return { cols: grid.cols, rows: grid.rows, pixelStats: null };
+    // Pixel value view: one sampled cell per number, drawn as crisp blocks.
+    resizeSampling(grid.cols, grid.rows);
+    const pixels = samplePixels(crop, grid.cols, grid.rows);
+    if (mode === 'rgb') {
+      renderRgb(ctx, overlay, grid, pixels, channel, layers);
+    } else if (mode === 'levels') {
+      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels);
+      overlay.renderFlat(grid, { pixels: buffers.levelPixels });
+    }
+
+    return { cols: grid.cols, rows: grid.rows, unit: '칸', pixelStats: null };
   }
 
   // Faint backdrop so the silhouette modes read as the same fixed screen as the
@@ -297,7 +315,7 @@ function createFrameLoop({
     else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
     ctx.restore();
 
-    return { cols, rows, pixelStats: computePixelStats(pixels, gridData, cols, rows) };
+    return { cols, rows, unit: '칸', pixelStats: computePixelStats(pixels, gridData, cols, rows) };
   }
 
   return {

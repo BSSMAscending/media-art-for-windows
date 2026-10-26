@@ -553,6 +553,26 @@ body {
   vertical-align: 0.05em;
 }
 
+/* Big toggle under the option row: switches camera-quality view to per-pixel numbers. */
+.value-toggle {
+  width: 100%;
+  min-height: var(--live-control-height);
+  margin-top: var(--space-3);
+  background: rgba(0, 8, 12, 0.8);
+}
+
+.value-toggle[hidden] {
+  display: none;
+}
+
+.value-toggle:disabled,
+.value-toggle:disabled:hover {
+  border-style: dashed;
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+  cursor: default;
+}
+
 .visual-stage .channel-overlay {
   position: absolute;
   pointer-events: none;

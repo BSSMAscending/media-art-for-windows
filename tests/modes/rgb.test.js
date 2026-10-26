@@ -51,7 +51,7 @@ describe('renderRgb', () => {
     const received = [];
     const overlay = {
       renderLayers(_grid, source, layers) {
-        received.push({ source, active: layers.active });
+        received.push({ source: source.pixels, active: layers.active });
       },
     };
     const ctx = createRecordingContext();

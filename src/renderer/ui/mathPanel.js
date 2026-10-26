@@ -2,8 +2,9 @@ const { mathDescriptions } = require('../data/mathDescriptions');
 const { getModeExplanation } = require('../data/modeExplanations');
 const { createExplainAnimation } = require('./explainAnimations');
 
-function formatGridMetric(cols, rows) {
-  return `지금 화면 = 가로 ${cols}칸 × 세로 ${rows}칸 = ${(cols * rows).toLocaleString('ko-KR')}칸`;
+function formatGridMetric(cols, rows, unit = '칸') {
+  const count = (value) => `${value.toLocaleString('ko-KR')}${unit}`;
+  return `지금 화면 = 가로 ${count(cols)} × 세로 ${count(rows)} = ${count(cols * rows)}`;
 }
 
 function element(tag, className, text) {
@@ -65,7 +66,7 @@ function createMathPanel(container = document.body) {
 
   function update(stats) {
     if (stats.mode !== currentMode || !stats.cols || !stats.rows) return;
-    const grid = formatGridMetric(stats.cols, stats.rows);
+    const grid = formatGridMetric(stats.cols, stats.rows, stats.unit);
     metric.textContent = fallbackMetric ? `${fallbackMetric} · ${grid}` : grid;
   }
 

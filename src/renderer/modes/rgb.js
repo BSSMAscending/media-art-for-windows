@@ -22,7 +22,7 @@ function drawChannelValues(ctx, grid, pixels, channel) {
 }
 
 function renderRgb(ctx, overlay, grid, pixels, channel, layers) {
-  overlay.renderLayers(grid, pixels, layers);
+  overlay.renderLayers(grid, { pixels }, layers);
   // Numbers appear only after the selected layer has settled into place.
   if (!layers.active) drawChannelValues(ctx, grid, pixels, channel);
 }

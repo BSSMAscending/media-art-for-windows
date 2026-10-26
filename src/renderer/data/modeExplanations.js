@@ -14,7 +14,7 @@ function channelExplanation(channel) {
   return {
     title: `${name} 빛만 남기기`,
     headline: `${name} 손전등의 밝기 손잡이`,
-    body: `칸마다 적힌 숫자가 ${name} 빛의 세기예요. 0은 꺼짐, 255는 가장 밝게!`,
+    body: `'빛의 세기 보기'를 누르면 칸마다 ${name} 빛의 세기가 숫자로 보여요.`,
     terms: ['8비트 = 256단계', '0 ~ 255'],
     animation: { type: 'channel-dimmer', color },
   };

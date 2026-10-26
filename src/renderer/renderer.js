@@ -5,6 +5,7 @@ const { createFrameLoop } = require('./core/frameLoop');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
+const { canShowPixelValues } = require('./modes/valueView');
 // 손하트 안내 패널 기능은 일시적으로 비활성화했습니다.
 // const { createHeartOverlay } = require('./ui/heartOverlay');
 const { FONT_SIZE } = require('./config');
@@ -47,6 +48,7 @@ const state = {
   selectedVersion: 'original',
   rgbChannel: 'N',
   levels: 10,
+  showValues: false,
   currentFontSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
@@ -127,6 +129,20 @@ function renderModeOptions(onSelect) {
   });
 }
 
+function renderValueToggle() {
+  const button = document.getElementById('valueToggle');
+  const stateLabel = document.getElementById('valueToggleState');
+  const mode = state.selectedVersion;
+  const available = canShowPixelValues(mode, state.rgbChannel);
+  const isOn = available && state.showValues;
+  button.hidden = mode !== 'rgb' && mode !== 'levels';
+  button.disabled = !available;
+  button.classList.toggle('is-selected', isOn);
+  button.setAttribute('aria-pressed', String(isOn));
+  if (!available) stateLabel.textContent = 'R · G · B를 고르면 볼 수 있어요';
+  else stateLabel.textContent = isOn ? '켜짐 · 칸마다 숫자' : '꺼짐 · 원본 화질';
+}
+
 function updateModeUI(mathPanel) {
   document.querySelectorAll('.mode-button[data-mode]').forEach((button) => {
     const isSelected = button.dataset.mode === state.selectedVersion;
@@ -137,6 +153,7 @@ function updateModeUI(mathPanel) {
     state[stateKey] = value;
     updateModeUI(mathPanel);
   });
+  renderValueToggle();
   mathPanel.updateMode(state.selectedVersion, getModeOption());
 }
 
@@ -188,6 +205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderModeButtons(document.getElementById('liveModeButtons'), (mode) => {
     state.selectedVersion = mode;
+    updateModeUI(mathPanel);
+  });
+  document.getElementById('valueToggle').addEventListener('click', () => {
+    state.showValues = !state.showValues;
     updateModeUI(mathPanel);
   });
   updateModeUI(mathPanel);
@@ -260,6 +281,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getMode: () => state.selectedVersion,
       getRgbChannel: () => state.rgbChannel,
       getLevels: () => state.levels,
+      getShowValues: () => state.showValues,
       getArtworkArea: () =>
         getArtworkArea(
           canvasEl.clientWidth,

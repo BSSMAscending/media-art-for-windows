@@ -9,8 +9,12 @@ uniform float depth;
 uniform float angle;
 uniform float scale;
 uniform vec2 projection;
+uniform vec4 sourceRect;
+uniform float mirror;
 void main() {
-  uv = vec2((position.x + 1.0) * 0.5, (1.0 - position.y) * 0.5);
+  vec2 base = vec2((position.x + 1.0) * 0.5, (1.0 - position.y) * 0.5);
+  if (mirror > 0.5) base.x = 1.0 - base.x;
+  uv = sourceRect.xy + base * sourceRect.zw;
   vec2 p = position * scale;
   float x = cos(angle) * p.x + sin(angle) * depth + offset;
   float z = -sin(angle) * p.x + cos(angle) * depth;
@@ -24,14 +28,32 @@ varying vec2 uv;
 uniform sampler2D camera;
 uniform vec3 channel;
 uniform float weight;
+uniform float levels;
 void main() {
-  gl_FragColor = vec4(texture2D(camera, uv).rgb * channel * weight, 1.0);
+  vec3 color = texture2D(camera, uv).rgb;
+  if (levels > 1.5) {
+    float luminance = dot(color, vec3(0.299, 0.587, 0.114));
+    color = vec3(min(levels - 1.0, floor(luminance * levels)) / (levels - 1.0));
+  }
+  gl_FragColor = vec4(color * channel * weight, 1.0);
 }`;
-const UNIFORMS = ['offset', 'depth', 'angle', 'scale', 'projection', 'channel', 'weight'];
+const UNIFORMS = [
+  'offset',
+  'depth',
+  'angle',
+  'scale',
+  'projection',
+  'sourceRect',
+  'mirror',
+  'channel',
+  'weight',
+  'levels',
+];
 
 /**
- * GPU layer behind the digit canvas. It covers only the full-frame grid, so the
- * side column stays visible, and draws each grid cell as one crisp pixel block.
+ * GPU layer behind the digit canvas. It covers only the artwork grid, so the side
+ * column stays visible. A source is either the live video, drawn smoothly at the
+ * camera's own resolution, or grid-sized pixels, drawn as crisp cell blocks.
  */
 function createChannelOverlay(stage, beforeEl) {
   const canvas = document.createElement('canvas');
@@ -72,13 +94,19 @@ function createChannelOverlay(stage, beforeEl) {
   const uniforms = {};
   for (const name of UNIFORMS) uniforms[name] = gl.getUniformLocation(program, name);
 
-  const texture = gl.createTexture();
+  function createTexture(filter) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return texture;
+  }
+
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const gridTexture = createTexture(gl.NEAREST);
+  const videoTexture = createTexture(gl.LINEAR);
   gl.uniform1i(gl.getUniformLocation(program, 'camera'), 0);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   // Additive blending: R + G + B layers sum back to the camera's real colour.
@@ -86,8 +114,8 @@ function createChannelOverlay(stage, beforeEl) {
   gl.blendFunc(gl.ONE, gl.ONE);
   gl.clearColor(0, 0, 0, 1);
 
-  let textureWidth = 0;
-  let textureHeight = 0;
+  let gridTextureWidth = 0;
+  let gridTextureHeight = 0;
   let contextLost = false;
   const projectionBounds = [0, 1];
   canvas.addEventListener('webglcontextlost', (event) => {
@@ -95,7 +123,7 @@ function createChannelOverlay(stage, beforeEl) {
     contextLost = true;
   });
 
-  function beginFrame(grid, pixels) {
+  function beginFrame(grid) {
     if (contextLost) throw new Error('Pixel WebGL context was lost. Restart the application.');
     canvas.hidden = false;
     const width = grid.cols * grid.cellSize;
@@ -111,8 +139,27 @@ function createChannelOverlay(stage, beforeEl) {
     if (canvas.height !== backingHeight) canvas.height = backingHeight;
     gl.viewport(0, 0, backingWidth, backingHeight);
     gl.clear(gl.COLOR_BUFFER_BIT);
+  }
 
-    if (textureWidth !== grid.cols || textureHeight !== grid.rows) {
+  function bindVideo({ video, crop }) {
+    gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    gl.uniform4f(
+      uniforms.sourceRect,
+      crop.x / width,
+      crop.y / height,
+      crop.width / width,
+      crop.height / height
+    );
+    // The camera is shown like a mirror, matching the sampled grid.
+    gl.uniform1f(uniforms.mirror, 1);
+  }
+
+  function bindGridPixels(grid, pixels) {
+    gl.bindTexture(gl.TEXTURE_2D, gridTexture);
+    if (gridTextureWidth !== grid.cols || gridTextureHeight !== grid.rows) {
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -124,8 +171,8 @@ function createChannelOverlay(stage, beforeEl) {
         gl.UNSIGNED_BYTE,
         pixels
       );
-      textureWidth = grid.cols;
-      textureHeight = grid.rows;
+      gridTextureWidth = grid.cols;
+      gridTextureHeight = grid.rows;
     } else {
       gl.texSubImage2D(
         gl.TEXTURE_2D,
@@ -139,6 +186,15 @@ function createChannelOverlay(stage, beforeEl) {
         pixels
       );
     }
+    gl.uniform4f(uniforms.sourceRect, 0, 0, 1, 1);
+    gl.uniform1f(uniforms.mirror, 0);
+  }
+
+  function bindSource(grid, source, levels) {
+    beginFrame(grid);
+    if (source.video) bindVideo(source);
+    else bindGridPixels(grid, source.pixels);
+    gl.uniform1f(uniforms.levels, levels);
   }
 
   function drawPass(channel, weight, offset, depth, angle, scale) {
@@ -161,9 +217,9 @@ function createChannelOverlay(stage, beforeEl) {
     hide() {
       canvas.hidden = true;
     },
-    /** Draws the camera as three additive R/G/B layers posed by `layers`. */
-    renderLayers(grid, pixels, layers) {
-      beginFrame(grid, pixels);
+    /** Draws the source as three additive R/G/B layers posed by `layers`. */
+    renderLayers(grid, source, layers) {
+      bindSource(grid, source, 0);
       getProjectionBounds(layers, projectionBounds);
       gl.uniform2f(uniforms.projection, projectionBounds[0], projectionBounds[1]);
       for (let c = 0; c < 3; c++) {
@@ -178,9 +234,12 @@ function createChannelOverlay(stage, beforeEl) {
         );
       }
     },
-    /** Draws already-computed cell colours flat, e.g. quantized grey levels. */
-    renderFlat(grid, pixels) {
-      beginFrame(grid, pixels);
+    /**
+     * Draws the source flat. With `levels` >= 2 each pixel's brightness is
+     * quantized to that many greys on the GPU; 0 keeps the source colours.
+     */
+    renderFlat(grid, source, levels = 0) {
+      bindSource(grid, source, levels);
       gl.uniform2f(uniforms.projection, 0, 1);
       drawPass([1, 1, 1], 1, 0, 0, 0, 1);
     },
