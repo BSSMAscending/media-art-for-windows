@@ -340,7 +340,6 @@ body {
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
   --live-control-height: clamp(3.5rem, 4.2vw, 5rem);
   --option-control-height: clamp(3rem, 3.4vw, 4rem);
-  --visual-height: clamp(7rem, 17vh, 13rem);
 }
 
 body {
@@ -692,17 +691,19 @@ body {
   word-break: keep-all;
 }
 
+/* The illustration takes whatever height the card has left and scales to it. */
 .explain-visual {
+  --visual-height: calc(100cqh - var(--space-6));
   display: flex;
-  flex: 1;
+  flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  min-height: calc(var(--visual-height) + var(--space-3) * 2);
+  min-height: 6.5rem;
   margin: var(--space-2) 0 var(--space-3);
-  padding: var(--space-3);
   border: 1px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.55);
   overflow: hidden;
+  container-type: size;
 }
 
 .explain-body {
@@ -748,7 +749,7 @@ body {
 
 /* Original: a scan line finds the person and flips their cells from 0 to 1. */
 .explain-scan-grid {
-  --bit: calc((var(--visual-height) - 20px) / 11);
+  --bit: min(1.1rem, calc((var(--visual-height) - 20px) / 11));
   position: relative;
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--bit));
@@ -892,7 +893,7 @@ body {
 /* RGB: three coloured lights overlap; where all three meet the light turns white. */
 .explain-light-mix {
   position: relative;
-  height: var(--visual-height);
+  height: min(13rem, var(--visual-height));
   max-width: 100%;
   aspect-ratio: 1.15;
   isolation: isolate;
@@ -981,7 +982,7 @@ body {
 
 .explain-dimmer-lamp {
   grid-row: 1 / span 2;
-  width: clamp(3.5rem, 4.5vw, 5.5rem);
+  width: min(clamp(3.5rem, 4.5vw, 5.5rem), var(--visual-height));
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(circle, var(--channel-color) 40%, transparent 72%);
@@ -1048,7 +1049,7 @@ body {
 .explain-levels-bar {
   position: relative;
   display: flex;
-  height: clamp(1.75rem, 2.4vw, 2.75rem);
+  height: clamp(1rem, 16cqh, 2.75rem);
   margin-bottom: var(--space-2);
   border: 1px solid var(--border-default);
 }
@@ -1062,7 +1063,7 @@ body {
   flex: 1;
   place-items: center;
   min-width: 0;
-  font-size: var(--type-control-meta);
+  font-size: clamp(0.6rem, 11cqh, 1.125rem);
   font-weight: 700;
 }
 
@@ -1131,10 +1132,6 @@ body {
 
 /* Short windows: give the explanation card the room the project note used. */
 @media (max-height: 820px) {
-  :root {
-    --visual-height: clamp(6rem, 15vh, 13rem);
-  }
-
   .info-panel {
     display: none;
   }

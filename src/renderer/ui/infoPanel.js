@@ -9,7 +9,7 @@ function createInfoPanel(container = document.body) {
   panel.innerHTML = `
     <div class="panel-eyebrow">PROJECT NOTE</div>
     <div class="info-mode">컴퓨터가 보는 내 모습</div>
-    <p class="info-desc">컴퓨터는 화면을 아주 작은 칸(픽셀)으로 나누고, 칸마다 숫자를 하나씩 적어서 기억해요.</p>
+    <p class="info-desc">컴퓨터는 화면을 작은 칸(픽셀)으로 나눠 숫자로 기억해요.</p>
     <ol class="info-pipeline" aria-label="화면이 만들어지는 순서"></ol>
   `;
   const pipeline = panel.querySelector('.info-pipeline');
