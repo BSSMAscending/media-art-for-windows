@@ -4,6 +4,7 @@ const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
+const { getArtworkArea } = require('./core/renderGeometry');
 // 손하트 안내 패널 기능은 일시적으로 비활성화했습니다.
 // const { createHeartOverlay } = require('./ui/heartOverlay');
 const { FONT_SIZE } = require('./config');
@@ -13,12 +14,31 @@ const MODE_OPTIONS = [
   { key: 'blackwhite', label: '흑백', caption: '선명한 윤곽' },
   { key: 'binary', label: '바이너리', caption: '0 / 1 문자' },
   { key: 'numeric', label: '숫자', caption: '0 ~ 9 계조' },
+  { key: 'rgb', label: '색 RGB', caption: '빛 세 가지로 나누기' },
 ];
+
+// Second row of touch buttons, shown under the mode buttons for modes that have them.
+const MODE_SUB_OPTIONS = {
+  rgb: {
+    stateKey: 'rgbChannel',
+    label: '보고 싶은 빛을 골라보세요',
+    options: [
+      { value: 'N', label: '전체', caption: 'R + G + B' },
+      { value: 'R', label: 'R', caption: '빨강', swatch: '#ff3b3b' },
+      { value: 'G', label: 'G', caption: '초록', swatch: '#36ff6b' },
+      { value: 'B', label: 'B', caption: '파랑', swatch: '#3b8bff' },
+    ],
+  },
+};
+const MODE_HINTS = {
+  original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
+};
 
 const state = {
   model: null,
   stream: null,
   selectedVersion: 'original',
+  rgbChannel: 'N',
   currentFontSize: FONT_SIZE,
   bgMode: 'off',
   filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
@@ -67,11 +87,45 @@ function renderModeButtons(container, onSelect) {
   });
 }
 
+function renderModeOptions(onSelect) {
+  const container = document.getElementById('modeOptions');
+  const label = document.getElementById('modeOptionsLabel');
+  const grid = document.getElementById('modeOptionButtons');
+  const subOptions = MODE_SUB_OPTIONS[state.selectedVersion];
+  grid.replaceChildren();
+  container.classList.toggle('has-options', Boolean(subOptions));
+  if (!subOptions) {
+    label.textContent = MODE_HINTS[state.selectedVersion] || '';
+    return;
+  }
+
+  label.textContent = subOptions.label;
+  subOptions.options.forEach((option) => {
+    const button = document.createElement('button');
+    const isSelected = state[subOptions.stateKey] === option.value;
+    button.type = 'button';
+    button.className = 'mode-button mode-option-button';
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
+    if (option.swatch) {
+      button.classList.add('has-swatch');
+      button.style.setProperty('--option-swatch', option.swatch);
+    }
+    button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
+    button.addEventListener('click', () => onSelect(subOptions.stateKey, option.value));
+    grid.appendChild(button);
+  });
+}
+
 function updateModeUI(mathPanel) {
-  document.querySelectorAll('.mode-button').forEach((button) => {
+  document.querySelectorAll('.mode-button[data-mode]').forEach((button) => {
     const isSelected = button.dataset.mode === state.selectedVersion;
     button.classList.toggle('is-selected', isSelected);
     button.setAttribute('aria-pressed', String(isSelected));
+  });
+  renderModeOptions((stateKey, value) => {
+    state[stateKey] = value;
+    updateModeUI(mathPanel);
   });
   mathPanel.updateMode(state.selectedVersion);
 }
@@ -221,6 +275,13 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       hiddenCanvasEl,
       model: state.model,
       getMode: () => state.selectedVersion,
+      getRgbChannel: () => state.rgbChannel,
+      getArtworkArea: () =>
+        getArtworkArea(
+          canvasEl.clientWidth,
+          canvasEl.clientHeight,
+          document.getElementById('sideColumn').getBoundingClientRect()
+        ),
       getFontSize: () => state.currentFontSize,
       getFilters: () => state.filters,
       onStats: (stats) => {
