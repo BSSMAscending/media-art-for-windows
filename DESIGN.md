@@ -69,8 +69,8 @@ All spacing derives from a base of `4px`.
 ### Grid
 
 - Live artwork stage: every mode draws into one fixed screen left of the side column; the whole camera frame is fitted into it, snapped to whole cells and centered. Silhouette modes add a faint cyan backdrop and border so the screen stays visible when few cells are lit.
-- Side column: one right-hand column, `clamp(20rem, 32vw, 40rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`, stacking, top to bottom, the tall mode explanation card, the pixel value toggle, the project note, and the mode controls.
-- Live control targets: mode buttons `clamp(3.5rem, 4.2vw, 5rem)` tall in one row; option buttons `clamp(3rem, 3.4vw, 4rem)` tall in a second row.
+- Side column: one right-hand column, `clamp(20rem, 35vw, 44rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`. Every touch control (mode buttons, option buttons, pixel value toggle) sits in one block at exactly mid screen height, where it is easiest to reach; equal-height cards above (title, metaphor, animation) and below (sentence, terms, live size, how-it-is-made steps) frame it.
+- Live control targets: mode buttons `clamp(4.5rem, 5.5vw, 7rem)` tall; option buttons and the toggle `clamp(4rem, 4.6vw, 6rem)` tall; `12px` gaps. Buttons use `touch-action: manipulation`, no text selection or tap flash, and shrink slightly while pressed. The block keeps the same height in every mode so no button moves under a finger.
 - Breakpoints: `720px` compact width, `1100px` standard width, and `820px` short height (the project note hides so the explanation card keeps its animation).
 
 ### Rules
@@ -121,11 +121,11 @@ All spacing derives from a base of `4px`.
 
 ### Mode Explanation Card
 
-- **Structure**: mode title, metaphor headline (e.g. 전등 스위치, 손전등 세 개, 크레파스), a looping illustration, one short sentence, term chips (이진법, 빛의 삼원색, 양자화, 8비트), and the live cell count.
+- **Structure**: split around the controls. Above: mode title, metaphor headline (e.g. 전등 스위치, 손전등 세 개, 크레파스) and a looping illustration that scales to the card's height. Below: one short sentence, term chips (이진법, 빛의 삼원색, 양자화, 8비트), the live cell or pixel count, and the camera → cells → numbers → picture steps.
 - **States**: rebuilt when the mode or its option changes; the cell count updates from frame stats without restarting the animation.
 - **Accessibility**: the explanation text is a polite live region; the illustration is `aria-hidden`.
 - **Motion**: CSS-only loops; their un-animated styles are the meaningful still picture used under reduced motion.
-- **Layout**: fills the side column between the project note and the mode controls, growing vertically.
+- **Layout**: the two halves share the column height equally so the controls stay centred.
 
 ### Mode Option Buttons
 
@@ -135,8 +135,8 @@ All spacing derives from a base of `4px`.
 
 ### Pixel Value Toggle
 
-- **Structure**: a full-width `픽셀별 빛의 세기 보기` button directly under the explanation card, at about mid screen height so it is easy to reach, with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
-- **States**: hidden in 미디어 아트; disabled with a dashed outline and the hint `R · G · B를 고르면 볼 수 있어요` on the combined RGB view; pressed uses the selected treatment.
+- **Structure**: a full-width `픽셀별 빛의 세기 보기` button at the bottom of the centred control block, with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
+- **States**: always in place; disabled with a dashed outline and a hint where it does not apply (`색 RGB · 밝기 단계에서 볼 수 있어요` in 미디어 아트, `R · G · B를 고르면 볼 수 있어요` on the combined RGB view); pressed uses the selected treatment.
 - **Behaviour**: off shows the camera at its own resolution; on shows the sampled cell grid with per-cell numbers.
 
 ### Update Notice

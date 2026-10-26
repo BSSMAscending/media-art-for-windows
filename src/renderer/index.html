@@ -35,20 +35,7 @@
     <div id="sideColumn" class="side-column">
       <div id="panelCards" class="panel-cards" aria-label="미디어 아트 안내 카드"></div>
 
-      <!-- Sits at about mid-height between the explanation card and the bottom controls. -->
-      <button
-        id="valueToggle"
-        class="mode-button value-toggle"
-        type="button"
-        aria-pressed="false"
-        hidden
-      >
-        <span>픽셀별 빛의 세기 보기</span>
-        <small id="valueToggleState"></small>
-      </button>
-
-      <div id="projectNote" class="project-note-slot"></div>
-
+      <!-- Every touch control sits in the vertical middle of the screen, easiest to reach. -->
       <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
         <div class="mode-cue">보고 싶은 모드를 선택해주세요</div>
         <div
@@ -66,6 +53,19 @@
             aria-labelledby="modeOptionsLabel"
           ></div>
         </div>
+        <button
+          id="valueToggle"
+          class="mode-button value-toggle"
+          type="button"
+          aria-pressed="false"
+        >
+          <span>픽셀별 빛의 세기 보기</span>
+          <small id="valueToggleState"></small>
+        </button>
+      </div>
+
+      <div class="panel-cards">
+        <div id="detailCard" class="detail-card" aria-label="원리 더 알아보기"></div>
       </div>
     </div>
 

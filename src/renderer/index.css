@@ -43,20 +43,6 @@ body {
   z-index: 1;
 }
 
-.info-panel {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.9);
-  border: 1px solid #00ffff;
-  color: #00ffff;
-  font-family: 'Courier New', monospace;
-  font-size: 0.8rem;
-  padding: 1rem;
-  z-index: 20;
-  max-width: 320px;
-}
-
 .info-mode {
   font-size: 1rem;
   font-weight: bold;
@@ -138,24 +124,6 @@ body {
   font-size: 0.75rem;
   color: #006666;
   text-align: right;
-}
-
-/* ── 수학 정보 패널 ── */
-.math-panel {
-  position: fixed;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 20, 0.92);
-  border: 1px solid #00ffff;
-  color: #00ffff;
-  font-family: 'Courier New', monospace;
-  font-size: 0.78rem;
-  padding: 1rem;
-  z-index: 20;
-  width: 260px;
-  max-height: 90vh;
-  overflow-y: auto;
 }
 
 .math-panel-title {
@@ -334,12 +302,12 @@ body {
   --type-panel-eyebrow: clamp(0.75rem, 0.9375vw, 1.125rem);
   --type-panel-mode: clamp(1.0625rem, 1.328125vw, 1.625rem);
   --side-column-inset: clamp(1rem, 2vw, 2.5rem);
-  --side-column-width: clamp(20rem, 32vw, 40rem);
+  --side-column-width: clamp(20rem, 35vw, 44rem);
   --ui-cluster-gap: clamp(0.5rem, 1vw, 1rem);
   --live-panel-padding: clamp(0.75rem, 1vw, 1.5rem);
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
-  --live-control-height: clamp(3.5rem, 4.2vw, 5rem);
-  --option-control-height: clamp(3rem, 3.4vw, 4rem);
+  --live-control-height: clamp(4.5rem, 5.5vw, 7rem);
+  --option-control-height: clamp(4rem, 4.6vw, 6rem);
 }
 
 body {
@@ -350,7 +318,7 @@ body {
 .mode-button-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--space-3);
   width: 100%;
   margin-top: var(--space-3);
 }
@@ -377,6 +345,14 @@ body {
     color 150ms ease-out,
     box-shadow 150ms ease-out,
     transform 150ms ease-out;
+  /* Touch: no double-tap zoom delay, no text selection, no grey tap flash. */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .mode-button span,
@@ -555,19 +531,10 @@ body {
 
 /* Big toggle under the option row: switches camera-quality view to per-pixel numbers. */
 .value-toggle {
-  flex: none;
   width: 100%;
-  min-height: var(--live-control-height);
-  background: rgba(0, 8, 12, 0.94);
-}
-
-/* The project note is a direct item of the side column, below the toggle. */
-.project-note-slot {
-  display: contents;
-}
-
-.value-toggle[hidden] {
-  display: none;
+  min-height: var(--option-control-height);
+  margin-top: var(--space-3);
+  background: rgba(0, 8, 12, 0.8);
 }
 
 .value-toggle:disabled,
@@ -583,32 +550,50 @@ body {
   pointer-events: none;
 }
 
+/* Equal flex above and below keeps the controls exactly at mid screen height. */
 .panel-cards {
   display: flex;
-  flex: 1;
+  flex: 1 1 0;
   flex-direction: column;
-  gap: var(--ui-cluster-gap);
   min-height: 0;
 }
 
-.info-panel,
-.math-panel {
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.math-panel,
+.detail-card {
   position: relative;
-  inset: auto;
-  width: auto;
-  max-width: none;
-  min-block-size: clamp(8rem, 15vh, 12rem);
   padding: var(--live-panel-padding);
   border: 1px solid var(--border-default);
-  border-radius: 0;
   background: var(--surface-panel);
   color: var(--text-primary);
   font-size: 14px;
 }
 
+.detail-card {
+  flex: 1;
+  gap: var(--space-3);
+  overflow: hidden;
+}
+
+.explain-details,
+.explain-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* How every mode is made: a quiet footer of the detail card. */
 .info-panel {
   display: flex;
   flex-direction: column;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .math-panel {
@@ -723,8 +708,8 @@ body {
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  min-height: 6.5rem;
-  margin: var(--space-2) 0 var(--space-3);
+  min-height: 4rem;
+  margin-top: var(--space-2);
   border: 1px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.55);
   overflow: hidden;
@@ -732,7 +717,7 @@ body {
 }
 
 .explain-body {
-  margin: 0 0 var(--space-1);
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--type-panel-note);
   line-height: 1.5;
@@ -743,7 +728,6 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-2);
 }
 
 .explain-term {
@@ -755,7 +739,6 @@ body {
 }
 
 .math-metric {
-  margin-top: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-left: 2px solid var(--accent-primary);
   background: var(--accent-soft);
@@ -1117,6 +1100,14 @@ body {
   border: 3px solid var(--accent-primary);
   animation-name: levels-cursor;
   animation-timing-function: steps(var(--levels), jump-none);
+}
+
+/* In a short card keep just the two bars; the marker and cursor tell the story. */
+@container (max-height: 7.5rem) {
+  .explain-levels-label,
+  .explain-levels-ends {
+    display: none;
+  }
 }
 
 .explain-levels-ends {

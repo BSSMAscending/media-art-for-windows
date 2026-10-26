@@ -135,11 +135,13 @@ function renderValueToggle() {
   const mode = state.selectedVersion;
   const available = canShowPixelValues(mode, state.rgbChannel);
   const isOn = available && state.showValues;
-  button.hidden = mode !== 'rgb' && mode !== 'levels';
+  // Stays in place in every mode (disabled where it does not apply) so the
+  // centred buttons never move under a visitor's finger.
   button.disabled = !available;
   button.classList.toggle('is-selected', isOn);
   button.setAttribute('aria-pressed', String(isOn));
-  if (!available) stateLabel.textContent = 'R · G · B를 고르면 볼 수 있어요';
+  if (mode === 'rgb' && !available) stateLabel.textContent = 'R · G · B를 고르면 볼 수 있어요';
+  else if (!available) stateLabel.textContent = '색 RGB · 밝기 단계에서 볼 수 있어요';
   else stateLabel.textContent = isOn ? '켜짐 · 칸마다 숫자' : '꺼짐 · 원본 화질';
 }
 
@@ -196,8 +198,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bgCanvasEl = document.getElementById('bgCanvas');
 
   const panelCards = document.getElementById('panelCards');
-  createInfoPanel(document.getElementById('projectNote'));
-  const mathPanel = createMathPanel(panelCards);
+  const detailCard = document.getElementById('detailCard');
+  const mathPanel = createMathPanel(panelCards, detailCard);
+  createInfoPanel(detailCard);
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
 

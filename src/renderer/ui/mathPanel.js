@@ -14,15 +14,23 @@ function element(tag, className, text) {
   return el;
 }
 
-function createMathPanel(container = document.body) {
+// The picture half (title, metaphor, animation) goes above the centred controls and
+// the reading half (sentence, terms, live size) below them.
+function createMathPanel(container = document.body, detailContainer = container) {
   const panel = element('div', 'math-panel');
   panel.id = 'mathPanel';
   panel.setAttribute('aria-label', '현재 선택한 미디어 아트 모드');
   const content = element('div', 'explain-content');
   content.setAttribute('aria-live', 'polite');
-  const metric = element('div', 'math-metric');
-  panel.append(element('div', 'panel-eyebrow', 'CURRENT MODE'), content, metric);
+  panel.appendChild(content);
   container.appendChild(panel);
+
+  const details = element('div', 'explain-details');
+  const text = element('div', 'explain-text');
+  text.setAttribute('aria-live', 'polite');
+  const metric = element('div', 'math-metric');
+  details.append(text, metric);
+  detailContainer.appendChild(details);
 
   let currentKey = null;
   let currentMode = null;
@@ -39,10 +47,8 @@ function createMathPanel(container = document.body) {
     if (!explanation) {
       const desc = mathDescriptions[modeKey] || {};
       fallbackMetric = desc.metric || desc.colorDepth || '';
-      content.replaceChildren(
-        element('div', 'explain-title', desc.title || modeKey),
-        element('p', 'explain-body', desc.shortDesc || desc.desc || '')
-      );
+      content.replaceChildren(element('div', 'explain-title', desc.title || modeKey));
+      text.replaceChildren(element('p', 'explain-body', desc.shortDesc || desc.desc || ''));
       metric.textContent = fallbackMetric;
       return;
     }
@@ -57,10 +63,9 @@ function createMathPanel(container = document.body) {
     content.replaceChildren(
       element('div', 'explain-title', explanation.title),
       element('div', 'explain-headline', explanation.headline),
-      visual,
-      element('p', 'explain-body', explanation.body),
-      terms
+      visual
     );
+    text.replaceChildren(element('p', 'explain-body', explanation.body), terms);
     metric.textContent = '';
   }
 
