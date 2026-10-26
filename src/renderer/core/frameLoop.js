@@ -8,19 +8,17 @@ const { FrameBuffers } = require('./frameBuffers');
 const { createChannelOverlay } = require('./channelOverlay');
 const { getFullFrameGrid } = require('./renderGeometry');
 const { renderOriginal } = require('../modes/original');
-const { createBlackWhiteRenderer } = require('../modes/blackwhite');
-const { renderBinary } = require('../modes/binary');
-const { renderNumeric } = require('../modes/numeric');
 const { renderBusan } = require('../modes/busan');
 const { renderPixelValue } = require('../modes/pixelvalue');
 const { renderColorRgb } = require('../modes/colorrgb');
 const { renderGrayscale8bit } = require('../modes/grayscale8bit');
 const { renderColor4k } = require('../modes/color4k');
 const { renderRgb } = require('../modes/rgb');
+const { renderLevels } = require('../modes/levels');
 const { createChannelTransition } = require('../modes/rgbTransition');
 
 // Modes that show the whole camera frame instead of the segmented person.
-const FULL_FRAME_MODES = new Set(['rgb']);
+const FULL_FRAME_MODES = new Set(['rgb', 'levels']);
 const DEFAULT_FILTERS = {
   brightness: 0,
   blur: 0,
@@ -64,6 +62,7 @@ function createFrameLoop({
   model,
   getMode,
   getRgbChannel,
+  getLevels,
   getArtworkArea,
   getFontSize,
   getFilters,
@@ -80,7 +79,6 @@ function createFrameLoop({
   let ctx = null;
   let hiddenCtx = null;
   const buffers = new FrameBuffers();
-  const renderBlackWhite = createBlackWhiteRenderer();
   const updateChannelTransition = createChannelTransition();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const fullFrameGrid = {};
@@ -222,7 +220,12 @@ function createFrameLoop({
     const crop = getCoverCrop(sourceWidth, sourceHeight, grid.cols, grid.rows);
     const pixels = samplePixels(crop, grid.cols, grid.rows, filters);
     const overlay = getChannelOverlay();
-    if (mode === 'rgb') renderRgb(ctx, overlay, grid, pixels, getRgbChannel(), layers);
+    if (mode === 'rgb') {
+      renderRgb(ctx, overlay, grid, pixels, getRgbChannel(), layers);
+    } else if (mode === 'levels') {
+      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels);
+      overlay.renderFlat(grid, buffers.levelPixels);
+    }
 
     return { cols: grid.cols, rows: grid.rows, pixelStats: null };
   }
@@ -291,25 +294,19 @@ function createFrameLoop({
     if (!hasActivePixels(gridData)) return null;
 
     const activeSeg = { data: gridData, width: cols, height: rows };
-    if (mode === 'blackwhite') {
-      renderBlackWhite(ctx, canvasEl, activeSeg);
-    } else {
-      ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+    ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-      if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      else if (mode === 'binary') renderBinary(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      else if (mode === 'numeric') renderNumeric(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      else if (mode === 'pixelvalue')
-        renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      else if (mode === 'colorrgb')
-        renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols, edgeData);
-      else if (mode === 'grayscale8bit')
-        renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-    }
+    if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'pixelvalue')
+      renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'colorrgb')
+      renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols, edgeData);
+    else if (mode === 'grayscale8bit')
+      renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
 
     return { cols, rows, pixelStats: computePixelStats(pixels, gridData, cols, rows) };
   }

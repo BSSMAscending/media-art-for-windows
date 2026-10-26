@@ -11,10 +11,8 @@ const { FONT_SIZE } = require('./config');
 
 const MODE_OPTIONS = [
   { key: 'original', label: '원본', caption: '0 / 1 실루엣' },
-  { key: 'blackwhite', label: '흑백', caption: '선명한 윤곽' },
-  { key: 'binary', label: '바이너리', caption: '0 / 1 문자' },
-  { key: 'numeric', label: '숫자', caption: '0 ~ 9 계조' },
-  { key: 'rgb', label: '색 RGB', caption: '빛 세 가지로 나누기' },
+  { key: 'rgb', label: '색 RGB', caption: '빨강 · 초록 · 파랑' },
+  { key: 'levels', label: '밝기 단계', caption: '2 · 10 · 256' },
 ];
 
 // Second row of touch buttons, shown under the mode buttons for modes that have them.
@@ -29,6 +27,15 @@ const MODE_SUB_OPTIONS = {
       { value: 'B', label: 'B', caption: '파랑', swatch: '#3b8bff' },
     ],
   },
+  levels: {
+    stateKey: 'levels',
+    label: '밝기를 몇 단계로 나눌까요?',
+    options: [
+      { value: 2, label: '2단계', caption: '0 · 1' },
+      { value: 10, label: '10단계', caption: '0 ~ 9' },
+      { value: 256, label: '256단계', caption: '0 ~ 255' },
+    ],
+  },
 };
 const MODE_HINTS = {
   original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
@@ -39,6 +46,7 @@ const state = {
   stream: null,
   selectedVersion: 'original',
   rgbChannel: 'N',
+  levels: 10,
   currentFontSize: FONT_SIZE,
   bgMode: 'off',
   filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
@@ -48,9 +56,8 @@ const state = {
 
 const MODES = [
   'original',
-  'blackwhite',
-  'binary',
-  'numeric',
+  'rgb',
+  'levels',
   'busan',
   'pixelvalue',
   'colorrgb',
@@ -276,6 +283,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       model: state.model,
       getMode: () => state.selectedVersion,
       getRgbChannel: () => state.rgbChannel,
+      getLevels: () => state.levels,
       getArtworkArea: () =>
         getArtworkArea(
           canvasEl.clientWidth,

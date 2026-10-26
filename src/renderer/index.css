@@ -453,6 +453,7 @@ body {
   font-size: var(--type-control-meta);
   font-weight: 400;
   letter-spacing: 0;
+  word-break: keep-all;
 }
 
 .mode-button:hover,

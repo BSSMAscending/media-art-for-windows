@@ -178,6 +178,12 @@ function createChannelOverlay(stage, beforeEl) {
         );
       }
     },
+    /** Draws already-computed cell colours flat, e.g. quantized grey levels. */
+    renderFlat(grid, pixels) {
+      beginFrame(grid, pixels);
+      gl.uniform2f(uniforms.projection, 0, 1);
+      drawPass([1, 1, 1], 1, 0, 0, 0, 1);
+    },
   };
 }
 

@@ -21,6 +21,7 @@ class FrameBuffers {
 
     this.filteredPixels = new Uint8ClampedArray(rgbaLength);
     this.filterScratch = new Uint8ClampedArray(rgbaLength);
+    this.levelPixels = new Uint8ClampedArray(rgbaLength);
     this.edgeData = new Float32Array(pixelCount);
     this.gridRaw = new Uint8Array(pixelCount);
     this.gridFiltered = new Uint8Array(pixelCount);

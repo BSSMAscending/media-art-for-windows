@@ -1,5 +1,5 @@
 const { getLuminance, getMirroredMaskIndex } = require('../utils');
-const { getLuminanceChar } = require('./numeric');
+const { getLevel } = require('./levels');
 
 function renderColorRgb(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW, edgeData) {
   ctx.shadowBlur = 0;
@@ -24,7 +24,7 @@ function renderColorRgb(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW, 
         ctx.shadowBlur = 0;
       }
 
-      ctx.fillText(getLuminanceChar(luminance), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
+      ctx.fillText(String(getLevel(luminance, 10)), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
     }
   }
 }
