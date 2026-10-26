@@ -68,9 +68,8 @@ All spacing derives from a base of `4px`.
 
 ### Grid
 
-- Live artwork stage: full viewport with the person silhouette rendered above the interface layers.
+- Live artwork stage: every mode draws into one fixed screen left of the side column; the whole camera frame is fitted into it, snapped to whole cells and centered. Silhouette modes add a faint cyan backdrop and border so the screen stays visible when few cells are lit.
 - Side column: one right-hand column, `clamp(20rem, 32vw, 40rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`, stacking the project note, the tall mode explanation card, and the mode controls.
-- Full-frame modes (RGB, brightness levels) fit the whole camera frame into the area left of the side column, snapped to whole cells and centered.
 - Live control targets: mode buttons `clamp(3.5rem, 4.2vw, 5rem)` tall in one row; option buttons `clamp(3rem, 3.4vw, 4rem)` tall in a second row.
 - Breakpoints: `720px` compact width, `1100px` standard width, and `820px` short height (the project note hides so the explanation card keeps its animation).
 

@@ -29,7 +29,8 @@ This is an Electron application called "Binary Media Art" that creates real-time
    - `original` (원본): Binary overlay (0/1) with cyan color effects on the segmented person silhouette
    - `rgb` (색 RGB): Full camera frame as additive WebGL R/G/B layers; 전체/R/G/B buttons split the layers apart (1.8s transition) and settled channels show each cell's 0-255 value
    - `levels` (밝기 단계): Full camera frame quantized to 2, 10 or 256 brightness steps (buttons, no sliders); each cell shows its step number over the matching grey
-   - Full-frame modes (`rgb`, `levels`) skip segmentation and fit the whole camera into the area left of the side column
+   - Every mode draws in the same fixed screen left of the side column (whole camera frame fitted to whole cells); `rgb` and `levels` skip segmentation
+   - There are no slider or F-key filter controls; the exhibit is adjusted only with buttons
    - The side column's explanation card uses metaphors, a CSS animation and term chips per mode/option (`data/modeExplanations.js`, `ui/explainAnimations.js`)
 
 3. **Real-time Processing**: Uses TensorFlow.js BodyPix model for person segmentation with mirrored video display
