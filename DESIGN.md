@@ -133,6 +133,12 @@ All spacing derives from a base of `4px`.
 - **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
 - **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
 
+### Pixel Value Toggle
+
+- **Structure**: a full-width `픽셀별 빛의 세기 보기` button under the option row with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
+- **States**: hidden in 미디어 아트; disabled with a dashed outline and the hint `R · G · B를 고르면 볼 수 있어요` on the combined RGB view; pressed uses the selected treatment.
+- **Behaviour**: off shows the camera at its own resolution; on shows the sampled cell grid with per-cell numbers.
+
 ### Update Notice
 
 - **Structure**: a small status panel with a version message and, after download, `지금 재시작` and `나중에` buttons.

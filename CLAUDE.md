@@ -26,9 +26,10 @@ This is an Electron application called "Binary Media Art" that creates real-time
 
 1. **Camera Selection**: Users can select from available cameras via dropdown
 2. **Multiple Visualization Modes** (touch buttons; keys 1-3, legacy modes on 4-8):
-   - `original` (원본): Binary overlay (0/1) with cyan color effects on the segmented person silhouette
-   - `rgb` (색 RGB): Full camera frame as additive WebGL R/G/B layers; 전체/R/G/B buttons split the layers apart (1.8s transition) and settled channels show each cell's 0-255 value
-   - `levels` (밝기 단계): Full camera frame quantized to 2, 10 or 256 brightness steps (buttons, no sliders); each cell shows its step number over the matching grey
+   - `original` (미디어 아트): Binary overlay (0/1) with cyan color effects on the segmented person silhouette
+   - `rgb` (색 RGB): Live video at camera resolution as additive WebGL R/G/B layers; 전체/R/G/B buttons split the layers apart (1.8s transition)
+   - `levels` (밝기 단계): Live video at camera resolution quantized on the GPU to 2, 10 or 256 brightness steps (buttons, no sliders)
+   - `픽셀별 빛의 세기 보기` toggle (`state.showValues`, `modes/valueView.js`): for R/G/B and every level count, switches to the sampled cell grid with each cell's 0-255 value or step number; disabled on the combined RGB view
    - Every mode draws in the same fixed screen left of the side column (whole camera frame fitted to whole cells); `rgb` and `levels` skip segmentation
    - There are no slider or F-key filter controls; the exhibit is adjusted only with buttons
    - The side column's explanation card uses metaphors, a CSS animation and term chips per mode/option (`data/modeExplanations.js`, `ui/explainAnimations.js`)
