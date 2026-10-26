@@ -130,7 +130,11 @@ function createFrameLoop({
 
     const mode = getMode();
     const fullFrame = FULL_FRAME_MODES.has(mode);
-    if (!fullFrame && !segmentationInFlight && now - lastSegmentationTime >= segmentationInterval) {
+    if (fullFrame) {
+      // Full-frame modes pause segmentation; drop the old mask so returning to the
+      // silhouette never flashes where the person stood minutes ago.
+      lastSegmentation = null;
+    } else if (!segmentationInFlight && now - lastSegmentationTime >= segmentationInterval) {
       updateSegmentation();
     }
 
