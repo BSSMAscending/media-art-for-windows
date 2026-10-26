@@ -10,7 +10,7 @@ const { getArtworkArea } = require('./core/renderGeometry');
 const { FONT_SIZE } = require('./config');
 
 const MODE_OPTIONS = [
-  { key: 'original', label: '원본', caption: '0 / 1 실루엣' },
+  { key: 'original', label: '미디어 아트', caption: '0 / 1 실루엣' },
   { key: 'rgb', label: '색 RGB', caption: '빛의 삼원색' },
   { key: 'levels', label: '밝기 단계', caption: '2 · 10 · 256' },
 ];
