@@ -69,10 +69,10 @@ All spacing derives from a base of `4px`.
 ### Grid
 
 - Live artwork stage: full viewport with the person silhouette rendered above the interface layers.
-- Information cards: two equal-width cards in a top row, inset `2.5vw` from the viewport edges.
-- Live control shelf: full-width lower row with the four mode buttons; character-size selection is configured in code.
-- Live control targets: `clamp(72px, 5.625vw, 144px)` tall so the control shelf retains its visual weight at high resolutions.
-- Breakpoints: `720px` compact and `1100px` standard.
+- Side column: one right-hand column, `clamp(20rem, 32vw, 40rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`, stacking the project note, the tall mode explanation card, and the mode controls.
+- Full-frame modes (RGB, brightness levels) fit the whole camera frame into the area left of the side column, snapped to whole cells and centered.
+- Live control targets: mode buttons `clamp(3.5rem, 4.2vw, 5rem)` tall in one row; option buttons `clamp(3rem, 3.4vw, 4rem)` tall in a second row.
+- Breakpoints: `720px` compact width, `1100px` standard width, and `820px` short height (the project note hides so the explanation card keeps its animation).
 
 ### Rules
 
@@ -120,14 +120,19 @@ All spacing derives from a base of `4px`.
 - **Layout**: placed in the upper-left card of the two-card row.
 - **Responsive layout**: the panel uses a viewport-ratio rail width, inset, top offset, and minimum block size on wide displays; compact layouts return to fluid side insets.
 
-### Mode Summary Panel
+### Mode Explanation Card
 
-- **Structure**: current mode title, one-sentence explanation, and one simple metric.
-- **States**: visible throughout the live-camera session; selected content updates with the active mode.
-- **Accessibility**: updates are announced through a polite live region.
-- **Motion**: content changes without layout animation.
-- **Layout**: placed in the upper-right card of the two-card row.
-- **Responsive layout**: the panel follows the same wide right-rail proportions and compact fallback as the information panel.
+- **Structure**: mode title, metaphor headline (e.g. 전등 스위치, 손전등 세 개, 크레파스), a looping illustration, one short sentence, term chips (이진법, 빛의 삼원색, 양자화, 8비트), and the live cell count.
+- **States**: rebuilt when the mode or its option changes; the cell count updates from frame stats without restarting the animation.
+- **Accessibility**: the explanation text is a polite live region; the illustration is `aria-hidden`.
+- **Motion**: CSS-only loops; their un-animated styles are the meaningful still picture used under reduced motion.
+- **Layout**: fills the side column between the project note and the mode controls, growing vertically.
+
+### Mode Option Buttons
+
+- **Structure**: a label and a row of buttons under the mode buttons: 전체/R/G/B for RGB, 2/10/256단계 for brightness levels; the original mode shows a hint line in the same space.
+- **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
+- **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
 
 ### Update Notice
 
@@ -145,6 +150,8 @@ All spacing derives from a base of `4px`.
 | --- | --- | --- | --- |
 | Micro | `150ms` | `ease-out` | Mode button feedback |
 | Standard | `250ms` | `ease-in-out` | Panel visibility at live-session boundaries |
+| Layer split | `1.8s` | quintic | RGB layers tilt, split, isolate the chosen channel, and merge back |
+| Explanation loop | `4-6s` | per animation | Explanation card illustrations and the project-note step highlight |
 
 - Mode selection updates the canvas mode, button state, and right-side summary together.
 - Character size is read from `src/renderer/config.js` when the renderer starts.
