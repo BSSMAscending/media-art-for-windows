@@ -1,8 +1,7 @@
 const { FONT_SIZE, RENDERING_CONFIG } = require('../config');
 const { runSegmentation } = require('./segmentation');
 const { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover } = require('./coverCrop');
-const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
-const { cleanMask, removeSmallRegions } = require('./morphology');
+const { removeSmallRegions } = require('./morphology');
 const { reinforceGridHandMask } = require('./handRefinement');
 const { FrameBuffers } = require('./frameBuffers');
 const { createChannelOverlay } = require('./channelOverlay');
@@ -19,13 +18,6 @@ const { createChannelTransition } = require('../modes/rgbTransition');
 
 // Modes that show the whole camera frame instead of the segmented person.
 const FULL_FRAME_MODES = new Set(['rgb', 'levels']);
-const DEFAULT_FILTERS = {
-  brightness: 0,
-  blur: 0,
-  sharpen: 0,
-  edgeOverlay: false,
-  maskClean: false,
-};
 
 function computePixelStats(pixels, segGrid, cols, rows) {
   let sum = 0,
@@ -65,7 +57,6 @@ function createFrameLoop({
   getLevels,
   getArtworkArea,
   getFontSize,
-  getFilters,
   onStats,
 }) {
   let rafId = null;
@@ -156,7 +147,6 @@ function createFrameLoop({
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
     const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
-    const filters = getFilters ? getFilters() : DEFAULT_FILTERS;
     // Every mode draws into the same fixed screen beside the side column.
     const area = getArtworkArea
       ? getArtworkArea()
@@ -175,14 +165,12 @@ function createFrameLoop({
 
     try {
       if (!fullFrame) channelOverlay?.hide();
-      const stats = fullFrame
-        ? drawFullFrame(mode, grid, filters, layers)
-        : drawSilhouetteFrame(mode, grid, filters);
+      const stats = fullFrame ? drawFullFrame(mode, grid, layers) : drawSilhouetteFrame(mode, grid);
       if (stats) {
         const fps = Math.round(1000 / (now - lastFrameTime));
         lastFrameTime = now;
         if (onStats && frameCount % 15 === 0) {
-          onStats({ mode, fontSz, fps, filters, ...stats });
+          onStats({ mode, fontSz, fps, ...stats });
         }
       }
     } catch (err) {
@@ -193,24 +181,12 @@ function createFrameLoop({
     scheduleNextFrame();
   }
 
-  function samplePixels(crop, cols, rows, filters) {
+  function samplePixels(crop, cols, rows) {
     hiddenCtx.save();
     hiddenCtx.scale(-1, 1);
     hiddenCtx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, -cols, 0, cols, rows);
     hiddenCtx.restore();
-
-    const imgData = hiddenCtx.getImageData(0, 0, cols, rows);
-    const filtersActive = filters.brightness !== 0 || filters.blur > 0 || filters.sharpen > 0;
-    const pixels = filtersActive ? buffers.copyPixels(imgData.data) : imgData.data;
-
-    if (filtersActive) {
-      if (filters.brightness !== 0) applyBrightness(pixels, cols, rows, filters.brightness);
-      if (filters.blur > 0)
-        applyGaussianBlur(pixels, cols, rows, filters.blur, buffers.filterScratch);
-      if (filters.sharpen > 0)
-        applySharpen(pixels, cols, rows, filters.sharpen, buffers.filterScratch);
-    }
-    return pixels;
+    return hiddenCtx.getImageData(0, 0, cols, rows).data;
   }
 
   function resizeSampling(cols, rows) {
@@ -227,10 +203,10 @@ function createFrameLoop({
     return channelOverlay;
   }
 
-  function drawFullFrame(mode, grid, filters, layers) {
+  function drawFullFrame(mode, grid, layers) {
     resizeSampling(grid.cols, grid.rows);
     const crop = getCoverCrop(videoEl.videoWidth, videoEl.videoHeight, grid.cols, grid.rows);
-    const pixels = samplePixels(crop, grid.cols, grid.rows, filters);
+    const pixels = samplePixels(crop, grid.cols, grid.rows);
     const overlay = getChannelOverlay();
     if (mode === 'rgb') {
       renderRgb(ctx, overlay, grid, pixels, getRgbChannel(), layers);
@@ -254,7 +230,7 @@ function createFrameLoop({
     ctx.strokeRect(grid.x - 0.5, grid.y - 0.5, width + 1, height + 1);
   }
 
-  function drawSilhouetteFrame(mode, grid, filters) {
+  function drawSilhouetteFrame(mode, grid) {
     const { cols, rows, cellSize: fontSz } = grid;
     resizeSampling(cols, rows);
     drawArtworkBackdrop(grid);
@@ -268,10 +244,7 @@ function createFrameLoop({
     const crop = getCoverCrop(sourceWidth, sourceHeight, cols, rows);
     if (!crop) return null;
 
-    const pixels = samplePixels(crop, cols, rows, filters);
-    const edgeData = filters.edgeOverlay
-      ? applySobelEdge(pixels, cols, rows, buffers.edgeData)
-      : null;
+    const pixels = samplePixels(crop, cols, rows);
     const segmentation = {
       data: lastSegmentation.data,
       width: lastSegmentation.width,
@@ -296,16 +269,6 @@ function createFrameLoop({
       buffers.regionQueue
     );
 
-    if (filters.maskClean) {
-      gridData = cleanMask(
-        gridData,
-        cols,
-        rows,
-        buffers.morphologyOutput,
-        buffers.morphologyScratch
-      );
-    }
-
     if (lastSegmentation.handLandmarks?.length > 0) {
       reinforceGridHandMask(
         gridData,
@@ -328,8 +291,7 @@ function createFrameLoop({
     else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
     else if (mode === 'pixelvalue')
       renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-    else if (mode === 'colorrgb')
-      renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols, edgeData);
+    else if (mode === 'colorrgb') renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
     else if (mode === 'grayscale8bit')
       renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
     else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);

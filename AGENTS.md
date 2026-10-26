@@ -22,7 +22,7 @@ MediaPipe Tasks Vision, and Canvas rendering.
 - `src/preload.js` — renderer preload entry point.
 - `src/renderer/renderer.js` — camera startup, UI state, controls, and the
   frame-loop integration.
-- `src/renderer/core/` — camera access, segmentation, filters, hand gestures,
+- `src/renderer/core/` — camera access, segmentation, hand gestures,
   and frame processing.
 - `src/renderer/modes/` — visualization-specific Canvas renderers. `rgb.js` and
   `levels.js` draw full-camera modes over the WebGL layer in

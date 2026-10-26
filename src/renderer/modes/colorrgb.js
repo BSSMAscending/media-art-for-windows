@@ -1,7 +1,7 @@
 const { getLuminance, getMirroredMaskIndex } = require('../utils');
 const { getLevel } = require('./levels');
 
-function renderColorRgb(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW, edgeData) {
+function renderColorRgb(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW) {
   ctx.shadowBlur = 0;
 
   for (let y = 0; y < rows; y++) {
@@ -15,16 +15,13 @@ function renderColorRgb(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW, 
       const b = pixels[i + 2];
       const luminance = getLuminance(r, g, b);
 
-      if (edgeData && edgeData[y * hiddenW + x] > 0.3) {
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = '#ffffff';
-      } else {
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.shadowBlur = 0;
-      }
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
 
-      ctx.fillText(String(getLevel(luminance, 10)), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
+      ctx.fillText(
+        String(getLevel(luminance, 10)),
+        x * fontSz + fontSz / 2,
+        y * fontSz + fontSz / 2
+      );
     }
   }
 }

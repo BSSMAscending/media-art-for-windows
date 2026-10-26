@@ -49,9 +49,7 @@ const state = {
   levels: 10,
   currentFontSize: FONT_SIZE,
   bgMode: 'off',
-  filters: { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false },
   loop: null,
-  filterPanelVisible: false,
 };
 
 const MODES = [
@@ -196,25 +194,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
 
-  document.getElementById('brightnessSlider').addEventListener('input', (e) => {
-    state.filters.brightness = parseFloat(e.target.value);
-    document.getElementById('brightnessValue').textContent = e.target.value;
-  });
-  document.getElementById('blurSlider').addEventListener('input', (e) => {
-    state.filters.blur = parseInt(e.target.value);
-    document.getElementById('blurValue').textContent = e.target.value;
-  });
-  document.getElementById('sharpenSlider').addEventListener('input', (e) => {
-    state.filters.sharpen = parseFloat(e.target.value);
-    document.getElementById('sharpenValue').textContent = parseFloat(e.target.value).toFixed(1);
-  });
-  document.getElementById('edgeOverlayCheck').addEventListener('change', (e) => {
-    state.filters.edgeOverlay = e.target.checked;
-  });
-  document.getElementById('maskCleanCheck').addEventListener('change', (e) => {
-    state.filters.maskClean = e.target.checked;
-  });
-
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -229,14 +208,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.selectedVersion = mode;
         updateModeUI(mathPanel);
       }
-      return;
-    }
-
-    if (e.key === 'f' || e.key === 'F') {
-      state.filterPanelVisible = !state.filterPanelVisible;
-      document.getElementById('filterPanel').style.display = state.filterPanelVisible
-        ? 'block'
-        : 'none';
     }
   });
 
@@ -296,7 +267,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
           document.getElementById('sideColumn').getBoundingClientRect()
         ),
       getFontSize: () => state.currentFontSize,
-      getFilters: () => state.filters,
       onStats: (stats) => {
         mathPanel.update(stats);
       },

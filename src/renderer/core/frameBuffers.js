@@ -19,21 +19,11 @@ class FrameBuffers {
     const pixelCount = width * height;
     const rgbaLength = pixelCount * 4;
 
-    this.filteredPixels = new Uint8ClampedArray(rgbaLength);
-    this.filterScratch = new Uint8ClampedArray(rgbaLength);
     this.levelPixels = new Uint8ClampedArray(rgbaLength);
-    this.edgeData = new Float32Array(pixelCount);
     this.gridRaw = new Uint8Array(pixelCount);
     this.gridFiltered = new Uint8Array(pixelCount);
-    this.morphologyScratch = new Uint8Array(pixelCount);
-    this.morphologyOutput = new Uint8Array(pixelCount);
     this.regionVisited = new Uint8Array(pixelCount);
     this.regionQueue = new Int32Array(pixelCount);
-  }
-
-  copyPixels(pixels) {
-    this.filteredPixels.set(pixels);
-    return this.filteredPixels;
   }
 }
 
