@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bgCanvasEl = document.getElementById('bgCanvas');
 
   const panelCards = document.getElementById('panelCards');
-  createInfoPanel(panelCards);
+  createInfoPanel(document.getElementById('projectNote'));
   const mathPanel = createMathPanel(panelCards);
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();

@@ -69,7 +69,7 @@ All spacing derives from a base of `4px`.
 ### Grid
 
 - Live artwork stage: every mode draws into one fixed screen left of the side column; the whole camera frame is fitted into it, snapped to whole cells and centered. Silhouette modes add a faint cyan backdrop and border so the screen stays visible when few cells are lit.
-- Side column: one right-hand column, `clamp(20rem, 32vw, 40rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`, stacking the project note, the tall mode explanation card, and the mode controls.
+- Side column: one right-hand column, `clamp(20rem, 32vw, 40rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`, stacking, top to bottom, the tall mode explanation card, the pixel value toggle, the project note, and the mode controls.
 - Live control targets: mode buttons `clamp(3.5rem, 4.2vw, 5rem)` tall in one row; option buttons `clamp(3rem, 3.4vw, 4rem)` tall in a second row.
 - Breakpoints: `720px` compact width, `1100px` standard width, and `820px` short height (the project note hides so the explanation card keeps its animation).
 
@@ -135,7 +135,7 @@ All spacing derives from a base of `4px`.
 
 ### Pixel Value Toggle
 
-- **Structure**: a full-width `픽셀별 빛의 세기 보기` button under the option row with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
+- **Structure**: a full-width `픽셀별 빛의 세기 보기` button directly under the explanation card, at about mid screen height so it is easy to reach, with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
 - **States**: hidden in 미디어 아트; disabled with a dashed outline and the hint `R · G · B를 고르면 볼 수 있어요` on the combined RGB view; pressed uses the selected treatment.
 - **Behaviour**: off shows the camera at its own resolution; on shows the sampled cell grid with per-cell numbers.
 
