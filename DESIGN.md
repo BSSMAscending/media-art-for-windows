@@ -129,7 +129,8 @@ All spacing derives from a base of `4px`.
 
 ### Mode Option Buttons
 
-- **Structure**: a label and a row of buttons under the mode buttons: 전체/R/G/B for RGB, 2/10/256단계 for brightness levels; the original mode shows a hint line in the same space.
+- **Structure**: a label and a row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels; the original mode shows a hint line in the same space.
+- **Selection**: the RGB mode button always opens the full colour with no light selected; tapping the selected R/G/B again clears it back to the full colour. A brightness step stays selected when tapped again.
 - **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
 - **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
 

@@ -1,0 +1,51 @@
+const MODE_OPTIONS = [
+  { key: 'original', label: '미디어 아트', caption: '0 / 1 실루엣' },
+  { key: 'rgb', label: '색 RGB', caption: '빛의 삼원색' },
+  { key: 'levels', label: '밝기 단계', caption: '2 · 10 · 256' },
+];
+
+// Second row of touch buttons, shown under the mode buttons for modes that have them.
+// `noneValue` lets a second tap on the selected option clear it back to that view.
+const MODE_SUB_OPTIONS = {
+  rgb: {
+    stateKey: 'rgbChannel',
+    label: '빛을 하나 골라보세요 (다시 누르면 전체 색)',
+    noneValue: 'N',
+    options: [
+      { value: 'R', label: 'R', caption: '빨강', swatch: '#ff3b3b' },
+      { value: 'G', label: 'G', caption: '초록', swatch: '#36ff6b' },
+      { value: 'B', label: 'B', caption: '파랑', swatch: '#3b8bff' },
+    ],
+  },
+  levels: {
+    stateKey: 'levels',
+    label: '밝기를 몇 단계로 나눌까요?',
+    options: [
+      { value: 2, label: '2단계', caption: '0 · 1' },
+      { value: 10, label: '10단계', caption: '0 ~ 9' },
+      { value: 256, label: '256단계', caption: '0 ~ 255' },
+    ],
+  },
+};
+
+const MODE_HINTS = {
+  original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
+};
+
+// Pressing a mode button opens its starting view; RGB always starts on the full colour.
+const MODE_START_STATE = {
+  rgb: { rgbChannel: 'N' },
+};
+
+function selectMode(state, mode) {
+  state.selectedVersion = mode;
+  Object.assign(state, MODE_START_STATE[mode]);
+}
+
+function selectModeOption(state, subOptions, value) {
+  const { stateKey, noneValue } = subOptions;
+  const clearsSelection = noneValue !== undefined && state[stateKey] === value;
+  state[stateKey] = clearsSelection ? noneValue : value;
+}
+
+module.exports = { MODE_OPTIONS, MODE_SUB_OPTIONS, MODE_HINTS, selectMode, selectModeOption };

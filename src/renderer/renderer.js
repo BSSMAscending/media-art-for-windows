@@ -6,41 +6,16 @@ const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { canShowPixelValues } = require('./modes/valueView');
+const {
+  MODE_OPTIONS,
+  MODE_SUB_OPTIONS,
+  MODE_HINTS,
+  selectMode,
+  selectModeOption,
+} = require('./data/modeOptions');
 // 손하트 안내 패널 기능은 일시적으로 비활성화했습니다.
 // const { createHeartOverlay } = require('./ui/heartOverlay');
 const { FONT_SIZE } = require('./config');
-
-const MODE_OPTIONS = [
-  { key: 'original', label: '미디어 아트', caption: '0 / 1 실루엣' },
-  { key: 'rgb', label: '색 RGB', caption: '빛의 삼원색' },
-  { key: 'levels', label: '밝기 단계', caption: '2 · 10 · 256' },
-];
-
-// Second row of touch buttons, shown under the mode buttons for modes that have them.
-const MODE_SUB_OPTIONS = {
-  rgb: {
-    stateKey: 'rgbChannel',
-    label: '보고 싶은 빛을 골라보세요',
-    options: [
-      { value: 'N', label: '전체', caption: 'R + G + B' },
-      { value: 'R', label: 'R', caption: '빨강', swatch: '#ff3b3b' },
-      { value: 'G', label: 'G', caption: '초록', swatch: '#36ff6b' },
-      { value: 'B', label: 'B', caption: '파랑', swatch: '#3b8bff' },
-    ],
-  },
-  levels: {
-    stateKey: 'levels',
-    label: '밝기를 몇 단계로 나눌까요?',
-    options: [
-      { value: 2, label: '2단계', caption: '0 · 1' },
-      { value: 10, label: '10단계', caption: '0 ~ 9' },
-      { value: 256, label: '256단계', caption: '0 ~ 255' },
-    ],
-  },
-};
-const MODE_HINTS = {
-  original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
-};
 
 const state = {
   model: null,
@@ -124,7 +99,7 @@ function renderModeOptions(onSelect) {
       button.style.setProperty('--option-swatch', option.swatch);
     }
     button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
-    button.addEventListener('click', () => onSelect(subOptions.stateKey, option.value));
+    button.addEventListener('click', () => onSelect(subOptions, option.value));
     grid.appendChild(button);
   });
 }
@@ -151,8 +126,8 @@ function updateModeUI(mathPanel) {
     button.classList.toggle('is-selected', isSelected);
     button.setAttribute('aria-pressed', String(isSelected));
   });
-  renderModeOptions((stateKey, value) => {
-    state[stateKey] = value;
+  renderModeOptions((subOptions, value) => {
+    selectModeOption(state, subOptions, value);
     updateModeUI(mathPanel);
   });
   renderValueToggle();
@@ -207,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupUpdateNotice();
 
   renderModeButtons(document.getElementById('liveModeButtons'), (mode) => {
-    state.selectedVersion = mode;
+    selectMode(state, mode);
     updateModeUI(mathPanel);
   });
   document.getElementById('valueToggle').addEventListener('click', () => {
@@ -229,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (num >= 1 && num <= 9 && state.loop) {
       const mode = MODES[num - 1];
       if (mode) {
-        state.selectedVersion = mode;
+        selectMode(state, mode);
         updateModeUI(mathPanel);
       }
     }
