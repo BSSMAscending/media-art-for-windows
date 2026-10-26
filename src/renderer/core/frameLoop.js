@@ -81,7 +81,7 @@ function createFrameLoop({
   const buffers = new FrameBuffers();
   const updateChannelTransition = createChannelTransition();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const fullFrameGrid = {};
+  const artworkGrid = {};
   let channelOverlay = null;
   const renderInterval = 1000 / RENDERING_CONFIG.targetFps;
   const segmentationInterval = 1000 / RENDERING_CONFIG.segmentationFps;
@@ -157,11 +157,27 @@ function createFrameLoop({
 
     const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
     const filters = getFilters ? getFilters() : DEFAULT_FILTERS;
+    // Every mode draws into the same fixed screen beside the side column.
+    const area = getArtworkArea
+      ? getArtworkArea()
+      : { x: 0, y: 0, width: canvasEl.width, height: canvasEl.height };
+    const grid = getFullFrameGrid(
+      area,
+      videoEl.videoWidth,
+      videoEl.videoHeight,
+      fontSz,
+      artworkGrid
+    );
+    if (!grid) {
+      scheduleNextFrame();
+      return;
+    }
+
     try {
       if (!fullFrame) channelOverlay?.hide();
       const stats = fullFrame
-        ? drawFullFrame(mode, fontSz, filters, layers)
-        : drawSilhouetteFrame(mode, fontSz, filters);
+        ? drawFullFrame(mode, grid, filters, layers)
+        : drawSilhouetteFrame(mode, grid, filters);
       if (stats) {
         const fps = Math.round(1000 / (now - lastFrameTime));
         lastFrameTime = now;
@@ -211,17 +227,9 @@ function createFrameLoop({
     return channelOverlay;
   }
 
-  function drawFullFrame(mode, fontSz, filters, layers) {
-    const sourceWidth = videoEl.videoWidth;
-    const sourceHeight = videoEl.videoHeight;
-    const area = getArtworkArea
-      ? getArtworkArea()
-      : { x: 0, y: 0, width: canvasEl.width, height: canvasEl.height };
-    const grid = getFullFrameGrid(area, sourceWidth, sourceHeight, fontSz, fullFrameGrid);
-    if (!grid) return null;
-
+  function drawFullFrame(mode, grid, filters, layers) {
     resizeSampling(grid.cols, grid.rows);
-    const crop = getCoverCrop(sourceWidth, sourceHeight, grid.cols, grid.rows);
+    const crop = getCoverCrop(videoEl.videoWidth, videoEl.videoHeight, grid.cols, grid.rows);
     const pixels = samplePixels(crop, grid.cols, grid.rows, filters);
     const overlay = getChannelOverlay();
     if (mode === 'rgb') {
@@ -234,10 +242,22 @@ function createFrameLoop({
     return { cols: grid.cols, rows: grid.rows, pixelStats: null };
   }
 
-  function drawSilhouetteFrame(mode, fontSz, filters) {
-    const cols = Math.floor(canvasEl.width / fontSz);
-    const rows = Math.floor(canvasEl.height / fontSz);
+  // Faint backdrop so the silhouette modes read as the same fixed screen as the
+  // camera modes even when only a few cells are lit.
+  function drawArtworkBackdrop(grid) {
+    const width = grid.cols * grid.cellSize;
+    const height = grid.rows * grid.cellSize;
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.03)';
+    ctx.fillRect(grid.x, grid.y, width, height);
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(grid.x - 0.5, grid.y - 0.5, width + 1, height + 1);
+  }
+
+  function drawSilhouetteFrame(mode, grid, filters) {
+    const { cols, rows, cellSize: fontSz } = grid;
     resizeSampling(cols, rows);
+    drawArtworkBackdrop(grid);
 
     if (!lastSegmentation || !lastSegmentation.width || !lastSegmentation.height) {
       return null;
@@ -298,6 +318,8 @@ function createFrameLoop({
     if (!hasActivePixels(gridData)) return null;
 
     const activeSeg = { data: gridData, width: cols, height: rows };
+    ctx.save();
+    ctx.translate(grid.x, grid.y);
     ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -311,6 +333,7 @@ function createFrameLoop({
     else if (mode === 'grayscale8bit')
       renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
     else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    ctx.restore();
 
     return { cols, rows, pixelStats: computePixelStats(pixels, gridData, cols, rows) };
   }
