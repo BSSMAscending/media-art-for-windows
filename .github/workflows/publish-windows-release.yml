@@ -1,7 +1,8 @@
 name: Publish Windows release
 
 # Releases come from bump commits on main: a push whose package.json version has
-# no vX.Y.Z tag yet builds the installer, publishes it, then tags that commit.
+# no vX.Y.Z tag yet builds the installer, publishes it with that version's
+# CHANGELOG.md entry as the Release title and notes, then tags that commit.
 # Every other push to main finds the tag already there and skips.
 on:
   push:
@@ -24,7 +25,8 @@ jobs:
     outputs:
       release: ${{ steps.version.outputs.release }}
       tag: ${{ steps.version.outputs.tag }}
-      previous-tag: ${{ steps.version.outputs.previous-tag }}
+      title: ${{ steps.notes.outputs.title }}
+      notes: ${{ steps.notes.outputs.notes }}
 
     steps:
       - name: Check out source
@@ -41,7 +43,6 @@ jobs:
           tag="v$version"
           latest=$(git tag -l 'v[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "previous-tag=${latest:+v$latest}" >> "$GITHUB_OUTPUT"
 
           if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
             echo "$tag is already released; nothing to publish."
@@ -62,6 +63,28 @@ jobs:
           echo "Bump commit found: publishing $tag (previous ${latest:+v$latest})."
           echo "release=true" >> "$GITHUB_OUTPUT"
 
+      # Read before the Windows build so a missing CHANGELOG.md entry fails in seconds.
+      - name: Read release notes from CHANGELOG.md
+        id: notes
+        if: steps.version.outputs.release == 'true'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          if ! title=$(node scripts/changelog.js "${RELEASE_TAG#v}" "$notes_file"); then
+            echo "::error::CHANGELOG.md에 [${RELEASE_TAG#v}] 항목이 없거나 비어 있습니다."
+            exit 1
+          fi
+          delimiter="NOTES_$(openssl rand -hex 8)"
+          {
+            echo "title=$title"
+            echo "notes<<$delimiter"
+            cat "$notes_file"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
   publish:
     name: publish
     needs: detect
@@ -69,13 +92,12 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
-      pull-requests: read
     env:
       RELEASE_TAG: ${{ needs.detect.outputs.tag }}
-      PREVIOUS_TAG: ${{ needs.detect.outputs.previous-tag }}
+      RELEASE_TITLE: ${{ needs.detect.outputs.title }}
+      RELEASE_NOTES: ${{ needs.detect.outputs.notes }}
       RELEASE_REPOSITORY: BSSMAscending/media-art-for-windows-releases
       RELEASE_GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
-      SOURCE_GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Check out bump commit
@@ -117,37 +139,14 @@ jobs:
             throw 'No Windows release artifacts were generated.'
           }
 
-          # Release notes: the body of the PR that merged the bump commit, or
-          # GitHub's generated list of merged PRs when it was pushed directly.
-          $env:GH_TOKEN = $env:SOURCE_GH_TOKEN
-          $pullRequests = @(
-            gh api "repos/$env:GITHUB_REPOSITORY/commits/$env:GITHUB_SHA/pulls" --paginate |
-              ConvertFrom-Json
-          )
-          $bumpPullRequest = $pullRequests |
-            Where-Object { $_.base.ref -eq 'main' -and $_.merged_at -and $_.merge_commit_sha -eq $env:GITHUB_SHA } |
-            Select-Object -First 1
-          $notes = $bumpPullRequest.body
-          if ([string]::IsNullOrWhiteSpace($notes)) {
-            $notesArgs = @('-f', "tag_name=$env:RELEASE_TAG", '-f', "target_commitish=$env:GITHUB_SHA")
-            if ($env:PREVIOUS_TAG) {
-              $notesArgs += @('-f', "previous_tag_name=$env:PREVIOUS_TAG")
-            }
-            $notes = gh api "repos/$env:GITHUB_REPOSITORY/releases/generate-notes" @notesArgs --jq '.body'
-            if ($LASTEXITCODE -ne 0) {
-              throw 'Could not generate release notes.'
-            }
-            $notes = $notes -join "`n"
-          }
-
+          # Title and notes come from this version's CHANGELOG.md entry (detect job).
           $releaseNotesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
-          Set-Content -LiteralPath $releaseNotesPath -Value $notes -NoNewline
-          $releaseTitle = "$env:RELEASE_TAG Busan Mathematical Culture Center – Media Art"
+          Set-Content -LiteralPath $releaseNotesPath -Value $env:RELEASE_NOTES -NoNewline
 
           $env:GH_TOKEN = $env:RELEASE_GH_TOKEN
           gh release view $env:RELEASE_TAG --repo $env:RELEASE_REPOSITORY 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:RELEASE_TAG --repo $env:RELEASE_REPOSITORY --title $releaseTitle --notes-file $releaseNotesPath
+            gh release create $env:RELEASE_TAG --repo $env:RELEASE_REPOSITORY --title $env:RELEASE_TITLE --notes-file $releaseNotesPath
             if ($LASTEXITCODE -ne 0) {
               throw "Could not create $env:RELEASE_TAG in $env:RELEASE_REPOSITORY."
             }

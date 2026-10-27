@@ -58,4 +58,9 @@ jobs:
             exit 1
           fi
 
-          echo "::notice::병합하면 v$version 이 배포됩니다. 이 PR 본문이 Release 본문이 됩니다."
+          if ! title=$(node scripts/changelog.js "$version"); then
+            echo "::error::CHANGELOG.md에 '## [$version] - 날짜' 항목을 추가해주세요. 이 항목이 Release 본문이 됩니다."
+            exit 1
+          fi
+
+          echo "::notice::병합하면 '$title' Release로 배포됩니다. 본문은 CHANGELOG.md의 [$version] 항목입니다."
