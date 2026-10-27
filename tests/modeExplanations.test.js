@@ -24,14 +24,16 @@ const VIEWS = [
 
 describe('mode explanations', () => {
   it.each(VIEWS)(
-    'gives %s (%s) a headline, one short line, terms and an animation',
+    'gives %s (%s) a headline, one short line, terms and an animation in both languages',
     (mode, option) => {
       const explanation = getModeExplanation(mode, option);
-      expect(explanation.title).toBeTruthy();
-      expect(explanation.headline).toBeTruthy();
+      for (const field of ['title', 'headline', 'body']) {
+        expect(explanation[field].ko).toBeTruthy();
+        expect(explanation[field].en).toBeTruthy();
+      }
       // Visitors take this in at a glance, so the copy stays one short line.
-      expect(typeof explanation.body).toBe('string');
-      expect(explanation.body.length).toBeLessThanOrEqual(45);
+      expect(explanation.body.ko.length).toBeLessThanOrEqual(45);
+      expect(explanation.body.en.length).toBeLessThanOrEqual(64);
       expect(explanation.terms.length).toBeGreaterThan(0);
       expect(explanation.animation.type).toBeTruthy();
     }
@@ -47,9 +49,11 @@ describe('mode explanations', () => {
   });
 
   it('names the selected light in each channel view', () => {
-    expect(getModeExplanation('rgb', 'R').headline).toContain('빨간');
-    expect(getModeExplanation('rgb', 'G').headline).toContain('초록');
-    expect(getModeExplanation('rgb', 'B').headline).toContain('파란');
+    expect(getModeExplanation('rgb', 'R').headline).toMatchObject({
+      ko: expect.stringContaining('빨간'),
+    });
+    expect(getModeExplanation('rgb', 'G').headline.en).toContain('green');
+    expect(getModeExplanation('rgb', 'B').headline.en).toContain('blue');
   });
 
   it('returns null for modes without a metaphor card', () => {
@@ -76,6 +80,7 @@ describe('explanation helpers', () => {
   });
 
   it('reports the live grid as a cell count', () => {
-    expect(formatGridMetric(74, 41)).toBe('지금 화면 = 가로 74칸 × 세로 41칸 = 3,034칸');
+    expect(formatGridMetric(74, 41, 'ko')).toBe('지금 화면 = 가로 74칸 × 세로 41칸 = 3,034칸');
+    expect(formatGridMetric(74, 41, 'en')).toBe('Now: 74 × 41 cells = 3,034 cells');
   });
 });
