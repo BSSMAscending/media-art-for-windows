@@ -34,12 +34,29 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 - [Electron 업데이트 가이드](https://www.electronjs.org/docs/latest/tutorial/updates)
 - [Electron 배포 및 업데이트 튜토리얼](https://www.electronjs.org/docs/latest/tutorial/tutorial-publishing-updating)
 
-## 배포 순서
+## 브랜치와 배포 순서
 
-1. `package.json`의 버전을 변경해 `dev`에 병합합니다.
-2. `dev`에서 `release: vX.Y.Z` 제목의 PR을 `main`으로 병합합니다.
-3. 병합된 `main` 커밋에 `vX.Y.Z` 태그를 푸시합니다.
+작업 브랜치는 `main`에서 만들고 `main`으로 PR을 보냅니다. 병합해도 `package.json` 버전이 그대로면 배포되지 않고, `build-windows-development.yml`이 확인용 설치 파일만 Actions 아티팩트로 만듭니다.
 
-태그 푸시의 `publish-windows-release.yml`은 Windows에서 `npm install`, `npm run make -- --platform=win32 --arch=x64`를 실행하고 `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release에 업로드합니다. 생성되는 Release의 제목은 `vX.Y.Z Busan Mathematical Culture Center – Media Art`이며, 본문은 해당 태그 커밋의 `dev` → `main` release PR 본문을 그대로 사용합니다.
+배포는 버전을 올리는 **bump 커밋**으로 합니다.
+
+1. `main`에서 브랜치를 만들고 버전을 올립니다. `package.json`과 `package-lock.json`이 함께 바뀝니다.
+
+   ```bash
+   npm version patch --no-git-tag-version   # 1.0.2 → 1.0.3 (minor, major도 가능)
+   git commit -am "chore: bump version to v1.0.3"
+   ```
+
+   `--no-git-tag-version`을 빼면 npm이 로컬 태그와 `1.0.3` 메시지 커밋을 만들고, 이 메시지는 commitlint를 통과하지 못합니다. 태그는 배포 워크플로가 붙입니다.
+2. `main`으로 PR을 엽니다. **PR 본문이 Release 본문이 됩니다.** `Validate version bump` 검사가 버전 형식(`X.Y.Z`), `package-lock.json` 일치, 기존 태그보다 높은지 확인합니다.
+3. PR을 병합하면 `publish-windows-release.yml`이 배포합니다.
+
+`publish-windows-release.yml`은 `main`에 푸시될 때마다 실행되지만, 배포 여부는 커밋 메시지가 아니라 버전으로 판단합니다. `package.json` 버전의 `vX.Y.Z` 태그가 이미 있으면 아무것도 하지 않고, 없을 때만 다음을 진행합니다.
+
+1. Windows에서 `npm install`, `npm run make -- --platform=win32 --arch=x64`를 실행합니다.
+2. `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release `vX.Y.Z Busan Mathematical Culture Center – Media Art`에 업로드합니다. 본문은 bump 커밋을 병합한 PR 본문이고, PR 없이 직접 푸시했으면 GitHub이 이전 태그 이후 병합된 PR 목록으로 만든 노트입니다.
+3. 마지막으로 그 커밋에 `vX.Y.Z` 태그를 붙입니다.
+
+태그를 업로드가 끝난 뒤에 붙이므로, 중간에 실패하면 태그가 남지 않습니다. Actions의 `Publish Windows release`에서 다시 실행하거나 다음 `main` 푸시 때 다시 배포를 시도합니다. 손으로 `v*` 태그를 푸시해도 배포는 일어나지 않습니다.
 
 현재 Windows 코드 서명 인증서는 사용하지 않습니다. 따라서 설치 또는 업데이트 실행 시 Microsoft SmartScreen 경고가 표시될 수 있으며, 자동 업데이트 구현만으로 이 경고는 제거되지 않습니다.
