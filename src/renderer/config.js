@@ -7,7 +7,7 @@ function toLocalURL(relPath) {
 }
 
 // 기본 칸(문자) 크기(px). 전시 화면에서는 칸 크기 레버로 CELL_SIZES 사이를 고릅니다.
-const FONT_SIZE = 16;
+const FONT_SIZE = 24;
 const CELL_SIZES = [8, 12, 16, 20, 24, 32, 40, 48];
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
