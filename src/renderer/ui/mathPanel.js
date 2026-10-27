@@ -1,9 +1,14 @@
 const { mathDescriptions } = require('../data/mathDescriptions');
 const { getModeExplanation } = require('../data/modeExplanations');
 const { createExplainAnimation } = require('./explainAnimations');
+const { t, getLanguage } = require('../i18n');
 
-function formatGridMetric(cols, rows) {
-  const count = (value) => `${value.toLocaleString('ko-KR')}칸`;
+function formatGridMetric(cols, rows, language = getLanguage()) {
+  const number = (value) => value.toLocaleString(language === 'en' ? 'en-US' : 'ko-KR');
+  if (language === 'en') {
+    return `Now: ${number(cols)} × ${number(rows)} cells = ${number(cols * rows)} cells`;
+  }
+  const count = (value) => `${number(value)}칸`;
   return `지금 화면 = 가로 ${count(cols)} × 세로 ${count(rows)} = ${count(cols * rows)}`;
 }
 
@@ -19,7 +24,6 @@ function element(tag, className, text) {
 function createMathPanel(container = document.body, detailContainer = container) {
   const panel = element('div', 'math-panel');
   panel.id = 'mathPanel';
-  panel.setAttribute('aria-label', '현재 선택한 미디어 아트 모드');
   const content = element('div', 'explain-content');
   content.setAttribute('aria-live', 'polite');
   panel.appendChild(content);
@@ -40,7 +44,7 @@ function createMathPanel(container = document.body, detailContainer = container)
   // Rebuilds the card only when the view changes so the animation keeps looping.
   // `amount` is the 수학 처리 lever value its example calculates with.
   function updateMode(modeKey, option, amount) {
-    const key = `${modeKey}:${option}`;
+    const key = `${modeKey}:${option}:${getLanguage()}`;
     if (key === currentKey) return;
     currentKey = key;
     currentMode = modeKey;
@@ -48,9 +52,9 @@ function createMathPanel(container = document.body, detailContainer = container)
     const explanation = getModeExplanation(modeKey, option);
     if (!explanation) {
       const desc = mathDescriptions[modeKey] || {};
-      fallbackMetric = desc.metric || desc.colorDepth || '';
-      content.replaceChildren(element('div', 'explain-title', desc.title || modeKey));
-      text.replaceChildren(element('p', 'explain-body', desc.shortDesc || desc.desc || ''));
+      fallbackMetric = t(desc.metric || desc.colorDepth || '');
+      content.replaceChildren(element('div', 'explain-title', t(desc.title) || modeKey));
+      text.replaceChildren(element('p', 'explain-body', t(desc.shortDesc || desc.desc || '')));
       metric.textContent = fallbackMetric;
       return;
     }
@@ -61,13 +65,15 @@ function createMathPanel(container = document.body, detailContainer = container)
     animation = createExplainAnimation({ ...explanation.animation, amount });
     if (animation) visual.appendChild(animation);
     const terms = element('div', 'explain-terms');
-    explanation.terms.forEach((term) => terms.appendChild(element('span', 'explain-term', term)));
+    explanation.terms.forEach((term) =>
+      terms.appendChild(element('span', 'explain-term', t(term)))
+    );
     content.replaceChildren(
-      element('div', 'explain-title', explanation.title),
-      element('div', 'explain-headline', explanation.headline),
+      element('div', 'explain-title', t(explanation.title)),
+      element('div', 'explain-headline', t(explanation.headline)),
       visual
     );
-    text.replaceChildren(element('p', 'explain-body', explanation.body), terms);
+    text.replaceChildren(element('p', 'explain-body', t(explanation.body)), terms);
     metric.textContent = '';
   }
 

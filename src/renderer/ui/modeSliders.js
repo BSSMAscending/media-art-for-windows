@@ -1,3 +1,5 @@
+const { t } = require('../i18n');
+
 // Big touch levers for the centred control block. A spec either steps through a
 // fixed list of `values` or spans `min`..`max` by `step`, and always writes the
 // chosen value to `state[spec.stateKey]`.
@@ -12,7 +14,7 @@ function element(tag, className, text) {
 function createSlider(spec, state, onChange) {
   const root = element('label', 'mode-slider');
   const output = element('output', 'mode-slider-value');
-  const head = element('span', 'mode-slider-label', spec.label);
+  const head = element('span', 'mode-slider-label', t(spec.label));
   head.appendChild(output);
 
   const input = element('input', 'mode-slider-input');
@@ -25,7 +27,7 @@ function createSlider(spec, state, onChange) {
   input.value = String(values ? Math.max(0, values.indexOf(current)) : current);
 
   const ends = element('span', 'mode-slider-ends');
-  spec.ends.forEach((end) => ends.appendChild(element('span', '', end)));
+  spec.ends.forEach((end) => ends.appendChild(element('span', '', t(end))));
   const lowEnd = ends.firstChild;
   let floor = Number(input.min);
 
@@ -34,7 +36,7 @@ function createSlider(spec, state, onChange) {
     return values ? values[position] : position;
   }
   function show(value) {
-    output.textContent = spec.format(value);
+    output.textContent = t(spec.format(value));
     input.setAttribute('aria-valuetext', output.textContent);
   }
 
@@ -62,7 +64,7 @@ function createSlider(spec, state, onChange) {
     const span = Number(input.max) - Number(input.min);
     root.style.setProperty('--floor', `${((floor - Number(input.min)) / span) * 100}%`);
     root.classList.toggle('has-floor', floor > Number(input.min));
-    lowEnd.textContent = note || spec.ends[0];
+    lowEnd.textContent = t(note || spec.ends[0]);
     if (Number(input.value) < floor) {
       input.value = String(floor);
       commit();

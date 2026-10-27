@@ -7,6 +7,7 @@ const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const { createMagnifier } = require('./ui/magnifier');
+const { t, getLanguage, setLanguage, onLanguageChange } = require('./i18n');
 const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
@@ -51,9 +52,72 @@ const MODES = [
   'color4k',
 ];
 
-function showError(message) {
+const ERRORS = {
+  modelFailed: { ko: 'AI 모델 로딩 실패: ', en: 'Could not load the AI model: ' },
+  modelLoading: {
+    ko: 'AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.',
+    en: 'The AI model is still loading. Please try again shortly.',
+  },
+  camera: {
+    ko: '카메라에 접근할 수 없습니다. 카메라 권한을 확인해보세요.',
+    en: 'Cannot open the camera. Please check the camera permission.',
+  },
+};
+
+// Text that lives in index.html, keyed by selector; `attr` targets an attribute.
+const STATIC_TEXT = [
+  {
+    selector: '#modeCue',
+    text: { ko: '보고 싶은 모드를 선택해주세요', en: 'Choose a mode to explore' },
+  },
+  {
+    selector: '.magnifier-hint',
+    text: {
+      ko: '화면을 꾹 누르고 있으면 돋보기로 크게 보여요',
+      en: 'Press and hold the picture to magnify it',
+    },
+  },
+  { selector: '#restartUpdateButton', text: { ko: '지금 재시작', en: 'Restart now' } },
+  { selector: '#laterUpdateButton', text: { ko: '나중에', en: 'Later' } },
+  { selector: '#languageToggle', attr: 'aria-label', text: { ko: '언어', en: 'Language' } },
+  {
+    selector: '#liveModeButtons',
+    attr: 'aria-label',
+    text: { ko: '미디어 아트 모드 선택', en: 'Choose a mode' },
+  },
+  { selector: '.mode-sliders', attr: 'aria-label', text: { ko: '레버', en: 'Levers' } },
+  {
+    selector: '#panelCards',
+    attr: 'aria-label',
+    text: { ko: '미디어 아트 안내 카드', en: 'About this view' },
+  },
+  {
+    selector: '#modeControls',
+    attr: 'aria-label',
+    text: { ko: '미디어 아트 모드 컨트롤', en: 'Controls' },
+  },
+  {
+    selector: '#detailCard',
+    attr: 'aria-label',
+    text: { ko: '원리 더 알아보기', en: 'How it works' },
+  },
+];
+
+function applyStaticText() {
+  for (const { selector, attr, text } of STATIC_TEXT) {
+    const el = document.querySelector(selector);
+    if (!el) continue;
+    if (attr) el.setAttribute(attr, t(text));
+    else el.textContent = t(text);
+  }
+}
+
+let lastError = null;
+
+function showError(message, detail = '') {
+  lastError = { message, detail };
   const el = document.getElementById('errorText');
-  el.textContent = message;
+  el.textContent = t(message) + detail;
   el.style.display = 'block';
 }
 
@@ -87,12 +151,13 @@ function layoutMagnifierArea(canvasEl) {
 }
 
 function renderModeButtons(container, onSelect) {
+  container.replaceChildren();
   MODE_OPTIONS.forEach((option) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'mode-button';
     button.dataset.mode = option.key;
-    button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
+    button.innerHTML = `<span>${t(option.label)}</span><small>${t(option.caption)}</small>`;
     button.addEventListener('click', () => onSelect(option.key));
     container.appendChild(button);
   });
@@ -111,11 +176,11 @@ function renderModeOptions(onSelect) {
   grid.replaceChildren();
   container.classList.toggle('has-options', Boolean(subOptions));
   if (!subOptions) {
-    label.textContent = MODE_HINTS[state.selectedVersion] || '';
+    label.textContent = t(MODE_HINTS[state.selectedVersion]) || '';
     return;
   }
 
-  label.textContent = subOptions.label;
+  label.textContent = t(subOptions.label);
   subOptions.options.forEach((option) => {
     const button = document.createElement('button');
     const isSelected = state[subOptions.stateKey] === option.value;
@@ -127,7 +192,7 @@ function renderModeOptions(onSelect) {
       button.classList.add('has-swatch');
       button.style.setProperty('--option-swatch', option.swatch);
     }
-    button.innerHTML = `<span>${option.label}</span><small>${option.caption}</small>`;
+    button.innerHTML = `<span>${t(option.label)}</span><small>${t(option.caption)}</small>`;
     button.addEventListener('click', () => onSelect(subOptions, option.value));
     grid.appendChild(button);
   });
@@ -142,7 +207,7 @@ function renderModeSlider(mathPanel) {
   slot.replaceChildren(
     spec
       ? createSlider(spec, state, (value) => mathPanel.updateAmount(value))
-      : createSliderHint(MODE_SLIDER_HINTS[state.selectedVersion] || '')
+      : createSliderHint(t(MODE_SLIDER_HINTS[state.selectedVersion]) || '')
   );
 }
 
@@ -175,22 +240,51 @@ function setupUpdateNotice() {
     notice.style.display = 'none';
   });
 
-  ipcRenderer.on('update-status', (_event, update) => {
-    const version = update.version ? ` ${update.version}` : '';
+  let lastUpdate = null;
+  function render() {
+    if (!lastUpdate) return;
+    const version = lastUpdate.version ? ` ${lastUpdate.version}` : '';
     notice.style.display = 'block';
 
-    if (update.status === 'downloading') {
-      title.textContent = `새 버전${version} 다운로드 중입니다`;
-      detail.textContent = '작품은 계속 사용할 수 있습니다.';
+    if (lastUpdate.status === 'downloading') {
+      title.textContent = t({
+        ko: `새 버전${version} 다운로드 중입니다`,
+        en: `Downloading new version${version}`,
+      });
+      detail.textContent = t({
+        ko: '작품은 계속 사용할 수 있습니다.',
+        en: 'You can keep using the artwork.',
+      });
       actions.style.display = 'none';
       return;
     }
 
-    if (update.status === 'downloaded') {
-      title.textContent = `새 버전${version} 다운로드가 완료되었습니다`;
-      detail.textContent = '지금 재시작하면 업데이트가 적용됩니다.';
+    if (lastUpdate.status === 'downloaded') {
+      title.textContent = t({
+        ko: `새 버전${version} 다운로드가 완료되었습니다`,
+        en: `New version${version} is ready`,
+      });
+      detail.textContent = t({
+        ko: '지금 재시작하면 업데이트가 적용됩니다.',
+        en: 'Restart now to apply the update.',
+      });
       actions.style.display = 'flex';
     }
+  }
+
+  ipcRenderer.on('update-status', (_event, update) => {
+    lastUpdate = update;
+    render();
+  });
+  return { render };
+}
+
+// 한국어 / English buttons in the centred control block.
+function renderLanguageToggle() {
+  document.querySelectorAll('#languageToggle [data-lang]').forEach((button) => {
+    const isSelected = button.dataset.lang === getLanguage();
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
   });
 }
 
@@ -207,15 +301,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
 
-  setupUpdateNotice();
+  const updateNotice = setupUpdateNotice();
 
-  renderModeButtons(document.getElementById('liveModeButtons'), (mode) => {
+  const onModeSelect = (mode) => {
     selectMode(state, mode);
     updateModeUI(mathPanel);
+  };
+  const renderControls = () => {
+    renderModeButtons(document.getElementById('liveModeButtons'), onModeSelect);
+    cellSizeLever = createSlider(CELL_SIZE_SLIDER, state);
+    document.getElementById('cellSizeSlider').replaceChildren(cellSizeLever);
+    updateModeUI(mathPanel);
+    applyStaticText();
+    renderLanguageToggle();
+  };
+  document.querySelectorAll('#languageToggle [data-lang]').forEach((button) => {
+    button.addEventListener('click', () => setLanguage(button.dataset.lang));
   });
-  cellSizeLever = createSlider(CELL_SIZE_SLIDER, state);
-  document.getElementById('cellSizeSlider').appendChild(cellSizeLever);
-  updateModeUI(mathPanel);
+  // The view, its options and lever values stay; only the words change.
+  onLanguageChange(() => {
+    renderControls();
+    updateNotice.render();
+    if (lastError) showError(lastError.message, lastError.detail);
+  });
+  renderControls();
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
 
@@ -256,13 +365,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel);
   } catch (err) {
     console.error('Failed to load model:', err);
-    showError('AI 모델 로딩 실패: ' + (err.message || err));
+    showError(ERRORS.modelFailed, String(err.message || err));
   }
 });
 
 async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
   if (!state.model) {
-    showError('AI 모델이 아직 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+    showError(ERRORS.modelLoading);
     return;
   }
 
@@ -310,6 +419,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
     state.loop.start();
   } catch (err) {
     console.error('Camera access failed:', err);
-    showError('카메라에 접근할 수 없습니다. 카메라 권한을 확인해보세요.');
+    showError(ERRORS.camera);
   }
 }

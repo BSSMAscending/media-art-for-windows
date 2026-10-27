@@ -16,7 +16,7 @@
 
     <!-- Press and hold anywhere on the artwork to magnify it (#40). -->
     <div id="magnifierArea" class="magnifier-area">
-      <span class="magnifier-hint">화면을 꾹 누르고 있으면 돋보기로 크게 보여요</span>
+      <span class="magnifier-hint"></span>
     </div>
 
     <div id="errorText" class="error-text" style="display: none"></div>
@@ -30,10 +30,8 @@
           id="restartUpdateButton"
           class="update-notice__button update-notice__button--primary"
           type="button"
-        >
-          지금 재시작
-        </button>
-        <button id="laterUpdateButton" class="update-notice__button" type="button">나중에</button>
+        ></button>
+        <button id="laterUpdateButton" class="update-notice__button" type="button"></button>
       </div>
     </aside>
 
@@ -42,7 +40,13 @@
 
       <!-- Every touch control sits in the vertical middle of the screen, easiest to reach. -->
       <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
-        <div class="mode-cue">보고 싶은 모드를 선택해주세요</div>
+        <div class="mode-cue-row">
+          <div id="modeCue" class="mode-cue"></div>
+          <div id="languageToggle" class="language-toggle" role="group">
+            <button type="button" data-lang="ko" lang="ko">한국어</button>
+            <button type="button" data-lang="en" lang="en">English</button>
+          </div>
+        </div>
         <div
           id="liveModeButtons"
           class="mode-button-grid mode-button-grid--live"
