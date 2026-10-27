@@ -33,7 +33,7 @@ const modeExplanations = {
       N: {
         title: '빛 세 가지로 만든 색',
         headline: '빨강 · 초록 · 파랑 손전등 세 개',
-        body: '칸마다 R · G · B 세 숫자가 있어요. 칸을 키우면 보여요.',
+        body: '칸마다 R · G · B 세 숫자가 있어요. 세 빛을 섞은 색이에요.',
         terms: ['빛의 삼원색', '256 × 256 × 256 ≈ 1,677만 색'],
         animation: { type: 'light-mix' },
       },

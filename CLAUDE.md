@@ -30,7 +30,7 @@ This is an Electron application called "Binary Media Art" that creates real-time
    - `rgb` (색 RGB): The camera sampled into numbered pixel cells, drawn as additive WebGL R/G/B layers; each cell shows its 0-255 value for the selected light, or all three stacked values in the full colour once cells are 24px or larger. The mode button opens the full colour, R/G/B buttons split the layers apart (1.8s transition) and a second tap on the selected light returns to the full colour (`data/modeOptions.js`)
    - `levels` (밝기 단계): The camera sampled into numbered pixel cells quantized to 2, 10 or 256 brightness steps; in 2단계 the black/white threshold (0-255) is set with a lever
    - Pixels everywhere: there is no camera-quality view; cells too small for readable digits (< 7px font) stay plain colour
-   - Levers (`ui/modeSliders.js`): a two-slot row under the option buttons. Left: cell size (`CELL_SIZES` in `config.js`, all modes). Right: the view's own lever (`getModeSlider`), or a hint that keeps the slot in place
+   - Levers (`ui/modeSliders.js`): a two-slot row under the option buttons. Left: cell size (`CELL_SIZES` in `config.js`, all modes, default 24px; floored at 24px in the combined RGB view so its three numbers always fit, `getCellSizeFloor`). Right: the view's own lever (`getModeSlider`), or a hint that keeps the slot in place
    - All touch controls sit in one block at exactly mid screen height in the side column; the explanation is split into equal cards above and below it
    - Every mode draws in the same fixed screen left of the side column (whole camera frame fitted to whole cells); `rgb` and `levels` skip segmentation
    - There are no F-key filter controls; touch buttons pick views and the two levers adjust them

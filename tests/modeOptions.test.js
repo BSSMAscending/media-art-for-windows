@@ -2,6 +2,8 @@ const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
   CELL_SIZE_SLIDER,
+  COLOR_VALUE_CELL_SIZE,
+  getCellSizeFloor,
   THRESHOLD_SLIDER,
   MODE_SLIDER_HINTS,
   getModeSlider,
@@ -73,6 +75,25 @@ describe('levers', () => {
     expect(getModeSlider({ selectedVersion: 'levels', levels: 10 })).toBeNull();
     expect(getModeSlider({ selectedVersion: 'rgb', levels: 2 })).toBeNull();
     expect([THRESHOLD_SLIDER.min, THRESHOLD_SLIDER.max]).toEqual([0, 255]);
+  });
+
+  it('keeps the combined RGB view at sizes where three numbers fit', () => {
+    expect(COLOR_VALUE_CELL_SIZE).toBe(24);
+    expect(getCellSizeFloor({ selectedVersion: 'rgb', rgbChannel: 'N' })).toEqual({
+      size: 24,
+      note: '전체 색은 24px부터',
+    });
+    for (const view of [
+      { selectedVersion: 'rgb', rgbChannel: 'R' },
+      { selectedVersion: 'levels', rgbChannel: 'N' },
+      { selectedVersion: 'original', rgbChannel: 'N' },
+    ]) {
+      expect(getCellSizeFloor(view)).toEqual({ size: CELL_SIZE_SLIDER.values[0], note: null });
+    }
+  });
+
+  it('starts at a size where every view shows its numbers', () => {
+    expect(FONT_SIZE).toBeGreaterThanOrEqual(COLOR_VALUE_CELL_SIZE);
   });
 
   it('gives every mode a hint for the lever slot it does not use', () => {
