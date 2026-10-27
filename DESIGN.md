@@ -139,6 +139,11 @@ All spacing derives from a base of `4px`.
 - **Structure**: the artwork area is a press-and-hold target with a quiet hint chip below the picture (`화면을 꾹 누르고 있으면 돋보기로 크게 보여요`). Holding shows a round lens (`clamp(15rem, 18vw, 22rem)`, cyan border and glow, `× 3` badge) and a cyan ring on the magnified spot.
 - **Behaviour**: fixed 3× zoom; the lens floats 28px above the finger (below it near the top edge), follows while held and disappears on release. The side column is never covered by the touch area.
 
+### Language Switch
+
+- **Structure**: a pill with `한국어` and `English` buttons at the right of the control block's first row; the cue fills the rest of the row.
+- **Behaviour**: switching changes every visible word but keeps the mode, options and lever values; the control block keeps its height in both languages. The app starts in Korean.
+
 ### Levers
 
 - **Structure**: two equal slots side by side at the bottom of the centred control block. Each lever has a label with its live value, a range input with a large round thumb, and end labels.
