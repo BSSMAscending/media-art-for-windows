@@ -214,7 +214,7 @@ function createFrameLoop({
       renderRgb(ctx, overlay, grid, pixels, getRgbChannel ? getRgbChannel() : 'N', layers);
     } else if (mode === 'levels') {
       renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels);
-      overlay.renderFlat(grid, { pixels: buffers.levelPixels });
+      overlay.renderFlat(grid, buffers.levelPixels);
     }
 
     return { cols: grid.cols, rows: grid.rows, pixelStats: null };

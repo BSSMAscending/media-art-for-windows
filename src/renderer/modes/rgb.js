@@ -57,7 +57,7 @@ function drawColorValues(ctx, grid, pixels) {
 }
 
 function renderRgb(ctx, overlay, grid, pixels, channel, layers) {
-  overlay.renderLayers(grid, { pixels }, layers);
+  overlay.renderLayers(grid, pixels, layers);
   // Numbers appear only after the layers have settled into place.
   if (layers.active) return;
   if (channel === 'N') drawColorValues(ctx, grid, pixels);
