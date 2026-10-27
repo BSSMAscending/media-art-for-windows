@@ -136,7 +136,7 @@ npm run lint
 - **카메라 해상도**: [src/renderer/core/camera.js](src/renderer/core/camera.js)에서 `640×480`을 요청합니다.
 - **숨은 모드**: 키보드 `5`~`9`는 예전 모드(부산 수학문화관, 픽셀 수치, RGB, 8비트 회색, 4비트 컬러)입니다.
 - **배포**: `package.json` 버전을 올리는 bump 커밋과 [CHANGELOG.md](CHANGELOG.md) 새 항목을 함께 `main`에 병합하면 배포됩니다. 자세한 순서는 [docs/windows-distribution.md](docs/windows-distribution.md)에 있습니다.
-- **소개 사이트**: [site/](site/)의 페이지와 README 스크린샷, `CHANGELOG.md`로 만든 패치노트를 `npm run site`가 `_site/`에 묶습니다. `main`에 병합하면 `.github/workflows/pages.yml`이 GitHub Pages에 올립니다.
+- **소개 사이트**: [site/](site/)의 페이지와 README 스크린샷, `CHANGELOG.md`(영어는 `CHANGELOG.en.md`)로 만든 패치노트를 `npm run site`가 `_site/`에 묶습니다. 한국어 / English와 밝은 / 어두운 화면을 고를 수 있습니다. `main`에 병합하면 `.github/workflows/pages.yml`이 GitHub Pages에 올립니다.
 
 ### 코드 구조
 
