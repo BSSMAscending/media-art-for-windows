@@ -6,6 +6,7 @@ const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
+const { createMagnifier } = require('./ui/magnifier');
 const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
@@ -34,6 +35,7 @@ const state = {
   cellSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
+  magnifier: null,
 };
 
 const MODES = [
@@ -63,6 +65,24 @@ function resizeCanvases(canvasEl, bgCanvasEl) {
   canvasEl.height = height;
   bgCanvasEl.width = width;
   bgCanvasEl.height = height;
+}
+
+function getStageArtworkArea(canvasEl) {
+  return getArtworkArea(
+    canvasEl.clientWidth,
+    canvasEl.clientHeight,
+    document.getElementById('sideColumn').getBoundingClientRect()
+  );
+}
+
+// The magnifier's touch area covers exactly the artwork, never the side column.
+function layoutMagnifierArea(canvasEl) {
+  const area = getStageArtworkArea(canvasEl);
+  const el = document.getElementById('magnifierArea');
+  el.style.left = `${area.x}px`;
+  el.style.top = `${area.y}px`;
+  el.style.width = `${area.width}px`;
+  el.style.height = `${area.height}px`;
 }
 
 function renderModeButtons(container, onSelect) {
@@ -193,6 +213,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
 
+  const magnifierArea = document.getElementById('magnifierArea');
+  canvasEl.dataset.smooth = 'true';
+  state.magnifier = createMagnifier({
+    area: magnifierArea,
+    getLayers: () =>
+      [document.querySelector('#visualStage .channel-overlay'), canvasEl].filter(Boolean),
+    getArtworkRect: () => magnifierArea.getBoundingClientRect(),
+  });
+  layoutMagnifierArea(canvasEl);
+
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -212,6 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('resize', () => {
     resizeCanvases(canvasEl, bgCanvasEl);
+    layoutMagnifierArea(canvasEl);
   });
 
   try {
@@ -261,16 +292,12 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getLevels: () => state.levels,
       getThreshold: () => state.threshold,
       getMathSettings: () => getMathSettings(state),
-      getArtworkArea: () =>
-        getArtworkArea(
-          canvasEl.clientWidth,
-          canvasEl.clientHeight,
-          document.getElementById('sideColumn').getBoundingClientRect()
-        ),
+      getArtworkArea: () => getStageArtworkArea(canvasEl),
       getCellSize: () => state.cellSize,
       onStats: (stats) => {
         mathPanel.update(stats);
       },
+      onDrawn: () => state.magnifier?.render(),
       // 손하트 감지 및 안내 패널 호출은 현재 비활성화했습니다.
       // onGesture: () => heartOverlay.show(),
     });

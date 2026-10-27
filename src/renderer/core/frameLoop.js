@@ -62,6 +62,7 @@ function createFrameLoop({
   getArtworkArea,
   getCellSize,
   onStats,
+  onDrawn,
 }) {
   let rafId = null;
   let isRunning = false;
@@ -170,6 +171,8 @@ function createFrameLoop({
     try {
       if (!fullFrame) channelOverlay?.hide();
       const stats = fullFrame ? drawFullFrame(mode, grid, layers) : drawSilhouetteFrame(mode, grid);
+      // Read the canvases now, before the browser presents and clears the WebGL frame.
+      onDrawn?.();
       if (stats) {
         const fps = Math.round(1000 / (now - lastFrameTime));
         lastFrameTime = now;
