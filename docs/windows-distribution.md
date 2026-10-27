@@ -57,6 +57,8 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 2. `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release `vX.Y.Z Busan Mathematical Culture Center – Media Art`에 업로드합니다. 본문은 bump 커밋을 병합한 PR 본문이고, PR 없이 직접 푸시했으면 GitHub이 이전 태그 이후 병합된 PR 목록으로 만든 노트입니다.
 3. 마지막으로 그 커밋에 `vX.Y.Z` 태그를 붙입니다.
 
-태그를 업로드가 끝난 뒤에 붙이므로, 중간에 실패하면 태그가 남지 않습니다. Actions의 `Publish Windows release`에서 다시 실행하거나 다음 `main` 푸시 때 다시 배포를 시도합니다. 손으로 `v*` 태그를 푸시해도 배포는 일어나지 않습니다.
+태그를 업로드가 끝난 뒤에 붙이므로, 중간에 실패하면 태그가 남지 않습니다. Actions의 `Publish Windows release`에서 다시 실행하거나 다음 `main` 푸시 때 다시 배포를 시도합니다.
+
+`v*` 태그는 손으로 푸시하지 않습니다. 워크플로는 태그가 있는 버전을 이미 배포된 것으로 보므로, 배포 전에 태그를 먼저 붙이면 그 버전은 배포되지 않습니다.
 
 현재 Windows 코드 서명 인증서는 사용하지 않습니다. 따라서 설치 또는 업데이트 실행 시 Microsoft SmartScreen 경고가 표시될 수 있으며, 자동 업데이트 구현만으로 이 경고는 제거되지 않습니다.
