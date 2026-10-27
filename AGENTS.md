@@ -22,9 +22,15 @@ MediaPipe Tasks Vision, and Canvas rendering.
 - `src/preload.js` — renderer preload entry point.
 - `src/renderer/renderer.js` — camera startup, UI state, controls, and the
   frame-loop integration.
-- `src/renderer/core/` — camera access, segmentation, filters, hand gestures,
+- `src/renderer/core/` — camera access, segmentation, hand gestures,
   and frame processing.
-- `src/renderer/modes/` — visualization-specific Canvas renderers.
+- `src/renderer/modes/` — visualization-specific Canvas renderers. `rgb.js` and
+  `levels.js` draw full-camera modes over the WebGL layer in
+  `core/channelOverlay.js`; `rgbTransition.js` animates the R/G/B layer split.
+- `src/renderer/core/renderGeometry.js` — artwork area beside the side column,
+  full-frame grid fitting, and RGB layer projection bounds.
+- `src/renderer/data/modeExplanations.js` — metaphor copy for the explanation
+  card; `src/renderer/ui/explainAnimations.js` builds its CSS animations.
 - `src/renderer/ui/` — information, mathematics, education, background, and
   gesture overlay UI.
 - `src/renderer/index.html` and `src/renderer/index.css` — renderer markup and
@@ -37,6 +43,9 @@ MediaPipe Tasks Vision, and Canvas rendering.
 - Preserve fixed-width rendering for visual modes unless a mode explicitly
   requires a different treatment.
 - Keep user-facing Korean copy consistent with the existing exhibition tone.
+- The exhibit is touch-first: adjust settings with large buttons, not sliders,
+  and explain ideas with metaphors and animation rather than formulas or long
+  text.
 - Add or update tests for configuration and logic changes when an existing test
   boundary covers them.
 - Run `npm test` after application changes. Treat unrelated lint failures as

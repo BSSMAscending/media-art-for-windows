@@ -1,23 +1,23 @@
 const { FrameBuffers } = require('../src/renderer/core/frameBuffers');
 const { removeSmallRegions } = require('../src/renderer/core/morphology');
-const { applySobelEdge } = require('../src/renderer/core/filters');
 
 describe('rendering buffer pool', () => {
   it('reuses typed arrays until the grid dimensions change', () => {
     const buffers = new FrameBuffers();
     buffers.ensure(3, 2);
-    const firstPixels = buffers.filteredPixels;
+    const firstPixels = buffers.levelPixels;
     const firstMask = buffers.gridRaw;
 
-    buffers.copyPixels(new Uint8ClampedArray(24).fill(7));
+    buffers.levelPixels.fill(7);
     buffers.ensure(3, 2);
 
-    expect(buffers.filteredPixels).toBe(firstPixels);
+    expect(buffers.levelPixels).toBe(firstPixels);
+    expect(buffers.levelPixels).toHaveLength(24);
     expect(buffers.gridRaw).toBe(firstMask);
-    expect(buffers.filteredPixels[0]).toBe(7);
+    expect(buffers.levelPixels[0]).toBe(7);
 
     buffers.ensure(4, 2);
-    expect(buffers.filteredPixels).not.toBe(firstPixels);
+    expect(buffers.levelPixels).not.toBe(firstPixels);
     expect(buffers.gridRaw).not.toBe(firstMask);
   });
 
@@ -36,13 +36,5 @@ describe('rendering buffer pool', () => {
     expect(result).toBe(output);
     expect(result[0]).toBe(0);
     expect(result[2 * 5 + 2]).toBe(1);
-  });
-
-  it('writes edge results into the supplied buffer', () => {
-    const pixels = new Uint8ClampedArray(3 * 3 * 4);
-    pixels.fill(255);
-    const output = new Float32Array(9);
-
-    expect(applySobelEdge(pixels, 3, 3, output)).toBe(output);
   });
 });

@@ -1,29 +1,78 @@
 const { mathDescriptions } = require('../data/mathDescriptions');
+const { getModeExplanation } = require('../data/modeExplanations');
+const { createExplainAnimation } = require('./explainAnimations');
 
-function createMathPanel(container = document.body) {
-  const panel = document.createElement('div');
+function formatGridMetric(cols, rows, unit = '칸') {
+  const count = (value) => `${value.toLocaleString('ko-KR')}${unit}`;
+  return `지금 화면 = 가로 ${count(cols)} × 세로 ${count(rows)} = ${count(cols * rows)}`;
+}
+
+function element(tag, className, text) {
+  const el = document.createElement(tag);
+  el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+// The picture half (title, metaphor, animation) goes above the centred controls and
+// the reading half (sentence, terms, live size) below them.
+function createMathPanel(container = document.body, detailContainer = container) {
+  const panel = element('div', 'math-panel');
   panel.id = 'mathPanel';
-  panel.className = 'math-panel';
-  panel.setAttribute('aria-live', 'polite');
   panel.setAttribute('aria-label', '현재 선택한 미디어 아트 모드');
+  const content = element('div', 'explain-content');
+  content.setAttribute('aria-live', 'polite');
+  panel.appendChild(content);
   container.appendChild(panel);
 
-  function updateMode(modeKey, stats) {
-    const desc = mathDescriptions[modeKey] || {};
-    const liveMetric = stats ? ` · ${stats.cols}×${stats.rows}` : '';
-    panel.innerHTML = `
-      <div class="panel-eyebrow">CURRENT MODE</div>
-      <div class="math-panel-title">선택한 미디어 아트</div>
-      <div class="math-section">
-        <div class="math-mode-name">${desc.title || modeKey}</div>
-        <p class="math-desc">${desc.shortDesc || desc.desc || ''}</p>
-        <div class="math-metric">${desc.metric || desc.colorDepth || ''}${liveMetric}</div>
-      </div>
-    `;
+  const details = element('div', 'explain-details');
+  const text = element('div', 'explain-text');
+  text.setAttribute('aria-live', 'polite');
+  const metric = element('div', 'math-metric');
+  details.append(text, metric);
+  detailContainer.appendChild(details);
+
+  let currentKey = null;
+  let currentMode = null;
+  let fallbackMetric = '';
+
+  // Rebuilds the card only when the view changes so the animation keeps looping.
+  function updateMode(modeKey, option) {
+    const key = `${modeKey}:${option}`;
+    if (key === currentKey) return;
+    currentKey = key;
+    currentMode = modeKey;
+
+    const explanation = getModeExplanation(modeKey, option);
+    if (!explanation) {
+      const desc = mathDescriptions[modeKey] || {};
+      fallbackMetric = desc.metric || desc.colorDepth || '';
+      content.replaceChildren(element('div', 'explain-title', desc.title || modeKey));
+      text.replaceChildren(element('p', 'explain-body', desc.shortDesc || desc.desc || ''));
+      metric.textContent = fallbackMetric;
+      return;
+    }
+
+    fallbackMetric = '';
+    const visual = element('div', 'explain-visual');
+    visual.setAttribute('aria-hidden', 'true');
+    const animation = createExplainAnimation(explanation.animation);
+    if (animation) visual.appendChild(animation);
+    const terms = element('div', 'explain-terms');
+    explanation.terms.forEach((term) => terms.appendChild(element('span', 'explain-term', term)));
+    content.replaceChildren(
+      element('div', 'explain-title', explanation.title),
+      element('div', 'explain-headline', explanation.headline),
+      visual
+    );
+    text.replaceChildren(element('p', 'explain-body', explanation.body), terms);
+    metric.textContent = '';
   }
 
   function update(stats) {
-    updateMode(stats.mode, stats);
+    if (stats.mode !== currentMode || !stats.cols || !stats.rows) return;
+    const grid = formatGridMetric(stats.cols, stats.rows, stats.unit);
+    metric.textContent = fallbackMetric ? `${fallbackMetric} · ${grid}` : grid;
   }
 
   return {
@@ -32,4 +81,4 @@ function createMathPanel(container = document.body) {
   };
 }
 
-module.exports = { createMathPanel };
+module.exports = { createMathPanel, formatGridMetric };

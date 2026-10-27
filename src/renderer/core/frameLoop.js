@@ -1,19 +1,24 @@
 const { FONT_SIZE, RENDERING_CONFIG } = require('../config');
 const { runSegmentation } = require('./segmentation');
 const { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover } = require('./coverCrop');
-const { applyBrightness, applyGaussianBlur, applySharpen, applySobelEdge } = require('./filters');
-const { cleanMask, removeSmallRegions } = require('./morphology');
+const { removeSmallRegions } = require('./morphology');
 const { reinforceGridHandMask } = require('./handRefinement');
 const { FrameBuffers } = require('./frameBuffers');
+const { createChannelOverlay } = require('./channelOverlay');
+const { getFullFrameGrid } = require('./renderGeometry');
 const { renderOriginal } = require('../modes/original');
-const { createBlackWhiteRenderer } = require('../modes/blackwhite');
-const { renderBinary } = require('../modes/binary');
-const { renderNumeric } = require('../modes/numeric');
 const { renderBusan } = require('../modes/busan');
 const { renderPixelValue } = require('../modes/pixelvalue');
 const { renderColorRgb } = require('../modes/colorrgb');
 const { renderGrayscale8bit } = require('../modes/grayscale8bit');
 const { renderColor4k } = require('../modes/color4k');
+const { renderRgb } = require('../modes/rgb');
+const { renderLevels } = require('../modes/levels');
+const { createChannelTransition } = require('../modes/rgbTransition');
+const { canShowPixelValues } = require('../modes/valueView');
+
+// Modes that show the whole camera frame instead of the segmented person.
+const FULL_FRAME_MODES = new Set(['rgb', 'levels']);
 
 function computePixelStats(pixels, segGrid, cols, rows) {
   let sum = 0,
@@ -49,8 +54,11 @@ function createFrameLoop({
   hiddenCanvasEl,
   model,
   getMode,
+  getRgbChannel,
+  getLevels,
+  getShowValues,
+  getArtworkArea,
   getFontSize,
-  getFilters,
   onStats,
 }) {
   let rafId = null;
@@ -64,7 +72,10 @@ function createFrameLoop({
   let ctx = null;
   let hiddenCtx = null;
   const buffers = new FrameBuffers();
-  const renderBlackWhite = createBlackWhiteRenderer();
+  const updateChannelTransition = createChannelTransition();
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const artworkGrid = {};
+  let channelOverlay = null;
   const renderInterval = 1000 / RENDERING_CONFIG.targetFps;
   const segmentationInterval = 1000 / RENDERING_CONFIG.segmentationFps;
 
@@ -110,11 +121,20 @@ function createFrameLoop({
       return;
     }
 
-    if (!segmentationInFlight && now - lastSegmentationTime >= segmentationInterval) {
+    const mode = getMode();
+    const fullFrame = FULL_FRAME_MODES.has(mode);
+    if (fullFrame) {
+      // Full-frame modes pause segmentation; drop the old mask so returning to the
+      // silhouette never flashes where the person stood minutes ago.
+      lastSegmentation = null;
+    } else if (!segmentationInFlight && now - lastSegmentationTime >= segmentationInterval) {
       updateSegmentation();
     }
 
-    if (now - lastRenderTime < renderInterval) {
+    const layers =
+      mode === 'rgb' ? updateChannelTransition(getRgbChannel(), now, reducedMotion.matches) : null;
+    // Channel transitions render on every display frame so the motion stays smooth.
+    if (!layers?.active && now - lastRenderTime < renderInterval) {
       scheduleNextFrame();
       return;
     }
@@ -129,136 +149,31 @@ function createFrameLoop({
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
     const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
-    const cols = Math.floor(canvasEl.width / fontSz);
-    const rows = Math.floor(canvasEl.height / fontSz);
-    if (hiddenCanvasEl.width !== cols || hiddenCanvasEl.height !== rows) {
-      hiddenCanvasEl.width = cols;
-      hiddenCanvasEl.height = rows;
-    }
-    buffers.ensure(cols, rows);
-
-    if (!lastSegmentation || !lastSegmentation.width || !lastSegmentation.height) {
-      scheduleNextFrame();
-      return;
-    }
-
-    const sourceWidth = videoEl.videoWidth;
-    const sourceHeight = videoEl.videoHeight;
-    const crop = getCoverCrop(sourceWidth, sourceHeight, cols, rows);
-    if (!crop) {
+    // Every mode draws into the same fixed screen beside the side column.
+    const area = getArtworkArea
+      ? getArtworkArea()
+      : { x: 0, y: 0, width: canvasEl.width, height: canvasEl.height };
+    const grid = getFullFrameGrid(
+      area,
+      videoEl.videoWidth,
+      videoEl.videoHeight,
+      fontSz,
+      artworkGrid
+    );
+    if (!grid) {
       scheduleNextFrame();
       return;
     }
 
     try {
-      hiddenCtx.save();
-      hiddenCtx.scale(-1, 1);
-      hiddenCtx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, -cols, 0, cols, rows);
-      hiddenCtx.restore();
-
-      const imgData = hiddenCtx.getImageData(0, 0, cols, rows);
-      const filters = getFilters
-        ? getFilters()
-        : { brightness: 0, blur: 0, sharpen: 0, edgeOverlay: false, maskClean: false };
-      const filtersActive = filters.brightness !== 0 || filters.blur > 0 || filters.sharpen > 0;
-      const pixels = filtersActive ? buffers.copyPixels(imgData.data) : imgData.data;
-
-      if (filtersActive) {
-        if (filters.brightness !== 0) applyBrightness(pixels, cols, rows, filters.brightness);
-        if (filters.blur > 0)
-          applyGaussianBlur(pixels, cols, rows, filters.blur, buffers.filterScratch);
-        if (filters.sharpen > 0)
-          applySharpen(pixels, cols, rows, filters.sharpen, buffers.filterScratch);
-      }
-
-      const edgeData = filters.edgeOverlay
-        ? applySobelEdge(pixels, cols, rows, buffers.edgeData)
-        : null;
-      const segmentation = {
-        data: lastSegmentation.data,
-        width: lastSegmentation.width,
-        height: lastSegmentation.height,
-      };
-      let gridData = upsampleCoverMaskToGrid(
-        segmentation,
-        crop,
-        sourceWidth,
-        sourceHeight,
-        cols,
-        rows,
-        buffers.gridRaw
-      );
-      gridData = removeSmallRegions(
-        gridData,
-        cols,
-        rows,
-        0.008,
-        buffers.gridFiltered,
-        buffers.regionVisited,
-        buffers.regionQueue
-      );
-
-      if (filters.maskClean) {
-        gridData = cleanMask(
-          gridData,
-          cols,
-          rows,
-          buffers.morphologyOutput,
-          buffers.morphologyScratch
-        );
-      }
-
-      if (lastSegmentation.handLandmarks?.length > 0) {
-        reinforceGridHandMask(
-          gridData,
-          cols,
-          rows,
-          mapLandmarksToCover(lastSegmentation.handLandmarks, crop, sourceWidth, sourceHeight)
-        );
-      }
-
-      if (!hasActivePixels(gridData)) {
-        frameCount++;
-        scheduleNextFrame();
-        return;
-      }
-
-      const activeSeg = { data: gridData, width: cols, height: rows };
-      const mode = getMode();
-      if (mode === 'blackwhite') {
-        renderBlackWhite(ctx, canvasEl, activeSeg);
-      } else {
-        ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-        else if (mode === 'binary') renderBinary(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-        else if (mode === 'numeric')
-          renderNumeric(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-        else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-        else if (mode === 'pixelvalue')
-          renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-        else if (mode === 'colorrgb')
-          renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols, edgeData);
-        else if (mode === 'grayscale8bit')
-          renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-        else if (mode === 'color4k')
-          renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-      }
-
-      const fps = Math.round(1000 / (now - lastFrameTime));
-      lastFrameTime = now;
-      if (onStats && frameCount % 15 === 0) {
-        onStats({
-          mode,
-          fontSz,
-          cols,
-          rows,
-          fps,
-          filters,
-          pixelStats: computePixelStats(pixels, gridData, cols, rows),
-        });
+      if (!fullFrame) channelOverlay?.hide();
+      const stats = fullFrame ? drawFullFrame(mode, grid, layers) : drawSilhouetteFrame(mode, grid);
+      if (stats) {
+        const fps = Math.round(1000 / (now - lastFrameTime));
+        lastFrameTime = now;
+        if (onStats && frameCount % 15 === 0) {
+          onStats({ mode, fontSz, fps, ...stats });
+        }
       }
     } catch (err) {
       console.error('Error in drawFrame:', err);
@@ -266,6 +181,141 @@ function createFrameLoop({
 
     frameCount++;
     scheduleNextFrame();
+  }
+
+  function samplePixels(crop, cols, rows) {
+    hiddenCtx.save();
+    hiddenCtx.scale(-1, 1);
+    hiddenCtx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, -cols, 0, cols, rows);
+    hiddenCtx.restore();
+    return hiddenCtx.getImageData(0, 0, cols, rows).data;
+  }
+
+  function resizeSampling(cols, rows) {
+    if (hiddenCanvasEl.width !== cols || hiddenCanvasEl.height !== rows) {
+      hiddenCanvasEl.width = cols;
+      hiddenCanvasEl.height = rows;
+    }
+    buffers.ensure(cols, rows);
+  }
+
+  function getChannelOverlay() {
+    channelOverlay ||= createChannelOverlay(canvasEl.parentElement, canvasEl);
+    channelOverlay.mount();
+    return channelOverlay;
+  }
+
+  function drawFullFrame(mode, grid, layers) {
+    const overlay = getChannelOverlay();
+    const channel = getRgbChannel ? getRgbChannel() : 'N';
+    const crop = getCoverCrop(videoEl.videoWidth, videoEl.videoHeight, grid.cols, grid.rows);
+
+    if (!(getShowValues?.() && canShowPixelValues(mode, channel))) {
+      // No AI work is needed here, so stream the camera at its own resolution.
+      const source = { video: videoEl, crop };
+      if (mode === 'rgb') overlay.renderLayers(grid, source, layers);
+      else if (mode === 'levels') overlay.renderFlat(grid, source, getLevels());
+      return {
+        cols: videoEl.videoWidth,
+        rows: videoEl.videoHeight,
+        unit: '픽셀',
+        pixelStats: null,
+      };
+    }
+
+    // Pixel value view: one sampled cell per number, drawn as crisp blocks.
+    resizeSampling(grid.cols, grid.rows);
+    const pixels = samplePixels(crop, grid.cols, grid.rows);
+    if (mode === 'rgb') {
+      renderRgb(ctx, overlay, grid, pixels, channel, layers);
+    } else if (mode === 'levels') {
+      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels);
+      overlay.renderFlat(grid, { pixels: buffers.levelPixels });
+    }
+
+    return { cols: grid.cols, rows: grid.rows, unit: '칸', pixelStats: null };
+  }
+
+  // Faint backdrop so the silhouette modes read as the same fixed screen as the
+  // camera modes even when only a few cells are lit.
+  function drawArtworkBackdrop(grid) {
+    const width = grid.cols * grid.cellSize;
+    const height = grid.rows * grid.cellSize;
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.03)';
+    ctx.fillRect(grid.x, grid.y, width, height);
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(grid.x - 0.5, grid.y - 0.5, width + 1, height + 1);
+  }
+
+  function drawSilhouetteFrame(mode, grid) {
+    const { cols, rows, cellSize: fontSz } = grid;
+    resizeSampling(cols, rows);
+    drawArtworkBackdrop(grid);
+
+    if (!lastSegmentation || !lastSegmentation.width || !lastSegmentation.height) {
+      return null;
+    }
+
+    const sourceWidth = videoEl.videoWidth;
+    const sourceHeight = videoEl.videoHeight;
+    const crop = getCoverCrop(sourceWidth, sourceHeight, cols, rows);
+    if (!crop) return null;
+
+    const pixels = samplePixels(crop, cols, rows);
+    const segmentation = {
+      data: lastSegmentation.data,
+      width: lastSegmentation.width,
+      height: lastSegmentation.height,
+    };
+    let gridData = upsampleCoverMaskToGrid(
+      segmentation,
+      crop,
+      sourceWidth,
+      sourceHeight,
+      cols,
+      rows,
+      buffers.gridRaw
+    );
+    gridData = removeSmallRegions(
+      gridData,
+      cols,
+      rows,
+      0.008,
+      buffers.gridFiltered,
+      buffers.regionVisited,
+      buffers.regionQueue
+    );
+
+    if (lastSegmentation.handLandmarks?.length > 0) {
+      reinforceGridHandMask(
+        gridData,
+        cols,
+        rows,
+        mapLandmarksToCover(lastSegmentation.handLandmarks, crop, sourceWidth, sourceHeight)
+      );
+    }
+
+    if (!hasActivePixels(gridData)) return null;
+
+    const activeSeg = { data: gridData, width: cols, height: rows };
+    ctx.save();
+    ctx.translate(grid.x, grid.y);
+    ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'pixelvalue')
+      renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'colorrgb') renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'grayscale8bit')
+      renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    ctx.restore();
+
+    return { cols, rows, unit: '칸', pixelStats: computePixelStats(pixels, gridData, cols, rows) };
   }
 
   return {
@@ -279,6 +329,7 @@ function createFrameLoop({
       isRunning = false;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = null;
+      channelOverlay?.remove();
     },
   };
 }

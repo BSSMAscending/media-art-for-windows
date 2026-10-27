@@ -68,11 +68,10 @@ All spacing derives from a base of `4px`.
 
 ### Grid
 
-- Live artwork stage: full viewport with the person silhouette rendered above the interface layers.
-- Information cards: two equal-width cards in a top row, inset `2.5vw` from the viewport edges.
-- Live control shelf: full-width lower row with the four mode buttons; character-size selection is configured in code.
-- Live control targets: `clamp(72px, 5.625vw, 144px)` tall so the control shelf retains its visual weight at high resolutions.
-- Breakpoints: `720px` compact and `1100px` standard.
+- Live artwork stage: every mode draws into one fixed screen left of the side column; the whole camera frame is fitted into it, snapped to whole cells and centered. Silhouette modes add a faint cyan backdrop and border so the screen stays visible when few cells are lit.
+- Side column: one right-hand column, `clamp(20rem, 35vw, 44rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`. Every touch control (mode buttons, option buttons, pixel value toggle) sits in one block at exactly mid screen height, where it is easiest to reach; equal-height cards above (title, metaphor, animation) and below (sentence, terms, live size, how-it-is-made steps) frame it.
+- Live control targets: mode buttons `clamp(4.5rem, 5.5vw, 7rem)` tall; option buttons and the toggle `clamp(4rem, 4.6vw, 6rem)` tall; `12px` gaps. Buttons use `touch-action: manipulation`, no text selection or tap flash, and shrink slightly while pressed. The block keeps the same height in every mode so no button moves under a finger.
+- Breakpoints: `720px` compact width, `1100px` standard width, and `820px` short height (the project note hides so the explanation card keeps its animation).
 
 ### Rules
 
@@ -120,14 +119,26 @@ All spacing derives from a base of `4px`.
 - **Layout**: placed in the upper-left card of the two-card row.
 - **Responsive layout**: the panel uses a viewport-ratio rail width, inset, top offset, and minimum block size on wide displays; compact layouts return to fluid side insets.
 
-### Mode Summary Panel
+### Mode Explanation Card
 
-- **Structure**: current mode title, one-sentence explanation, and one simple metric.
-- **States**: visible throughout the live-camera session; selected content updates with the active mode.
-- **Accessibility**: updates are announced through a polite live region.
-- **Motion**: content changes without layout animation.
-- **Layout**: placed in the upper-right card of the two-card row.
-- **Responsive layout**: the panel follows the same wide right-rail proportions and compact fallback as the information panel.
+- **Structure**: split around the controls. Above: mode title, metaphor headline (e.g. 전등 스위치, 손전등 세 개, 크레파스) and a looping illustration that scales to the card's height. Below: one short sentence, term chips (이진법, 빛의 삼원색, 양자화, 8비트), the live cell or pixel count, and the camera → cells → numbers → picture steps.
+- **States**: rebuilt when the mode or its option changes; the cell count updates from frame stats without restarting the animation.
+- **Accessibility**: the explanation text is a polite live region; the illustration is `aria-hidden`.
+- **Motion**: CSS-only loops; their un-animated styles are the meaningful still picture used under reduced motion.
+- **Layout**: the two halves share the column height equally so the controls stay centred.
+
+### Mode Option Buttons
+
+- **Structure**: a label and a row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels; the original mode shows a hint line in the same space.
+- **Selection**: the RGB mode button always opens the full colour with no light selected; tapping the selected R/G/B again clears it back to the full colour. A brightness step stays selected when tapped again.
+- **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
+- **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
+
+### Pixel Value Toggle
+
+- **Structure**: a full-width `픽셀별 빛의 세기 보기` button at the bottom of the centred control block, with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
+- **States**: always in place; disabled with a dashed outline and a hint where it does not apply (`색 RGB · 밝기 단계에서 볼 수 있어요` in 미디어 아트, `R · G · B를 고르면 볼 수 있어요` on the combined RGB view); pressed uses the selected treatment.
+- **Behaviour**: off shows the camera at its own resolution; on shows the sampled cell grid with per-cell numbers.
 
 ### Update Notice
 
@@ -145,6 +156,8 @@ All spacing derives from a base of `4px`.
 | --- | --- | --- | --- |
 | Micro | `150ms` | `ease-out` | Mode button feedback |
 | Standard | `250ms` | `ease-in-out` | Panel visibility at live-session boundaries |
+| Layer split | `1.8s` | quintic | RGB layers tilt, split, isolate the chosen channel, and merge back |
+| Explanation loop | `4-6s` | per animation | Explanation card illustrations and the project-note step highlight |
 
 - Mode selection updates the canvas mode, button state, and right-side summary together.
 - Character size is read from `src/renderer/config.js` when the renderer starts.

@@ -1,14 +1,22 @@
+// How every mode is made, in four steps that light up in turn.
+const PIPELINE_STEPS = ['카메라', '칸 나누기', '숫자로 바꾸기', '다시 그리기'];
+
 function createInfoPanel(container = document.body) {
   const panel = document.createElement('aside');
   panel.id = 'infoPanel';
   panel.className = 'info-panel';
   panel.setAttribute('aria-label', '미디어 아트 프로젝트 설명');
   panel.innerHTML = `
-    <div class="panel-eyebrow">PROJECT NOTE</div>
     <div class="info-mode">컴퓨터가 보는 내 모습</div>
-    <p class="info-desc">컴퓨터는 우리 얼굴을 구별할 때 '숫자'로 바꿔서 기억해요.</p>
-    <p class="info-note">0부터 9까지의 숫자가 어떻게 내 얼굴을 만드는지 살펴보세요!</p>
+    <ol class="info-pipeline" aria-label="화면이 만들어지는 순서"></ol>
   `;
+  const pipeline = panel.querySelector('.info-pipeline');
+  PIPELINE_STEPS.forEach((step, index) => {
+    const item = document.createElement('li');
+    item.textContent = step;
+    item.style.setProperty('--step', index);
+    pipeline.appendChild(item);
+  });
   container.appendChild(panel);
 }
 
