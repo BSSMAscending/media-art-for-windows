@@ -97,7 +97,7 @@ All spacing derives from a base of `4px`.
 ### Character Size Configuration
 
 - **Location**: `src/renderer/config.js`.
-- **Value**: `FONT_SIZE` defaults to `16px`.
+- **Value**: `FONT_SIZE` defaults to `24px`, the smallest cell that fits the combined RGB view's three numbers.
 - **Change**: edit the value in code and restart the app; there is no live size selector in the interface.
 
 ### Window Mode Button
@@ -142,7 +142,7 @@ All spacing derives from a base of `4px`.
 ### Levers
 
 - **Structure**: two equal slots side by side at the bottom of the centred control block. Each lever has a label with its live value, a range input with a large round thumb, and end labels.
-- **Left**: `칸 크기`, stepping through 8-48px cells in every mode.
+- **Left**: `칸 크기`, stepping through 8-48px cells in every mode; starts at 24px. In the combined RGB view it cannot go below 24px: the track keeps its length, the blocked part is dark and striped and the low end reads `전체 색은 24px부터`.
 - **Right**: the current view's own lever (`흑백 경계값` 0-255 in 밝기 단계 2단계, the calculation's strength in 수학 처리); views without one show a dashed slot with a short hint, so neither thumb moves when the mode changes.
 - **Touch**: `touch-action: none`; tapping the track jumps the thumb there.
 

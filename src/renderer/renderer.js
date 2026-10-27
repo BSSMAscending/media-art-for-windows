@@ -13,6 +13,7 @@ const {
   MODE_HINTS,
   CELL_SIZE_SLIDER,
   MATH_START_AMOUNTS,
+  getCellSizeFloor,
   MODE_SLIDER_HINTS,
   getModeSlider,
   getMathSettings,
@@ -132,6 +133,8 @@ function renderModeOptions(onSelect) {
   });
 }
 
+let cellSizeLever = null;
+
 // The right lever slot follows the view; the cell size lever on the left never moves.
 function renderModeSlider(mathPanel) {
   const slot = document.getElementById('modeSlider');
@@ -153,6 +156,8 @@ function updateModeUI(mathPanel) {
     selectModeOption(state, subOptions, value);
     updateModeUI(mathPanel);
   });
+  const floor = getCellSizeFloor(state);
+  cellSizeLever?.setFloor(floor.size, floor.note);
   renderModeSlider(mathPanel);
   mathPanel.updateMode(state.selectedVersion, getModeOption(), getMathSettings(state).amount);
 }
@@ -208,7 +213,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectMode(state, mode);
     updateModeUI(mathPanel);
   });
-  document.getElementById('cellSizeSlider').appendChild(createSlider(CELL_SIZE_SLIDER, state));
+  cellSizeLever = createSlider(CELL_SIZE_SLIDER, state);
+  document.getElementById('cellSizeSlider').appendChild(cellSizeLever);
   updateModeUI(mathPanel);
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);

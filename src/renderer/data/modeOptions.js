@@ -1,4 +1,6 @@
 const { CELL_SIZES } = require('../config');
+const { getColorValueFontSize } = require('../modes/rgb');
+const { MIN_DIGIT_FONT_SIZE } = require('../utils');
 
 const MODE_OPTIONS = [
   { key: 'original', label: '미디어 아트', caption: '0 / 1 실루엣' },
@@ -54,6 +56,19 @@ const CELL_SIZE_SLIDER = {
   format: (size) => `${size}px`,
   ends: ['작게', '크게'],
 };
+
+// The combined RGB view needs room for three stacked numbers per cell, so its
+// lever stops at the first size where they are readable (24px).
+const COLOR_VALUE_CELL_SIZE = CELL_SIZES.find(
+  (size) => getColorValueFontSize(size) >= MIN_DIGIT_FONT_SIZE
+);
+
+function getCellSizeFloor(state) {
+  if (state.selectedVersion === 'rgb' && state.rgbChannel === 'N') {
+    return { size: COLOR_VALUE_CELL_SIZE, note: `전체 색은 ${COLOR_VALUE_CELL_SIZE}px부터` };
+  }
+  return { size: CELL_SIZES[0], note: null };
+}
 
 // Right lever: the current view's own setting, or this hint when it has none.
 const THRESHOLD_SLIDER = {
@@ -151,6 +166,8 @@ module.exports = {
   MODE_SUB_OPTIONS,
   MODE_HINTS,
   CELL_SIZE_SLIDER,
+  COLOR_VALUE_CELL_SIZE,
+  getCellSizeFloor,
   THRESHOLD_SLIDER,
   MATH_SLIDERS,
   MATH_START_AMOUNTS,

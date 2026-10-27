@@ -603,6 +603,23 @@ body {
   background: linear-gradient(90deg, rgba(0, 255, 255, 0.08), rgba(0, 255, 255, 0.45));
 }
 
+/* A floored lever keeps its full length; the blocked low part is dark and striped. */
+.mode-slider.has-floor .mode-slider-input::-webkit-slider-runnable-track {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0 var(--floor), transparent var(--floor)),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0 4px, transparent 4px 8px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.08), rgba(0, 255, 255, 0.45));
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    var(--floor) 100%,
+    100% 100%;
+}
+
+.mode-slider.has-floor .mode-slider-ends span:first-child {
+  color: var(--text-secondary);
+}
+
 .mode-slider-input::-webkit-slider-thumb {
   width: var(--slider-thumb-size);
   height: var(--slider-thumb-size);
