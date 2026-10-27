@@ -60,10 +60,4 @@ describe('explanation helpers', () => {
   it('reports the live grid as a cell count', () => {
     expect(formatGridMetric(74, 41)).toBe('지금 화면 = 가로 74칸 × 세로 41칸 = 3,034칸');
   });
-
-  it('reports camera-quality views in real pixels', () => {
-    expect(formatGridMetric(1280, 720, '픽셀')).toBe(
-      '지금 화면 = 가로 1,280픽셀 × 세로 720픽셀 = 921,600픽셀'
-    );
-  });
 });

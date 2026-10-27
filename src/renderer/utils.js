@@ -9,10 +9,14 @@ function getMirroredMaskIndex(x, y, cols, rows, segmentation) {
   return maskY * segmentation.width + mirroredX;
 }
 
+// Smaller digits blur into noise and cost thousands of fillText calls a frame,
+// so pixel views leave tiny cells as plain colour.
+const MIN_DIGIT_FONT_SIZE = 7;
+
 // Largest bold Courier size that fits `digits` characters inside one square cell.
 function getDigitFontSize(cellSize, digits) {
   const widthLimited = (cellSize * 0.92) / (digits * 0.6);
   return Math.max(4, Math.floor(Math.min(cellSize * 0.75, widthLimited)));
 }
 
-module.exports = { getLuminance, getMirroredMaskIndex, getDigitFontSize };
+module.exports = { getLuminance, getMirroredMaskIndex, getDigitFontSize, MIN_DIGIT_FONT_SIZE };

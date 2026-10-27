@@ -5,7 +5,6 @@ const { createFrameLoop } = require('./core/frameLoop');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
-const { canShowPixelValues } = require('./modes/valueView');
 const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
@@ -23,7 +22,6 @@ const state = {
   selectedVersion: 'original',
   rgbChannel: 'N',
   levels: 10,
-  showValues: false,
   currentFontSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
@@ -104,22 +102,6 @@ function renderModeOptions(onSelect) {
   });
 }
 
-function renderValueToggle() {
-  const button = document.getElementById('valueToggle');
-  const stateLabel = document.getElementById('valueToggleState');
-  const mode = state.selectedVersion;
-  const available = canShowPixelValues(mode, state.rgbChannel);
-  const isOn = available && state.showValues;
-  // Stays in place in every mode (disabled where it does not apply) so the
-  // centred buttons never move under a visitor's finger.
-  button.disabled = !available;
-  button.classList.toggle('is-selected', isOn);
-  button.setAttribute('aria-pressed', String(isOn));
-  if (mode === 'rgb' && !available) stateLabel.textContent = 'R · G · B를 고르면 볼 수 있어요';
-  else if (!available) stateLabel.textContent = '색 RGB · 밝기 단계에서 볼 수 있어요';
-  else stateLabel.textContent = isOn ? '켜짐 · 칸마다 숫자' : '꺼짐 · 원본 화질';
-}
-
 function updateModeUI(mathPanel) {
   document.querySelectorAll('.mode-button[data-mode]').forEach((button) => {
     const isSelected = button.dataset.mode === state.selectedVersion;
@@ -130,7 +112,6 @@ function updateModeUI(mathPanel) {
     selectModeOption(state, subOptions, value);
     updateModeUI(mathPanel);
   });
-  renderValueToggle();
   mathPanel.updateMode(state.selectedVersion, getModeOption());
 }
 
@@ -183,10 +164,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderModeButtons(document.getElementById('liveModeButtons'), (mode) => {
     selectMode(state, mode);
-    updateModeUI(mathPanel);
-  });
-  document.getElementById('valueToggle').addEventListener('click', () => {
-    state.showValues = !state.showValues;
     updateModeUI(mathPanel);
   });
   updateModeUI(mathPanel);
@@ -259,7 +236,6 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getMode: () => state.selectedVersion,
       getRgbChannel: () => state.rgbChannel,
       getLevels: () => state.levels,
-      getShowValues: () => state.showValues,
       getArtworkArea: () =>
         getArtworkArea(
           canvasEl.clientWidth,

@@ -65,6 +65,14 @@ describe('renderLevels', () => {
     ]);
   });
 
+  it('keeps the greys but skips digits in cells too small to read', () => {
+    const ctx = createRecordingContext();
+    const output = new Uint8ClampedArray(16);
+    renderLevels(ctx, { ...grid, cellSize: 8 }, grayPixels([0, 255, 0, 255]), 256, output);
+    expect(ctx.draws).toEqual([]);
+    expect([...output.slice(4, 8)]).toEqual([255, 255, 255, 255]);
+  });
+
   it('sizes digits so the longest step number fits in a cell', () => {
     const ctx = createRecordingContext();
     renderLevels(ctx, grid, grayPixels([0, 0, 0, 0]), 10, new Uint8ClampedArray(16));

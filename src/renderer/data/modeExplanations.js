@@ -14,7 +14,7 @@ function channelExplanation(channel) {
   return {
     title: `${name} 빛만 남기기`,
     headline: `${name} 손전등의 밝기 손잡이`,
-    body: `'빛의 세기 보기'를 누르면 칸마다 ${name} 빛의 세기가 숫자로 보여요.`,
+    body: `칸마다 적힌 숫자가 그 칸의 ${name} 빛 세기예요.`,
     terms: ['8비트 = 256단계', '0 ~ 255'],
     animation: { type: 'channel-dimmer', color },
   };
@@ -33,7 +33,7 @@ const modeExplanations = {
       N: {
         title: '빛 세 가지로 만든 색',
         headline: '빨강 · 초록 · 파랑 손전등 세 개',
-        body: '세 빛을 겹치면 모든 색이 나와요. R · G · B를 눌러 떼어 보세요.',
+        body: '칸마다 R · G · B 세 숫자가 있어요. 칸을 키우면 보여요.',
         terms: ['빛의 삼원색', '256 × 256 × 256 ≈ 1,677만 색'],
         animation: { type: 'light-mix' },
       },
