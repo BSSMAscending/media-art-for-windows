@@ -27,12 +27,13 @@ This is an Electron application called "Binary Media Art" that creates real-time
 1. **Camera Selection**: Users can select from available cameras via dropdown
 2. **Multiple Visualization Modes** (touch buttons; keys 1-3, legacy modes on 4-8):
    - `original` (미디어 아트): Binary overlay (0/1) with cyan color effects on the segmented person silhouette
-   - `rgb` (색 RGB): Live video at camera resolution as additive WebGL R/G/B layers; the mode button opens the full colour, R/G/B buttons split the layers apart (1.8s transition) and a second tap on the selected light returns to the full colour (`data/modeOptions.js`)
-   - `levels` (밝기 단계): Live video at camera resolution quantized on the GPU to 2, 10 or 256 brightness steps (buttons, no sliders)
-   - `픽셀별 빛의 세기 보기` toggle (`state.showValues`, `modes/valueView.js`): for R/G/B and every level count, switches to the sampled cell grid with each cell's 0-255 value or step number; disabled (but kept in place) on the combined RGB view and in 미디어 아트
+   - `rgb` (색 RGB): The camera sampled into numbered pixel cells, drawn as additive WebGL R/G/B layers; each cell shows its 0-255 value for the selected light, or all three stacked values in the full colour once cells are 24px or larger. The mode button opens the full colour, R/G/B buttons split the layers apart (1.8s transition) and a second tap on the selected light returns to the full colour (`data/modeOptions.js`)
+   - `levels` (밝기 단계): The camera sampled into numbered pixel cells quantized to 2, 10 or 256 brightness steps; in 2단계 the black/white threshold (0-255) is set with a lever
+   - Pixels everywhere: there is no camera-quality view; cells too small for readable digits (< 7px font) stay plain colour
+   - Levers (`ui/modeSliders.js`): a two-slot row under the option buttons. Left: cell size (`CELL_SIZES` in `config.js`, all modes). Right: the view's own lever (`getModeSlider`), or a hint that keeps the slot in place
    - All touch controls sit in one block at exactly mid screen height in the side column; the explanation is split into equal cards above and below it
    - Every mode draws in the same fixed screen left of the side column (whole camera frame fitted to whole cells); `rgb` and `levels` skip segmentation
-   - There are no slider or F-key filter controls; the exhibit is adjusted only with buttons
+   - There are no F-key filter controls; touch buttons pick views and the two levers adjust them
    - The side column's explanation card uses metaphors, a CSS animation and term chips per mode/option (`data/modeExplanations.js`, `ui/explainAnimations.js`)
 
 3. **Real-time Processing**: Uses TensorFlow.js BodyPix model for person segmentation with mirrored video display

@@ -69,8 +69,8 @@ All spacing derives from a base of `4px`.
 ### Grid
 
 - Live artwork stage: every mode draws into one fixed screen left of the side column; the whole camera frame is fitted into it, snapped to whole cells and centered. Silhouette modes add a faint cyan backdrop and border so the screen stays visible when few cells are lit.
-- Side column: one right-hand column, `clamp(20rem, 35vw, 44rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`. Every touch control (mode buttons, option buttons, pixel value toggle) sits in one block at exactly mid screen height, where it is easiest to reach; equal-height cards above (title, metaphor, animation) and below (sentence, terms, live size, how-it-is-made steps) frame it.
-- Live control targets: mode buttons `clamp(4.5rem, 5.5vw, 7rem)` tall; option buttons and the toggle `clamp(4rem, 4.6vw, 6rem)` tall; `12px` gaps. Buttons use `touch-action: manipulation`, no text selection or tap flash, and shrink slightly while pressed. The block keeps the same height in every mode so no button moves under a finger.
+- Side column: one right-hand column, `clamp(20rem, 35vw, 44rem)` wide and inset `clamp(1rem, 2vw, 2.5rem)`. Every touch control (mode buttons, option buttons, levers) sits in one block at exactly mid screen height, where it is easiest to reach; equal-height cards above (title, metaphor, animation) and below (sentence, terms, live size, how-it-is-made steps) frame it.
+- Live control targets: mode buttons `clamp(4.5rem, 5.5vw, 7rem)` tall; option buttons `clamp(4rem, 4.6vw, 6rem)` tall; lever slots `clamp(5.5rem, 6.2vw, 8rem)` tall with a `clamp(2.25rem, 2.6vw, 3.25rem)` thumb; `12px` gaps. Buttons use `touch-action: manipulation`, no text selection or tap flash, and shrink slightly while pressed. The block keeps the same height in every mode so no button moves under a finger.
 - Breakpoints: `720px` compact width, `1100px` standard width, and `820px` short height (the project note hides so the explanation card keeps its animation).
 
 ### Rules
@@ -134,11 +134,12 @@ All spacing derives from a base of `4px`.
 - **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
 - **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
 
-### Pixel Value Toggle
+### Levers
 
-- **Structure**: a full-width `픽셀별 빛의 세기 보기` button at the bottom of the centred control block, with a state line (`꺼짐 · 원본 화질` / `켜짐 · 칸마다 숫자`).
-- **States**: always in place; disabled with a dashed outline and a hint where it does not apply (`색 RGB · 밝기 단계에서 볼 수 있어요` in 미디어 아트, `R · G · B를 고르면 볼 수 있어요` on the combined RGB view); pressed uses the selected treatment.
-- **Behaviour**: off shows the camera at its own resolution; on shows the sampled cell grid with per-cell numbers.
+- **Structure**: two equal slots side by side at the bottom of the centred control block. Each lever has a label with its live value, a range input with a large round thumb, and end labels.
+- **Left**: `칸 크기`, stepping through 8-48px cells in every mode.
+- **Right**: the current view's own lever (`흑백 경계값` 0-255 in 밝기 단계 2단계); views without one show a dashed slot with a short hint, so neither thumb moves when the mode changes.
+- **Touch**: `touch-action: none`; tapping the track jumps the thumb there.
 
 ### Update Notice
 
