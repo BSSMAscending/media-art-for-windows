@@ -44,13 +44,24 @@ const CELL_SIZE_SLIDER = {
 };
 
 // Right lever: the current view's own setting, or this hint when it has none.
+const THRESHOLD_SLIDER = {
+  stateKey: 'threshold',
+  label: '흑백 경계값',
+  min: 0,
+  max: 255,
+  step: 1,
+  format: (value) => String(value),
+  ends: ['0', '255'],
+};
+
 const MODE_SLIDER_HINTS = {
   original: '칸이 작을수록 내 모습이 또렷해져요',
   rgb: '칸을 키우면 숫자가 더 잘 보여요',
-  levels: '칸을 키우면 숫자가 더 잘 보여요',
+  levels: '2단계를 고르면 흑백 경계값을 옮길 수 있어요',
 };
 
-function getModeSlider() {
+function getModeSlider(state) {
+  if (state.selectedVersion === 'levels' && state.levels === 2) return THRESHOLD_SLIDER;
   return null;
 }
 
@@ -75,6 +86,7 @@ module.exports = {
   MODE_SUB_OPTIONS,
   MODE_HINTS,
   CELL_SIZE_SLIDER,
+  THRESHOLD_SLIDER,
   MODE_SLIDER_HINTS,
   getModeSlider,
   selectMode,

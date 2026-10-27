@@ -47,8 +47,8 @@ const modeExplanations = {
       2: {
         title: '2단계: 검정과 흰색',
         headline: '크레파스 2자루로 그리기',
-        body: '밝으면 1, 어두우면 0. 그림이 굵고 단순해져요.',
-        terms: ['1비트 = 스위치 1개', '2가지 = 2¹'],
+        body: '경계값보다 밝으면 1, 어두우면 0. 경계값을 옮겨 보세요.',
+        terms: ['1비트 = 스위치 1개', '경계값 = 0과 1을 가르는 기준'],
         animation: { type: 'level-steps', levels: 2 },
       },
       10: {

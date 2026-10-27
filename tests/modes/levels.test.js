@@ -28,6 +28,18 @@ describe('getLevel', () => {
     expect(getLevel(getLuminance(128, 128, 128), 2)).toBe(1);
   });
 
+  it('splits two levels at a chosen threshold, inclusive', () => {
+    expect(getLevel(99 / 255, 2, 100)).toBe(0);
+    expect(getLevel(100 / 255, 2, 100)).toBe(1);
+    expect(getLevel(200 / 255, 2, 220)).toBe(0);
+    expect(getLevel(1, 2, 255)).toBe(1);
+    expect(getLevel(0, 2, 0)).toBe(1);
+  });
+
+  it('ignores the threshold for more than two levels', () => {
+    expect(getLevel(0.95, 10, 250)).toBe(9);
+  });
+
   it('matches the 8-bit grey value exactly at 256 levels', () => {
     for (const value of [0, 1, 64, 127, 128, 200, 254, 255]) {
       expect(getLevel(getLuminance(value, value, value), 256)).toBe(value);
@@ -52,6 +64,14 @@ describe('renderLevels', () => {
       const gray = Math.round((level * 255) / (levels - 1));
       expect([...output.slice(cell * 4, cell * 4 + 4)]).toEqual([gray, gray, gray, 255]);
     });
+  });
+
+  it('draws two levels from the threshold', () => {
+    const ctx = createRecordingContext();
+    const output = new Uint8ClampedArray(16);
+    renderLevels(ctx, grid, grayPixels([50, 100, 150, 200]), 2, output, 160);
+    expect(ctx.draws.map(({ char }) => char)).toEqual(['0', '0', '0', '1']);
+    expect(output[12]).toBe(255);
   });
 
   it('places digits at the grid origin with contrast against their grey', () => {

@@ -2,7 +2,9 @@ const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
   CELL_SIZE_SLIDER,
+  THRESHOLD_SLIDER,
   MODE_SLIDER_HINTS,
+  getModeSlider,
   selectMode,
   selectModeOption,
 } = require('../src/renderer/data/modeOptions');
@@ -64,6 +66,13 @@ describe('levers', () => {
     expect(sizes).toEqual([...sizes].sort((a, b) => a - b));
     expect(sizes).toContain(FONT_SIZE);
     expect(CELL_SIZE_SLIDER.format(24)).toBe('24px');
+  });
+
+  it('offers the threshold lever only in two-level black and white', () => {
+    expect(getModeSlider({ selectedVersion: 'levels', levels: 2 })).toBe(THRESHOLD_SLIDER);
+    expect(getModeSlider({ selectedVersion: 'levels', levels: 10 })).toBeNull();
+    expect(getModeSlider({ selectedVersion: 'rgb', levels: 2 })).toBeNull();
+    expect([THRESHOLD_SLIDER.min, THRESHOLD_SLIDER.max]).toEqual([0, 255]);
   });
 
   it('gives every mode a hint for the lever slot it does not use', () => {

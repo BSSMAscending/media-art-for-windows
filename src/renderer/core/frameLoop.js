@@ -55,6 +55,7 @@ function createFrameLoop({
   getMode,
   getRgbChannel,
   getLevels,
+  getThreshold,
   getArtworkArea,
   getCellSize,
   onStats,
@@ -213,7 +214,7 @@ function createFrameLoop({
     if (mode === 'rgb') {
       renderRgb(ctx, overlay, grid, pixels, getRgbChannel ? getRgbChannel() : 'N', layers);
     } else if (mode === 'levels') {
-      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels);
+      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels, getThreshold?.());
       overlay.renderFlat(grid, buffers.levelPixels);
     }
 

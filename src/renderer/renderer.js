@@ -26,6 +26,7 @@ const state = {
   selectedVersion: 'original',
   rgbChannel: 'N',
   levels: 10,
+  threshold: 128,
   cellSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
@@ -253,6 +254,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getMode: () => state.selectedVersion,
       getRgbChannel: () => state.rgbChannel,
       getLevels: () => state.levels,
+      getThreshold: () => state.threshold,
       getArtworkArea: () =>
         getArtworkArea(
           canvasEl.clientWidth,
