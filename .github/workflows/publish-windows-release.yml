@@ -1,45 +1,123 @@
 name: Publish Windows release
 
+# Releases come from bump commits on main: a push whose package.json version has
+# no vX.Y.Z tag yet builds the installer, publishes it with that version's
+# CHANGELOG.md entry as the Release title and notes, then tags that commit.
+# Every other push to main finds the tag already there and skips.
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: read
+
+concurrency:
+  group: publish-windows-release
+  cancel-in-progress: false
 
 jobs:
-  publish:
-    runs-on: windows-latest
-    env:
-      RELEASE_REPOSITORY: BSSMAscending/media-art-for-windows-releases
-      RELEASE_GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
-      SOURCE_GH_TOKEN: ${{ github.token }}
+  detect:
+    name: detect version bump
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.version.outputs.release }}
+      tag: ${{ steps.version.outputs.tag }}
+      title: ${{ steps.notes.outputs.title }}
+      notes: ${{ steps.notes.outputs.notes }}
 
     steps:
-      - name: Check out tagged source
+      - name: Check out source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Verify release version and source branch
+      - name: Compare package version with release tags
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          tag="v$version"
+          latest=$(git tag -l 'v[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            echo "$tag is already released; nothing to publish."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::package.json version $version must be X.Y.Z to release."
+            exit 1
+          fi
+
+          if [[ -n "$latest" && "$(printf '%s\n%s\n' "$latest" "$version" | sort -V | tail -n 1)" != "$version" ]]; then
+            echo "::error::package.json version $version is lower than the latest release v$latest."
+            exit 1
+          fi
+
+          echo "Bump commit found: publishing $tag (previous ${latest:+v$latest})."
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+      # Read before the Windows build so a missing CHANGELOG.md entry fails in seconds.
+      - name: Read release notes from CHANGELOG.md
+        id: notes
+        if: steps.version.outputs.release == 'true'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          if ! title=$(node scripts/changelog.js "${RELEASE_TAG#v}" "$notes_file"); then
+            echo "::error::CHANGELOG.md에 [${RELEASE_TAG#v}] 항목이 없거나 비어 있습니다."
+            exit 1
+          fi
+          delimiter="NOTES_$(openssl rand -hex 8)"
+          {
+            echo "title=$title"
+            echo "notes<<$delimiter"
+            cat "$notes_file"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: publish
+    needs: detect
+    if: needs.detect.outputs.release == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ needs.detect.outputs.tag }}
+      RELEASE_TITLE: ${{ needs.detect.outputs.title }}
+      RELEASE_NOTES: ${{ needs.detect.outputs.notes }}
+      RELEASE_REPOSITORY: BSSMAscending/media-art-for-windows-releases
+      RELEASE_GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+
+    steps:
+      - name: Check out bump commit
+        uses: actions/checkout@v4
+
+      - name: Verify release target
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:RELEASE_GH_TOKEN)) {
             throw 'RELEASES_REPOSITORY_TOKEN GitHub Secret is not configured.'
           }
 
-          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
-          if ($env:GITHUB_REF_NAME -ne "v$packageVersion") {
-            throw "Tag $env:GITHUB_REF_NAME does not match package.json version $packageVersion."
+          # A complete release without its source tag means an earlier run stopped
+          # after uploading; tag that commit by hand instead of rebuilding over it.
+          $env:GH_TOKEN = $env:RELEASE_GH_TOKEN
+          $assets = gh release view $env:RELEASE_TAG --repo $env:RELEASE_REPOSITORY --json assets --jq '.assets[].name' 2>$null
+          if ($LASTEXITCODE -eq 0 -and $assets -contains 'RELEASES') {
+            throw "$env:RELEASE_TAG is already published but has no source tag. Push the $env:RELEASE_TAG tag to the released commit."
           }
-
-          git fetch origin main
-          git merge-base --is-ancestor HEAD origin/main
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Release tags must point to a commit already merged into main.'
-          }
+          $global:LASTEXITCODE = 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -61,27 +139,30 @@ jobs:
             throw 'No Windows release artifacts were generated.'
           }
 
-          $env:GH_TOKEN = $env:SOURCE_GH_TOKEN
-          $releasePullRequests = @(
-            gh api "repos/$env:GITHUB_REPOSITORY/commits/$env:GITHUB_SHA/pulls" --paginate |
-              ConvertFrom-Json
-          )
-          $releasePullRequest = $releasePullRequests |
-            Where-Object { $_.base.ref -eq 'main' -and $_.head.ref -eq 'dev' -and $_.merged_at } |
-            Select-Object -First 1
-
-          if ($null -eq $releasePullRequest) {
-            throw 'No merged dev-to-main release pull request was found for this release tag.'
-          }
-
+          # Title and notes come from this version's CHANGELOG.md entry (detect job).
           $releaseNotesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
-          Set-Content -LiteralPath $releaseNotesPath -Value $releasePullRequest.body -NoNewline
-          $releaseTitle = "$env:GITHUB_REF_NAME Busan Mathematical Culture Center – Media Art"
+          Set-Content -LiteralPath $releaseNotesPath -Value $env:RELEASE_NOTES -NoNewline
 
           $env:GH_TOKEN = $env:RELEASE_GH_TOKEN
-          gh release view $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY 2>$null
+          gh release view $env:RELEASE_TAG --repo $env:RELEASE_REPOSITORY 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:GITHUB_REF_NAME --repo $env:RELEASE_REPOSITORY --title $releaseTitle --notes-file $releaseNotesPath
+            gh release create $env:RELEASE_TAG --repo $env:RELEASE_REPOSITORY --title $env:RELEASE_TITLE --notes-file $releaseNotesPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "Could not create $env:RELEASE_TAG in $env:RELEASE_REPOSITORY."
+            }
           }
 
-          gh release upload $env:GITHUB_REF_NAME $files --repo $env:RELEASE_REPOSITORY --clobber
+          gh release upload $env:RELEASE_TAG $files --repo $env:RELEASE_REPOSITORY --clobber
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not upload the installer to $env:RELEASE_TAG."
+          }
+
+      - name: Tag the bump commit
+        shell: pwsh
+        run: |
+          # Tagged last, so a failed run leaves no tag and the next run retries the release.
+          git tag $env:RELEASE_TAG $env:GITHUB_SHA
+          git push origin "refs/tags/$env:RELEASE_TAG"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not push the $env:RELEASE_TAG tag."
+          }

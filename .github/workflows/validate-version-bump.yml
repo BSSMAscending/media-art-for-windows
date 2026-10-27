@@ -1,0 +1,66 @@
+name: Validate version bump
+
+# Any branch can be merged into main. A PR that changes the package.json version
+# is a bump: merging it publishes that version, so check it before the merge.
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump:
+    name: version bump
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate the bumped version
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          read_version() { node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version"; }
+          version=$(read_version < package.json)
+          base=$(git show "$BASE_SHA:package.json" | read_version)
+
+          if [[ "$version" == "$base" ]]; then
+            echo "package.json 버전이 그대로($version)입니다. 병합해도 배포되지 않습니다."
+            exit 0
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::버전은 X.Y.Z 형식이어야 합니다: $version"
+            exit 1
+          fi
+
+          lock=$(node -p "const lock = require('./package-lock.json'); [lock.version, lock.packages[''].version].join(' ')")
+          if [[ "$lock" != "$version $version" ]]; then
+            echo "::error::package-lock.json 버전($lock)이 package.json($version)과 다릅니다. npm version $version --no-git-tag-version 으로 함께 바꿔주세요."
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            echo "::error::v$version 태그가 이미 있습니다. 더 높은 버전으로 올려주세요."
+            exit 1
+          fi
+
+          latest=$(git tag -l 'v[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [[ -n "$latest" && "$(printf '%s\n%s\n' "$latest" "$version" | sort -V | tail -n 1)" != "$version" ]]; then
+            echo "::error::$version 은 최신 배포 v$latest 보다 낮습니다."
+            exit 1
+          fi
+
+          if ! title=$(node scripts/changelog.js "$version"); then
+            echo "::error::CHANGELOG.md에 '## [$version] - 날짜' 항목을 추가해주세요. 이 항목이 Release 본문이 됩니다."
+            exit 1
+          fi
+
+          echo "::notice::병합하면 '$title' Release로 배포됩니다. 본문은 CHANGELOG.md의 [$version] 항목입니다."

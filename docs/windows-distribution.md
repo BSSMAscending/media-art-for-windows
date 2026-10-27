@@ -34,12 +34,64 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 - [Electron 업데이트 가이드](https://www.electronjs.org/docs/latest/tutorial/updates)
 - [Electron 배포 및 업데이트 튜토리얼](https://www.electronjs.org/docs/latest/tutorial/tutorial-publishing-updating)
 
-## 배포 순서
+## 브랜치와 배포 순서
 
-1. `package.json`의 버전을 변경해 `dev`에 병합합니다.
-2. `dev`에서 `release: vX.Y.Z` 제목의 PR을 `main`으로 병합합니다.
-3. 병합된 `main` 커밋에 `vX.Y.Z` 태그를 푸시합니다.
+작업 브랜치는 `main`에서 만들고 `main`으로 PR을 보냅니다. 병합해도 `package.json` 버전이 그대로면 배포되지 않고, `build-windows-development.yml`이 확인용 설치 파일만 Actions 아티팩트로 만듭니다.
 
-태그 푸시의 `publish-windows-release.yml`은 Windows에서 `npm install`, `npm run make -- --platform=win32 --arch=x64`를 실행하고 `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release에 업로드합니다. 생성되는 Release의 제목은 `vX.Y.Z Busan Mathematical Culture Center – Media Art`이며, 본문은 해당 태그 커밋의 `dev` → `main` release PR 본문을 그대로 사용합니다.
+배포는 버전을 올리는 **bump 커밋**으로 합니다.
+
+1. `main`에서 브랜치를 만들고 버전을 올립니다. `package.json`과 `package-lock.json`이 함께 바뀝니다.
+
+   ```bash
+   npm version patch --no-git-tag-version   # 1.0.2 → 1.0.3 (minor, major도 가능)
+   ```
+
+   `--no-git-tag-version`을 빼면 npm이 로컬 태그와 `1.0.3` 메시지 커밋을 만들고, 이 메시지는 commitlint를 통과하지 못합니다. 태그는 배포 워크플로가 붙입니다.
+2. `CHANGELOG.md`에 새 버전 항목을 씁니다. **이 항목이 Release 제목과 본문이 됩니다.** 쓰는 법은 아래 [변경 기록 쓰기](#변경-기록-쓰기)에 있습니다.
+3. 두 변경을 `chore: bump version to v1.0.3`로 함께 커밋하고 `main`으로 PR을 엽니다. `Validate version bump` 검사가 다음을 확인하고, 배포될 Release 제목을 알려줍니다.
+   - 버전 형식(`X.Y.Z`)
+   - `package-lock.json` 버전 일치
+   - 기존 태그보다 높은 버전인지
+   - `CHANGELOG.md` 항목이 있는지
+4. PR을 병합하면 `publish-windows-release.yml`이 배포합니다.
+
+`publish-windows-release.yml`은 `main`에 푸시될 때마다 실행되지만, 배포 여부는 커밋 메시지가 아니라 버전으로 판단합니다. `package.json` 버전의 `vX.Y.Z` 태그가 이미 있으면 아무것도 하지 않고, 없을 때만 다음을 진행합니다.
+
+1. `CHANGELOG.md`에서 그 버전 항목을 읽습니다. 없거나 비어 있으면 빌드 전에 멈춥니다.
+2. Windows에서 `npm install`, `npm run make -- --platform=win32 --arch=x64`를 실행합니다.
+3. `out/make/squirrel.windows/x64/`의 `Setup.exe`, `.nupkg`, `RELEASES`를 공개 Release에 업로드합니다.
+4. 마지막으로 그 커밋에 `vX.Y.Z` 태그를 붙입니다.
+
+태그를 업로드가 끝난 뒤에 붙이므로, 중간에 실패하면 태그가 남지 않습니다. Actions의 `Publish Windows release`에서 다시 실행하거나 다음 `main` 푸시 때 다시 배포를 시도합니다.
+
+`v*` 태그는 손으로 푸시하지 않습니다. 워크플로는 태그가 있는 버전을 이미 배포된 것으로 보므로, 배포 전에 태그를 먼저 붙이면 그 버전은 배포되지 않습니다.
+
+## 변경 기록 쓰기
+
+[`CHANGELOG.md`](../CHANGELOG.md)는 버전마다 바뀐 점을 최신 버전부터 적는 파일입니다. [Keep a Changelog](https://keepachangelog.com/) 형식을 따릅니다.
+
+- **평소**: 기능 PR을 병합할 때 `## [Unreleased]` 아래에 한 줄씩 적어 둡니다. 배포 직전에 한꺼번에 써도 됩니다.
+- **배포할 때**: `## [Unreleased]` 바로 아래에 새 버전 제목 줄을 넣습니다. 그러면 그동안 적은 내용이 그 버전 항목이 되고, `## [Unreleased]`는 빈 채로 남습니다.
+
+```markdown
+## [Unreleased]
+
+## [1.1.0] - 2026-10-28 - 설명 모드 개편
+
+### 새 기능
+
+- 색 RGB 모드를 추가했습니다.
+
+### 고친 점
+
+- 모드를 바꿀 때 버튼이 움직이던 문제를 고쳤습니다.
+```
+
+- **제목 줄**: `## [버전] - 날짜` 형식입니다. 끝에 ` - 제목`을 붙이면 Release 제목이 `v1.1.0 설명 모드 개편`이 됩니다. 붙이지 않으면 `v1.1.0 Busan Mathematical Culture Center – Media Art`가 됩니다.
+- **본문**: 제목 줄 아래부터 다음 `## ` 제목 전까지가 그대로 Release 본문이 됩니다. 항목 안의 소제목은 `###`로 씁니다. `##`를 쓰면 거기서 항목이 끝납니다.
+- **소제목**: 자유롭게 정해도 되지만 `새 기능`, `바뀐 점`, `고친 점`으로 나누면 읽기 쉽습니다.
+- **이미 배포한 항목**: 고쳐도 이미 만들어진 Release 본문은 바뀌지 않습니다. 필요하면 Release 페이지에서 직접 고칩니다.
+
+`npm test`도 현재 `package.json` 버전의 항목이 있는지 확인합니다. 버전만 올리고 커밋하려 하면 pre-commit에서 바로 알려줍니다.
 
 현재 Windows 코드 서명 인증서는 사용하지 않습니다. 따라서 설치 또는 업데이트 실행 시 Microsoft SmartScreen 경고가 표시될 수 있으며, 자동 업데이트 구현만으로 이 경고는 제거되지 않습니다.
