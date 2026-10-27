@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { renderMarkdown, renderPatchNotes, build } = require('../scripts/build-site');
+const { renderMarkdown, renderPatchNotes, bilingual, build } = require('../scripts/build-site');
 const { parseChangelog } = require('../scripts/changelog');
 
 describe('site Markdown', () => {
@@ -42,11 +42,22 @@ describe('patch notes', () => {
   it('lists every version newest first with an anchor', () => {
     const { index, notes } = renderPatchNotes(parseChangelog(changelog));
     expect(index).toBe(
-      '<a href="#upcoming">다음 버전</a>\n<a href="#v1.1.0">v1.1.0</a>\n<a href="#v1.0.0">v1.0.0</a>'
+      `<a href="#upcoming">${bilingual('다음 버전', 'Next')}</a>\n<a href="#v1.1.0">v1.1.0</a>\n<a href="#v1.0.0">v1.0.0</a>`
     );
     expect(notes).toContain('<article class="release" id="v1.1.0">');
-    expect(notes).toContain('<h2 class="release-title">새 모드</h2>');
+    expect(notes).toContain('<span data-l="ko">새 모드</span>');
     expect(notes).toContain('<time datetime="2026-10-28">2026. 10. 28.</time>');
+  });
+
+  it('shows the English notes for a version, or its Korean notes with a note', () => {
+    const english = parseChangelog('## [1.1.0] - 2026-10-28 - New mode\n\n- Image math\n');
+    const { notes } = renderPatchNotes(parseChangelog(changelog), english);
+    const v110 = notes.slice(notes.indexOf('id="v1.1.0"'), notes.indexOf('id="v1.0.0"'));
+    expect(v110).toContain('<span data-l="en">New mode</span>');
+    expect(v110).toContain('<li>Image math</li>');
+    const v100 = notes.slice(notes.indexOf('id="v1.0.0"'));
+    expect(v100).toContain('Notes for this version are in Korean.');
+    expect(v100.match(/<li>첫 버전<\/li>/g)).toHaveLength(2);
   });
 
   it('marks the Unreleased section as not yet deployed, and hides it when empty', () => {

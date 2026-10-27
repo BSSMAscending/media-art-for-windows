@@ -1,57 +1,129 @@
 <!doctype html>
-<html lang="ko">
+<html
+  lang="ko"
+  data-lang="ko"
+  data-title-ko="Binary Media Art · 숫자가 되는 나"
+  data-title-en="Binary Media Art · Becoming numbers"
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Binary Media Art</title>
+    <title>Binary Media Art · 숫자가 되는 나</title>
     <meta
       name="description"
-      content="카메라에 비친 내 모습이 숫자가 되는 과정을 보여주는 부산수학문화관 미디어 아트 전시물"
+      content="카메라에 비친 내 모습이 숫자가 되는 과정을 보여주는 부산수학문화관 미디어 아트 전시물 · A media art exhibit that turns your camera image into numbers"
     />
     <meta property="og:title" content="Binary Media Art" />
     <meta property="og:description" content="카메라에 비친 내가 숫자가 되는 순간" />
     <meta property="og:image" content="images/hero.webp" />
+    <script>
+      // Saved or browser language and theme, applied before the page paints.
+      (function () {
+        var root = document.documentElement;
+        var get = function (key) {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            return null;
+          }
+        };
+        var query = new URLSearchParams(location.search).get('lang');
+        var saved = get('lang');
+        var lang =
+          query === 'ko' || query === 'en'
+            ? query
+            : saved === 'ko' || saved === 'en'
+              ? saved
+              : /^ko\b/i.test(navigator.language || '')
+                ? 'ko'
+                : 'en';
+        root.dataset.lang = lang;
+        root.lang = lang;
+        var theme = get('theme');
+        if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+      })();
+    </script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href="./" aria-label="Binary Media Art 처음으로">
+        <a class="brand" href="./" aria-label="Binary Media Art">
           <span class="brand-mark" aria-hidden="true"
             ><span></span><span></span><span></span><span></span><span></span><span></span
             ><span></span><span></span><span></span
           ></span>
           <span class="brand-name">Binary Media Art</span>
         </a>
-        <nav class="site-nav" aria-label="사이트 메뉴">
-          <a href="#how">원리</a>
-          <a href="#modes">모드</a>
-          <a href="#play">체험</a>
-          <a href="#install">설치</a>
-          <a href="patch-notes.html">패치노트</a>
+        <nav class="site-nav" aria-label="Menu">
+          <a href="#how"><span data-l="ko">원리</span><span data-l="en">How</span></a>
+          <a href="#modes"><span data-l="ko">모드</span><span data-l="en">Modes</span></a>
+          <a href="#play"><span data-l="ko">체험</span><span data-l="en">Try it</span></a>
+          <a href="#install"><span data-l="ko">설치</span><span data-l="en">Install</span></a>
+          <a href="patch-notes.html"
+            ><span data-l="ko">패치노트</span><span data-l="en">Patch notes</span></a
+          >
           <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>
         </nav>
+        <div class="site-tools">
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-set-lang="ko" lang="ko">KO</button>
+            <button type="button" data-set-lang="en" lang="en">EN</button>
+          </div>
+          <button class="theme-toggle" id="themeToggle" type="button">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path
+                  d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"
+                />
+              </g>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
 
     <main>
       <section class="hero">
         <div class="wrap">
-          <p class="eyebrow">부산수학문화관 · 수학 미디어 아트</p>
-          <h1>카메라에 비친 내가<br /><em>숫자</em>가 되는 순간</h1>
-          <p class="lead">
+          <p class="eyebrow">
+            <span data-l="ko">부산수학문화관 · 수학 미디어 아트</span
+            ><span data-l="en">Busan Mathematical Culture Center · Math media art</span>
+          </p>
+          <h1 data-l="ko">카메라에 비친 내가<br /><em>숫자</em>가 되는 순간</h1>
+          <h1 data-l="en">The moment you<br />become <em>numbers</em></h1>
+          <p class="lead" data-l="ko">
             터치 화면 앞에 서면 내 모습이 0과 1, 빛 세 장, 밝기 계단, 계산된 숫자로 바뀝니다.
             컴퓨터가 사진을 어떻게 숫자로 다루는지 눈으로 보고 손으로 만져 보는 전시물입니다.
           </p>
+          <p class="lead" data-l="en">
+            Stand in front of the touch screen and you turn into 0s and 1s, three lights, brightness
+            steps and calculated numbers. An exhibit to see, and touch, how a computer handles a
+            picture as numbers.
+          </p>
           <div class="actions">
-            <a class="button primary" href="{{DOWNLOAD_URL}}">Windows 설치 파일 받기</a>
-            <a class="button" href="patch-notes.html">패치노트 보기</a>
+            <a class="button primary" href="{{DOWNLOAD_URL}}"
+              ><span data-l="ko">Windows 설치 파일 받기</span
+              ><span data-l="en">Download for Windows</span></a
+            >
+            <a class="button" href="patch-notes.html"
+              ><span data-l="ko">패치노트 보기</span><span data-l="en">Patch notes</span></a
+            >
           </div>
-          <p class="meta">최신 배포 v{{VERSION}} · {{UPCOMING_NOTE}}</p>
+          <p class="meta">
+            <span data-l="ko">최신 배포</span><span data-l="en">Latest release</span> v{{VERSION}} ·
+            {{UPCOMING_NOTE}}
+          </p>
           <figure class="shot">
             <img
               src="images/hero.webp"
               alt="색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면"
+              data-alt-ko="색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면"
+              data-alt-en="The RGB Color mode sliding the red, green and blue lights apart"
             />
           </figure>
         </div>
@@ -60,33 +132,54 @@
       <section class="section" id="how">
         <div class="wrap">
           <div class="section-head">
-            <h2>사진이 숫자가 되는 4단계</h2>
-            <p>모든 모드는 같은 순서로 화면을 만듭니다. 칸 하나가 픽셀 하나, 숫자 하나입니다.</p>
+            <h2 data-l="ko">사진이 숫자가 되는 4단계</h2>
+            <h2 data-l="en">Four steps from photo to numbers</h2>
+            <p data-l="ko">
+              모든 모드는 같은 순서로 화면을 만듭니다. 칸 하나가 픽셀 하나, 숫자 하나입니다.
+            </p>
+            <p data-l="en">
+              Every mode builds the screen the same way: one cell, one pixel, one number.
+            </p>
           </div>
           <ol class="steps">
-            <li><strong>카메라</strong><span>640×480 영상을 거울처럼 뒤집어 받습니다.</span></li>
             <li>
-              <strong>칸 나누기</strong
-              ><span>화면을 같은 크기의 칸으로 나눕니다. 처음에는 24px입니다.</span>
+              <strong data-l="ko">카메라</strong><strong data-l="en">Camera</strong>
+              <span data-l="ko">640×480 영상을 거울처럼 뒤집어 받습니다.</span>
+              <span data-l="en">A 640×480 picture, flipped like a mirror.</span>
             </li>
             <li>
-              <strong>숫자로 바꾸기</strong
-              ><span>칸마다 빛의 세기를 0~255, 또는 0과 1로 적습니다.</span>
+              <strong data-l="ko">칸 나누기</strong><strong data-l="en">Split into cells</strong>
+              <span data-l="ko">화면을 같은 크기의 칸으로 나눕니다. 처음에는 24px입니다.</span>
+              <span data-l="en">The screen is cut into equal cells, 24px to start.</span>
             </li>
             <li>
-              <strong>다시 그리기</strong
-              ><span>숫자를 다시 색으로 칠하고, 그 위에 숫자를 적습니다.</span>
+              <strong data-l="ko">숫자로 바꾸기</strong
+              ><strong data-l="en">Turn into numbers</strong>
+              <span data-l="ko">칸마다 빛의 세기를 0~255, 또는 0과 1로 적습니다.</span>
+              <span data-l="en">Each cell's light becomes 0~255, or 0 and 1.</span>
+            </li>
+            <li>
+              <strong data-l="ko">다시 그리기</strong><strong data-l="en">Draw again</strong>
+              <span data-l="ko">숫자를 다시 색으로 칠하고, 그 위에 숫자를 적습니다.</span>
+              <span data-l="en">The numbers are painted back as color, and written on top.</span>
             </li>
           </ol>
           <figure class="shot">
             <img
               src="images/layout.webp"
               alt="화면 구성: 1 작품 화면, 2 비유 카드, 3 버튼과 레버, 4 설명 카드"
+              data-alt-ko="화면 구성: 1 작품 화면, 2 비유 카드, 3 버튼과 레버, 4 설명 카드"
+              data-alt-en="Screen layout: 1 artwork, 2 metaphor card, 3 buttons and levers, 4 explanation card"
               loading="lazy"
             />
             <figcaption>
-              ① 작품 화면 ② 비유 · 애니메이션 ③ 버튼과 레버 (화면 세로 가운데) ④ 설명 · 용어 · 지금
-              화면
+              <span data-l="ko"
+                >① 작품 화면 ② 비유 · 애니메이션 ③ 버튼과 레버 (화면 세로 가운데) ④ 설명 · 용어 ·
+                지금 화면</span
+              ><span data-l="en"
+                >① Artwork ② Metaphor and animation ③ Buttons and levers (at mid height) ④
+                Explanation, terms and live size</span
+              >
             </figcaption>
           </figure>
         </div>
@@ -95,28 +188,44 @@
       <section class="section" id="modes">
         <div class="wrap">
           <div class="section-head">
-            <h2>네 가지 모드</h2>
-            <p>같은 장면을 네 가지 방법으로 숫자로 바꿔 봅니다.</p>
+            <h2 data-l="ko">네 가지 모드</h2>
+            <h2 data-l="en">Four modes</h2>
+            <p data-l="ko">같은 장면을 네 가지 방법으로 숫자로 바꿔 봅니다.</p>
+            <p data-l="en">The same scene, turned into numbers in four ways.</p>
           </div>
 
           <div class="modes">
             <article class="mode">
               <div class="mode-text">
-                <span class="mode-tag">1 · 미디어 아트</span>
-                <h3>0과 1로 그린 나</h3>
-                <p>
+                <span class="mode-tag"
+                  ><span data-l="ko">1 · 미디어 아트</span
+                  ><span data-l="en">1 · Media Art</span></span
+                >
+                <h3 data-l="ko">0과 1로 그린 나</h3>
+                <h3 data-l="en">You, drawn in 0s and 1s</h3>
+                <p data-l="ko">
                   인공지능이 사람을 찾은 칸은 <code>1</code>, 나머지 칸은 <code>0</code>입니다.
                   아무도 없으면 화면이 0으로 가득 차고, 사람이 들어오면 그 자리만 1로 켜집니다.
                 </p>
-                <ul>
+                <p data-l="en">
+                  Cells where the AI finds a person are <code>1</code>, every other cell is
+                  <code>0</code>. An empty room is all zeros; step in and your cells light up as 1.
+                </p>
+                <ul data-l="ko">
                   <li>칸마다 켜고 끄는 전등 스위치 = 1비트</li>
                   <li>내 몸의 색과 밝기에 따라 1이 은은하게 빛납니다</li>
+                </ul>
+                <ul data-l="en">
+                  <li>A light switch in every cell = 1 bit</li>
+                  <li>Each 1 glows with your own color and brightness</li>
                 </ul>
               </div>
               <div class="mode-media">
                 <img
                   src="images/media-art-states.webp"
                   alt="아무도 없을 때는 0만, 사람이 들어오면 그 자리가 1로 켜진 화면"
+                  data-alt-ko="아무도 없을 때는 0만, 사람이 들어오면 그 자리가 1로 켜진 화면"
+                  data-alt-en="Only zeros in an empty room; a person's cells light up as 1"
                   loading="lazy"
                 />
               </div>
@@ -124,27 +233,43 @@
 
             <article class="mode">
               <div class="mode-text">
-                <span class="mode-tag">2 · 색 RGB</span>
-                <h3>빛 세 가지로 만든 색</h3>
-                <p>
+                <span class="mode-tag"
+                  ><span data-l="ko">2 · 색 RGB</span><span data-l="en">2 · RGB Color</span></span
+                >
+                <h3 data-l="ko">빛 세 가지로 만든 색</h3>
+                <h3 data-l="en">Color from three lights</h3>
+                <p data-l="ko">
                   화면의 모든 색은 빨강 · 초록 · 파랑 빛을 섞은 것입니다. <code>R</code>
                   <code>G</code> <code>B</code>를 누르면 빛 세 장이 벌어진 뒤 고른 빛만 남고, 칸마다
                   그 빛의 세기가 적힙니다.
                 </p>
-                <ul>
+                <p data-l="en">
+                  Every color on screen is red, green and blue light mixed. Press <code>R</code>
+                  <code>G</code> <code>B</code> and the three lights slide apart, leaving the one
+                  you picked with its strength in every cell.
+                </p>
+                <ul data-l="ko">
                   <li>빛 하나의 세기 = 0~255, 8비트</li>
                   <li>세 빛을 합치면 256 × 256 × 256 ≈ 1,677만 색</li>
+                </ul>
+                <ul data-l="en">
+                  <li>One light's strength = 0~255, 8 bits</li>
+                  <li>Three lights together = 256 × 256 × 256 ≈ 16.7 million colors</li>
                 </ul>
               </div>
               <div class="mode-media">
                 <img
                   src="images/rgb-split.webp"
                   alt="R을 누르면 빛 세 장이 벌어지고, 다시 누르면 합쳐지는 애니메이션"
+                  data-alt-ko="R을 누르면 빛 세 장이 벌어지고, 다시 누르면 합쳐지는 애니메이션"
+                  data-alt-en="Pressing R slides the three lights apart; pressing it again merges them"
                   loading="lazy"
                 />
                 <img
                   src="images/rgb-numbers.webp"
                   alt="전체 색 칸의 R·G·B 세 숫자와 R 칸의 숫자 확대"
+                  data-alt-ko="전체 색 칸의 R·G·B 세 숫자와 R 칸의 숫자 확대"
+                  data-alt-en="Close-up of the three R·G·B numbers per cell, and the red numbers"
                   loading="lazy"
                 />
               </div>
@@ -152,26 +277,58 @@
 
             <article class="mode">
               <div class="mode-text">
-                <span class="mode-tag">3 · 밝기 단계</span>
-                <h3>크레파스 몇 자루로 그릴까</h3>
-                <p>
+                <span class="mode-tag"
+                  ><span data-l="ko">3 · 밝기 단계</span
+                  ><span data-l="en">3 · Brightness</span></span
+                >
+                <h3 data-l="ko">크레파스 몇 자루로 그릴까</h3>
+                <h3 data-l="en">How many crayons?</h3>
+                <p data-l="ko">
                   밝기를 2 · 10 · 256단계 계단으로 나누고 칸마다 단계 번호를 적습니다. 2단계에서는
                   <strong>흑백 경계값</strong> 레버로 0과 1을 가르는 기준을 직접 옮깁니다.
                 </p>
-                <ul>
+                <p data-l="en">
+                  Brightness is cut into 2, 10 or 256 steps, with the step number in every cell. In
+                  2 steps, the <strong>threshold</strong> lever moves the point between 0 and 1.
+                </p>
+                <ul data-l="ko">
                   <li>양자화 = 매끈한 값을 계단으로 나누기</li>
                   <li>256단계 = 8비트, 눈에는 거의 사진처럼</li>
+                </ul>
+                <ul data-l="en">
+                  <li>Quantization = cutting a smooth value into steps</li>
+                  <li>256 steps = 8 bits, almost a photo to our eyes</li>
                 </ul>
               </div>
               <div class="mode-media">
                 <div class="trio">
-                  <img src="images/levels-2.webp" alt="2단계 흑백" loading="lazy" />
-                  <img src="images/levels-10.webp" alt="10단계 회색" loading="lazy" />
-                  <img src="images/levels-256.webp" alt="256단계 회색" loading="lazy" />
+                  <img
+                    src="images/levels-2.webp"
+                    alt="2단계 흑백"
+                    data-alt-ko="2단계 흑백"
+                    data-alt-en="2 steps, black and white"
+                    loading="lazy"
+                  />
+                  <img
+                    src="images/levels-10.webp"
+                    alt="10단계 회색"
+                    data-alt-ko="10단계 회색"
+                    data-alt-en="10 grey steps"
+                    loading="lazy"
+                  />
+                  <img
+                    src="images/levels-256.webp"
+                    alt="256단계 회색"
+                    data-alt-ko="256단계 회색"
+                    data-alt-en="256 grey steps"
+                    loading="lazy"
+                  />
                 </div>
                 <img
                   src="images/threshold.webp"
                   alt="흑백 경계값을 40에서 220까지 옮기는 애니메이션"
+                  data-alt-ko="흑백 경계값을 40에서 220까지 옮기는 애니메이션"
+                  data-alt-en="Moving the threshold from 40 to 220"
                   loading="lazy"
                 />
               </div>
@@ -179,29 +336,52 @@
 
             <article class="mode">
               <div class="mode-text">
-                <span class="mode-tag">4 · 수학 처리</span>
-                <h3>숫자를 계산하면 사진이 바뀐다</h3>
-                <p>
+                <span class="mode-tag"
+                  ><span data-l="ko">4 · 수학 처리</span
+                  ><span data-l="en">4 · Image Math</span></span
+                >
+                <h3 data-l="ko">숫자를 계산하면 사진이 바뀐다</h3>
+                <h3 data-l="en">Change the numbers, change the photo</h3>
+                <p data-l="ko">
                   사진 앱의 밝기 · 대비 · 블러 · 선명은 모두 숫자 계산입니다. 하나를 고르면 칸마다
                   숫자가 어떻게 바뀌는지 바로 보이고, 레버로 세기를 바꿉니다.
+                </p>
+                <p data-l="en">
+                  A photo app's brightness, contrast, blur and sharpen are all number math. Pick one
+                  to see every number change, and set its strength with the lever.
                 </p>
                 <table class="formula">
                   <tbody>
                     <tr>
-                      <th>밝기</th>
-                      <td>값 + 더할 수</td>
+                      <th><span data-l="ko">밝기</span><span data-l="en">Brighten</span></th>
+                      <td>
+                        <span data-l="ko">값 + 더할 수</span><span data-l="en">value + amount</span>
+                      </td>
                     </tr>
                     <tr>
-                      <th>대비</th>
-                      <td>(값 − 128) × 곱할 수 + 128</td>
+                      <th><span data-l="ko">대비</span><span data-l="en">Contrast</span></th>
+                      <td>
+                        <span data-l="ko">(값 − 128) × 곱할 수 + 128</span
+                        ><span data-l="en">(value − 128) × factor + 128</span>
+                      </td>
                     </tr>
                     <tr>
-                      <th>블러</th>
-                      <td>주변 칸의 가우시안 무게 평균 (모서리 1 · 옆 2 · 가운데 4 ÷ 16)</td>
+                      <th><span data-l="ko">블러</span><span data-l="en">Blur</span></th>
+                      <td>
+                        <span data-l="ko"
+                          >주변 칸의 가우시안 무게 평균 (모서리 1 · 옆 2 · 가운데 4 ÷ 16)</span
+                        ><span data-l="en"
+                          >Gaussian weighted average of the neighbors (corner 1 · side 2 · center 4
+                          ÷ 16)</span
+                        >
+                      </td>
                     </tr>
                     <tr>
-                      <th>선명</th>
-                      <td>값 + (값 − 무게 평균) × 세기</td>
+                      <th><span data-l="ko">선명</span><span data-l="en">Sharpen</span></th>
+                      <td>
+                        <span data-l="ko">값 + (값 − 무게 평균) × 세기</span
+                        ><span data-l="en">value + (value − average) × strength</span>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -210,6 +390,8 @@
                 <img
                   src="images/math-numbers.webp"
                   alt="같은 칸의 원본 숫자와 밝기·대비·블러·선명 계산 결과"
+                  data-alt-ko="같은 칸의 원본 숫자와 밝기·대비·블러·선명 계산 결과"
+                  data-alt-en="The same cells before and after brighten, contrast, blur and sharpen"
                   loading="lazy"
                 />
               </div>
@@ -221,49 +403,77 @@
       <section class="section" id="play">
         <div class="wrap">
           <div class="section-head">
-            <h2>직접 만져 보기</h2>
-            <p>누르는 버튼과 레버는 모두 화면 세로 가운데에 모여 있어 아이들도 쉽게 닿습니다.</p>
+            <h2 data-l="ko">직접 만져 보기</h2>
+            <h2 data-l="en">Try it yourself</h2>
+            <p data-l="ko">
+              누르는 버튼과 레버는 모두 화면 세로 가운데에 모여 있어 아이들도 쉽게 닿습니다.
+            </p>
+            <p data-l="en">
+              Every button and lever sits at the middle of the screen, where children can reach.
+            </p>
           </div>
           <div class="panels">
             <div class="panel">
-              <h3>칸 크기 레버</h3>
+              <h3 data-l="ko">칸 크기 레버</h3>
+              <h3 data-l="en">Cell size lever</h3>
               <img
                 src="images/cell-size.webp"
                 alt="칸 크기를 8px에서 48px까지 바꾸는 애니메이션"
+                data-alt-ko="칸 크기를 8px에서 48px까지 바꾸는 애니메이션"
+                data-alt-en="Changing the cell size from 8px to 48px"
                 loading="lazy"
               />
-              <p>칸을 작게 하면 사진에 가까워지고, 크게 하면 숫자가 잘 보입니다.</p>
+              <p data-l="ko">칸을 작게 하면 사진에 가까워지고, 크게 하면 숫자가 잘 보입니다.</p>
+              <p data-l="en">Small cells look like a photo; big cells make the numbers readable.</p>
             </div>
             <div class="panel">
-              <h3>돋보기</h3>
+              <h3 data-l="ko">돋보기</h3>
+              <h3 data-l="en">Magnifier</h3>
               <img
                 src="images/magnifier.webp"
                 alt="화면을 누르고 끌면 따라오는 3배 돋보기"
+                data-alt-ko="화면을 누르고 끌면 따라오는 3배 돋보기"
+                data-alt-en="A 3× lens following the finger across the picture"
                 loading="lazy"
               />
-              <p>
+              <p data-l="ko">
                 작품 화면을 꾹 누르고 있으면 손가락 위에 3배 돋보기가 떠서 작은 숫자도 읽힙니다.
+              </p>
+              <p data-l="en">
+                Press and hold the picture and a 3× lens floats above your finger to read tiny
+                numbers.
               </p>
             </div>
             <div class="panel">
-              <h3>설명 카드</h3>
+              <h3 data-l="ko">설명 카드</h3>
+              <h3 data-l="en">Explanation cards</h3>
               <img
                 src="images/math-cards.webp"
                 alt="밝기·대비·블러·선명 설명 카드"
+                data-alt-ko="밝기·대비·블러·선명 설명 카드"
+                data-alt-en="Cards for brighten, contrast, blur and sharpen"
                 loading="lazy"
               />
-              <p>긴 수식 대신 한 줄 공식과 3×3 숫자 예시로 감을 잡습니다.</p>
+              <p data-l="ko">긴 수식 대신 한 줄 공식과 3×3 숫자 예시로 감을 잡습니다.</p>
+              <p data-l="en">A one-line formula and a 3×3 example instead of long math.</p>
             </div>
           </div>
           <figure class="shot">
             <img
               src="images/controls.webp"
               alt="모드별 버튼과 레버: 색 RGB, 밝기 2단계, 수학 처리"
+              data-alt-ko="모드별 버튼과 레버: 색 RGB, 밝기 2단계, 수학 처리"
+              data-alt-en="Buttons and levers in RGB Color, Brightness 2 steps and Image Math"
               loading="lazy"
             />
             <figcaption>
-              오른쪽 레버는 화면마다 바뀝니다: 밝기 2단계에서는 흑백 경계값, 수학 처리에서는 계산의
-              세기.
+              <span data-l="ko"
+                >오른쪽 레버는 화면마다 바뀝니다: 밝기 2단계에서는 흑백 경계값, 수학 처리에서는
+                계산의 세기. 버튼 묶음 첫 줄에서 한국어 / English를 바꿀 수 있습니다.</span
+              ><span data-l="en"
+                >The right lever changes with the view: the threshold in 2 steps, the strength in
+                Image Math. The first row switches between 한국어 and English.</span
+              >
             </figcaption>
           </figure>
         </div>
@@ -272,31 +482,54 @@
       <section class="section" id="install">
         <div class="wrap">
           <div class="section-head">
-            <h2>설치와 업데이트</h2>
-            <p>Windows용 Electron 앱입니다. 전시 PC에 한 번 설치하면 새 버전을 스스로 받습니다.</p>
+            <h2 data-l="ko">설치와 업데이트</h2>
+            <h2 data-l="en">Install and updates</h2>
+            <p data-l="ko">
+              Windows용 Electron 앱입니다. 전시 PC에 한 번 설치하면 새 버전을 스스로 받습니다.
+            </p>
+            <p data-l="en">
+              An Electron app for Windows. Install it once on the exhibit PC and it fetches new
+              versions by itself.
+            </p>
           </div>
           <div class="install">
             <div class="panel">
-              <h3>설치 파일</h3>
-              <p>
+              <h3 data-l="ko">설치 파일</h3>
+              <h3 data-l="en">Installer</h3>
+              <p data-l="ko">
                 <a href="{{DOWNLOAD_URL}}">최신 Release</a>에서 <code>Setup.exe</code>를 받아
                 실행합니다. 코드 서명을 하지 않아 처음 실행할 때 SmartScreen 경고가 나올 수
                 있습니다.
               </p>
-            </div>
-            <div class="panel">
-              <h3>자동 업데이트</h3>
-              <p>
-                앱이 켜지고 몇 초 뒤 새 버전을 확인해 내려받고, 다 받으면 재시작을 물어봅니다.
-                확인하지 못해도 전시는 그대로 이어집니다.
+              <p data-l="en">
+                Download <code>Setup.exe</code> from the
+                <a href="{{DOWNLOAD_URL}}">latest Release</a>
+                and run it. It is not code-signed, so SmartScreen may warn on first launch.
               </p>
             </div>
             <div class="panel">
-              <h3>바뀐 점</h3>
-              <p>
+              <h3 data-l="ko">자동 업데이트</h3>
+              <h3 data-l="en">Automatic updates</h3>
+              <p data-l="ko">
+                앱이 켜지고 몇 초 뒤 새 버전을 확인해 내려받고, 다 받으면 재시작을 물어봅니다.
+                확인하지 못해도 전시는 그대로 이어집니다.
+              </p>
+              <p data-l="en">
+                A few seconds after launch the app checks for a new version, downloads it and asks
+                to restart. If the check fails, the exhibit just carries on.
+              </p>
+            </div>
+            <div class="panel">
+              <h3 data-l="ko">바뀐 점</h3>
+              <h3 data-l="en">What's new</h3>
+              <p data-l="ko">
                 버전마다 무엇이 바뀌었는지는 <a href="patch-notes.html">패치노트</a>에, 소스 코드는
                 <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>에
                 있습니다.
+              </p>
+              <p data-l="en">
+                See the <a href="patch-notes.html">patch notes</a> for each version, and the source
+                on <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>.
               </p>
             </div>
           </div>
@@ -307,8 +540,10 @@
     <footer class="site-footer">
       <div class="wrap">
         <span>Binary Media Art · BSSM Ascending</span>
-        <span>사이트의 화면은 실제 카메라 대신 가상 장면으로 캡처했습니다.</span>
+        <span data-l="ko">사이트의 화면은 실제 카메라 대신 가상 장면으로 캡처했습니다.</span>
+        <span data-l="en">Screens on this site use a drawn scene instead of a real camera.</span>
       </div>
     </footer>
+    <script src="app.js"></script>
   </body>
 </html>

@@ -1,42 +1,103 @@
 <!doctype html>
-<html lang="ko">
+<html
+  lang="ko"
+  data-lang="ko"
+  data-title-ko="패치노트 · Binary Media Art"
+  data-title-en="Patch notes · Binary Media Art"
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>패치노트 · Binary Media Art</title>
-    <meta name="description" content="Binary Media Art 버전별 변경 기록" />
+    <meta
+      name="description"
+      content="Binary Media Art 버전별 변경 기록 · Patch notes for every version"
+    />
+    <script>
+      // Saved or browser language and theme, applied before the page paints.
+      (function () {
+        var root = document.documentElement;
+        var get = function (key) {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            return null;
+          }
+        };
+        var query = new URLSearchParams(location.search).get('lang');
+        var saved = get('lang');
+        var lang =
+          query === 'ko' || query === 'en'
+            ? query
+            : saved === 'ko' || saved === 'en'
+              ? saved
+              : /^ko\b/i.test(navigator.language || '')
+                ? 'ko'
+                : 'en';
+        root.dataset.lang = lang;
+        root.lang = lang;
+        var theme = get('theme');
+        if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+      })();
+    </script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href="./" aria-label="Binary Media Art 처음으로">
+        <a class="brand" href="./" aria-label="Binary Media Art">
           <span class="brand-mark" aria-hidden="true"
             ><span></span><span></span><span></span><span></span><span></span><span></span
             ><span></span><span></span><span></span
           ></span>
           <span class="brand-name">Binary Media Art</span>
         </a>
-        <nav class="site-nav" aria-label="사이트 메뉴">
-          <a href="./#how">원리</a>
-          <a href="./#modes">모드</a>
-          <a href="./#play">체험</a>
-          <a href="./#install">설치</a>
-          <a href="patch-notes.html" aria-current="page">패치노트</a>
+        <nav class="site-nav" aria-label="Menu">
+          <a href="./#how"><span data-l="ko">원리</span><span data-l="en">How</span></a>
+          <a href="./#modes"><span data-l="ko">모드</span><span data-l="en">Modes</span></a>
+          <a href="./#play"><span data-l="ko">체험</span><span data-l="en">Try it</span></a>
+          <a href="./#install"><span data-l="ko">설치</span><span data-l="en">Install</span></a>
+          <a href="patch-notes.html" aria-current="page"
+            ><span data-l="ko">패치노트</span><span data-l="en">Patch notes</span></a
+          >
           <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>
         </nav>
+        <div class="site-tools">
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-set-lang="ko" lang="ko">KO</button>
+            <button type="button" data-set-lang="en" lang="en">EN</button>
+          </div>
+          <button class="theme-toggle" id="themeToggle" type="button">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path
+                  d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"
+                />
+              </g>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
 
     <main class="wrap">
       <section class="notes-hero">
         <p class="eyebrow">CHANGELOG</p>
-        <h1>패치노트</h1>
-        <p class="lead">
+        <h1 data-l="ko">패치노트</h1>
+        <h1 data-l="en">Patch notes</h1>
+        <p class="lead" data-l="ko">
           버전마다 무엇이 바뀌었는지 최신 버전부터 적었습니다. 최신 배포는 v{{VERSION}}이며,
           <a href="{{DOWNLOAD_URL}}">설치 파일</a>은 공개 Release에 있습니다.
         </p>
-        <nav class="release-index" aria-label="버전 바로가기">
+        <p class="lead" data-l="en">
+          What changed in each version, newest first. The latest release is v{{VERSION}}; the
+          <a href="{{DOWNLOAD_URL}}">installer</a> is on the public Release page.
+        </p>
+        <nav class="release-index" aria-label="Versions">
           <!-- PATCH_NOTES_INDEX -->
         </nav>
       </section>
@@ -49,13 +110,21 @@
     <footer class="site-footer">
       <div class="wrap">
         <span>Binary Media Art · BSSM Ascending</span>
-        <span
+        <span data-l="ko"
           >이 페이지는 저장소의
           <a href="https://github.com/BSSMAscending/media-art-for-windows/blob/main/CHANGELOG.md"
             >CHANGELOG.md</a
           >로 만들어집니다.</span
         >
+        <span data-l="en"
+          >Built from
+          <a href="https://github.com/BSSMAscending/media-art-for-windows/blob/main/CHANGELOG.en.md"
+            >CHANGELOG.en.md</a
+          >
+          in the repository.</span
+        >
       </div>
     </footer>
+    <script src="app.js"></script>
   </body>
 </html>

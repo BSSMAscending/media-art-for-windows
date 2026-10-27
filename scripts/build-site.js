@@ -66,31 +66,57 @@ function formatDate(date) {
   return `${year}. ${month}. ${day}.`;
 }
 
-/** The version index and one article per entry; an empty Unreleased section is left out. */
-function renderPatchNotes(entries) {
+// Both languages side by side; the page shows one by its data-lang (see site/app.js).
+function bilingual(ko, en, tag = 'span') {
+  return `<${tag} data-l="ko">${ko}</${tag}><${tag} data-l="en">${en}</${tag}>`;
+}
+
+/**
+ * The version index and one article per entry, newest first, in Korean and English.
+ * `english` comes from CHANGELOG.en.md; a version missing there shows its Korean
+ * notes in both. An empty Unreleased section is left out.
+ */
+function renderPatchNotes(entries, english = []) {
   const shown = entries.filter((entry) => entry.version || entry.body);
   const id = (entry) => (entry.version ? `v${entry.version}` : 'upcoming');
+  const translationOf = (entry) => english.find((other) => other.version === entry.version);
   const index = shown
     .map(
-      (entry) => `<a href="#${id(entry)}">${entry.version ? `v${entry.version}` : '다음 버전'}</a>`
+      (entry) =>
+        `<a href="#${id(entry)}">${entry.version ? `v${entry.version}` : bilingual('다음 버전', 'Next')}</a>`
     )
     .join('\n');
   const notes = shown
     .map((entry) => {
       const upcoming = !entry.version;
-      const label = upcoming ? '다음 버전' : `v${entry.version}`;
-      const title = upcoming ? '준비 중' : entry.title || '';
+      const translation = translationOf(entry);
+      const label = upcoming ? bilingual('다음 버전', 'Next version') : `v${entry.version}`;
+      const title = upcoming
+        ? bilingual('준비 중', 'In progress')
+        : bilingual(
+            escapeHtml(entry.title || ''),
+            escapeHtml(translation?.title || entry.title || '')
+          );
       const date = entry.date
         ? `<time datetime="${entry.date}">${formatDate(entry.date)}</time>`
-        : '<span class="release-note">아직 전시 PC에 배포되지 않은 변경입니다</span>';
+        : `<span class="release-note">${bilingual(
+            '아직 전시 PC에 배포되지 않은 변경입니다',
+            'Not on the exhibit PCs yet'
+          )}</span>`;
+      const englishBody = translation?.body
+        ? renderMarkdown(translation.body)
+        : `<p class="release-note">Notes for this version are in Korean.</p>\n${renderMarkdown(entry.body)}`;
       return `<article class="release${upcoming ? ' is-upcoming' : ''}" id="${id(entry)}">
   <header class="release-head">
     <span class="release-version">${label}</span>
-    <h2 class="release-title">${escapeHtml(title)}</h2>
+    <h2 class="release-title">${title}</h2>
     ${date}
   </header>
-  <div class="release-body">
+  <div class="release-body" data-l="ko">
 ${renderMarkdown(entry.body)}
+  </div>
+  <div class="release-body" data-l="en">
+${englishBody}
   </div>
 </article>`;
     })
@@ -114,15 +140,25 @@ function build(outDir) {
   copyDir(path.join(ROOT, 'docs/images/readme'), path.join(outDir, 'images'));
 
   const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const entries = parseChangelog(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8'));
-  const { index, notes } = renderPatchNotes(entries);
+  const read = (file) =>
+    fs.existsSync(path.join(ROOT, file))
+      ? parseChangelog(fs.readFileSync(path.join(ROOT, file), 'utf8'))
+      : [];
+  const entries = read('CHANGELOG.md');
+  const { index, notes } = renderPatchNotes(entries, read('CHANGELOG.en.md'));
   const upcoming = entries.some((entry) => !entry.version && entry.body);
   const values = {
     '{{VERSION}}': escapeHtml(version),
     '{{DOWNLOAD_URL}}': `${RELEASES_URL}/latest`,
     '{{UPCOMING_NOTE}}': upcoming
-      ? '다음 버전 준비 중 · <a href="patch-notes.html#upcoming">무엇이 바뀌나요?</a>'
-      : '<a href="patch-notes.html">패치노트</a>',
+      ? bilingual(
+          '다음 버전 준비 중 · <a href="patch-notes.html#upcoming">무엇이 바뀌나요?</a>',
+          'Next version in progress · <a href="patch-notes.html#upcoming">What changes?</a>'
+        )
+      : bilingual(
+          '<a href="patch-notes.html">패치노트</a>',
+          '<a href="patch-notes.html">Patch notes</a>'
+        ),
     '<!-- PATCH_NOTES_INDEX -->': index,
     '<!-- PATCH_NOTES -->': notes,
   };
@@ -142,4 +178,4 @@ if (require.main === module) {
   console.log(`Site built in ${build(outDir)}`);
 }
 
-module.exports = { renderMarkdown, renderPatchNotes, build };
+module.exports = { renderMarkdown, renderPatchNotes, bilingual, build };

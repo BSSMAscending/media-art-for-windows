@@ -1,4 +1,5 @@
-/* Binary Media Art project site: the exhibit's dark gallery look with cyan signals. */
+/* Binary Media Art project site: the exhibit's dark gallery look with cyan signals,
+   and a light version for daylight reading. Colours live in tokens per theme. */
 :root {
   --bg: #020306;
   --surface: #071016;
@@ -10,13 +11,76 @@
   --text-muted: #5f8a90;
   --accent: #00e5e5;
   --accent-ink: #001414;
+  --accent-hover: #4ff3f3;
+  --accent-soft: rgba(0, 229, 229, 0.1);
   --highlight: #ffd60a;
+  --highlight-border: rgba(255, 214, 10, 0.5);
+  --header-bg: rgba(2, 3, 6, 0.86);
+  --hero-glow: rgba(0, 229, 229, 0.16);
+  --glow: rgba(0, 229, 229, 0.35);
+  --title-glow: rgba(0, 229, 229, 0.55);
+  --shot-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   --radius: 14px;
   --max: 1120px;
   --gutter: clamp(16px, 4vw, 40px);
   --font: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
   --mono: 'SFMono-Regular', Consolas, 'Courier New', monospace;
   color-scheme: dark;
+}
+
+/* Light theme: chosen in the header, or the system's when nothing is saved. */
+:root[data-theme='light'] {
+  --bg: #f4f8f9;
+  --surface: #ffffff;
+  --surface-strong: #eaf3f4;
+  --border: rgba(0, 105, 115, 0.16);
+  --border-strong: rgba(0, 115, 125, 0.45);
+  --text: #08262b;
+  --text-secondary: #335c63;
+  --text-muted: #67878c;
+  --accent: #007c87;
+  --accent-ink: #ffffff;
+  --accent-hover: #00939f;
+  --accent-soft: rgba(0, 124, 135, 0.08);
+  --highlight: #a86e00;
+  --highlight-border: rgba(168, 110, 0, 0.45);
+  --header-bg: rgba(244, 248, 249, 0.88);
+  --hero-glow: rgba(0, 160, 175, 0.14);
+  --glow: rgba(0, 124, 135, 0.25);
+  --title-glow: rgba(0, 124, 135, 0.18);
+  --shot-shadow: 0 24px 60px rgba(8, 38, 43, 0.18);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f4f8f9;
+    --surface: #ffffff;
+    --surface-strong: #eaf3f4;
+    --border: rgba(0, 105, 115, 0.16);
+    --border-strong: rgba(0, 115, 125, 0.45);
+    --text: #08262b;
+    --text-secondary: #335c63;
+    --text-muted: #67878c;
+    --accent: #007c87;
+    --accent-ink: #ffffff;
+    --accent-hover: #00939f;
+    --accent-soft: rgba(0, 124, 135, 0.08);
+    --highlight: #a86e00;
+    --highlight-border: rgba(168, 110, 0, 0.45);
+    --header-bg: rgba(244, 248, 249, 0.88);
+    --hero-glow: rgba(0, 160, 175, 0.14);
+    --glow: rgba(0, 124, 135, 0.25);
+    --title-glow: rgba(0, 124, 135, 0.18);
+    --shot-shadow: 0 24px 60px rgba(8, 38, 43, 0.18);
+    color-scheme: light;
+  }
+}
+
+/* Both languages are in the page; only the chosen one shows. */
+:root[data-lang='ko'] [data-l='en'],
+:root[data-lang='en'] [data-l='ko'] {
+  display: none !important;
 }
 
 * {
@@ -52,7 +116,7 @@ a {
 code {
   padding: 0.1em 0.4em;
   border-radius: 6px;
-  background: rgba(0, 229, 229, 0.12);
+  background: var(--accent-soft);
   color: var(--text);
   font-family: var(--mono);
   font-size: 0.9em;
@@ -70,7 +134,7 @@ code {
   top: 0;
   z-index: 10;
   border-bottom: 1px solid var(--border);
-  background: rgba(2, 3, 6, 0.86);
+  background: var(--header-bg);
   backdrop-filter: blur(12px);
 }
 
@@ -126,8 +190,97 @@ code {
 
 .site-nav a:hover,
 .site-nav a[aria-current='page'] {
-  background: rgba(0, 229, 229, 0.1);
+  background: var(--accent-soft);
   color: var(--text);
+}
+
+/* Language and theme switches at the end of the header. */
+.site-tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-switch {
+  display: flex;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+
+.lang-switch button,
+.theme-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.lang-switch button {
+  min-width: 36px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lang-switch button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.theme-toggle:hover,
+.lang-switch button:hover {
+  color: var(--text);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* The icon shows the theme you would switch to. */
+.theme-toggle .icon-sun {
+  display: block;
+}
+
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme='light'] .theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme='light'] .theme-toggle .icon-moon {
+  display: block;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .theme-toggle .icon-sun {
+    display: none;
+  }
+
+  :root:not([data-theme='dark']) .theme-toggle .icon-moon {
+    display: block;
+  }
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Buttons */
@@ -144,25 +297,25 @@ code {
 }
 
 .button:hover {
-  background: rgba(0, 229, 229, 0.1);
+  background: var(--accent-soft);
 }
 
 .button.primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
-  box-shadow: 0 0 24px rgba(0, 229, 229, 0.35);
+  box-shadow: 0 0 24px var(--glow);
 }
 
 .button.primary:hover {
-  background: #4ff3f3;
+  background: var(--accent-hover);
 }
 
 /* Hero */
 .hero {
   padding: clamp(48px, 9vw, 104px) 0 48px;
   background:
-    radial-gradient(60% 50% at 70% 0%, rgba(0, 229, 229, 0.16), transparent 70%),
+    radial-gradient(60% 50% at 70% 0%, var(--hero-glow), transparent 70%),
     linear-gradient(180deg, transparent, var(--bg));
 }
 
@@ -184,7 +337,7 @@ h1 {
 h1 em {
   color: var(--accent);
   font-style: normal;
-  text-shadow: 0 0 28px rgba(0, 229, 229, 0.55);
+  text-shadow: 0 0 28px var(--title-glow);
 }
 
 .lead {
@@ -212,7 +365,7 @@ h1 em {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #000;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shot-shadow);
 }
 
 .shot figcaption,
@@ -483,7 +636,7 @@ h3 {
 
 .release.is-upcoming {
   border-style: dashed;
-  border-color: rgba(255, 214, 10, 0.5);
+  border-color: var(--highlight-border);
 }
 
 .release.is-upcoming::before {
@@ -567,12 +720,22 @@ h3 {
     font-size: 16px;
   }
 
+  /* Logo and switches on the first row, the menu on its own row below. */
   .site-header .wrap {
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding-top: 8px;
+    padding-bottom: 4px;
   }
 
-  .brand-name {
-    display: none;
+  .site-tools {
+    margin-left: auto;
+  }
+
+  .site-nav {
+    order: 3;
+    width: 100%;
+    margin-left: -7px;
   }
 
   .site-nav a {
