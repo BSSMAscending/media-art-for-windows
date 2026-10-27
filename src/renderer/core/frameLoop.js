@@ -245,11 +245,9 @@ function createFrameLoop({
     ctx.strokeRect(grid.x - 0.5, grid.y - 0.5, width + 1, height + 1);
   }
 
-  function drawSilhouetteFrame(mode, grid) {
-    const { cols, rows, cellSize: fontSz } = grid;
-    resizeSampling(cols, rows);
-    drawArtworkBackdrop(grid);
-
+  // Finds the person on the grid: the AI mask upsampled to cells, cleaned up, with
+  // hands reinforced, plus the sampled pixels. Null while nobody is in view.
+  function findPerson(cols, rows) {
     if (!lastSegmentation || !lastSegmentation.width || !lastSegmentation.height) {
       return null;
     }
@@ -294,25 +292,37 @@ function createFrameLoop({
     }
 
     if (!hasActivePixels(gridData)) return null;
+    return { pixels, mask: { data: gridData, width: cols, height: rows } };
+  }
 
-    const activeSeg = { data: gridData, width: cols, height: rows };
+  function drawSilhouetteFrame(mode, grid) {
+    const { cols, rows, cellSize: fontSz } = grid;
+    resizeSampling(cols, rows);
+    drawArtworkBackdrop(grid);
+
+    const person = findPerson(cols, rows);
+    // 미디어 아트 always fills the screen with bits; the legacy modes draw only the person.
+    if (!person && mode !== 'original') return null;
+
     ctx.save();
     ctx.translate(grid.x, grid.y);
     ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-    else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-    else if (mode === 'pixelvalue')
-      renderPixelValue(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-    else if (mode === 'colorrgb') renderColorRgb(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+    const pixels = person?.pixels;
+    const mask = person?.mask ?? null;
+    if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, mask, pixels, cols);
+    else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, mask, pixels, cols);
+    else if (mode === 'pixelvalue') renderPixelValue(ctx, cols, rows, fontSz, mask, pixels, cols);
+    else if (mode === 'colorrgb') renderColorRgb(ctx, cols, rows, fontSz, mask, pixels, cols);
     else if (mode === 'grayscale8bit')
-      renderGrayscale8bit(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
-    else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, activeSeg, pixels, cols);
+      renderGrayscale8bit(ctx, cols, rows, fontSz, mask, pixels, cols);
+    else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, mask, pixels, cols);
     ctx.restore();
 
-    return { cols, rows, pixelStats: computePixelStats(pixels, gridData, cols, rows) };
+    const pixelStats = person ? computePixelStats(pixels, mask.data, cols, rows) : null;
+    return { cols, rows, pixelStats };
   }
 
   return {

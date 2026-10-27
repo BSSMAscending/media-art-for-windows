@@ -63,7 +63,6 @@ const COLORS = {
   black: '#000000',
   white: '#ffffff',
 };
-const LUMINANCE_THRESHOLD = 0.4;
 const LUMINANCE_GLOW_THRESHOLD = 0.7;
 const CYAN_INFLUENCE = 0.8;
 const BUSAN_CHARS = ['부', '산', '수', '학', '문', '화', '관'];
@@ -80,7 +79,6 @@ module.exports = {
   HAND_REFINEMENT,
   HAND_GRID_REFINEMENT,
   COLORS,
-  LUMINANCE_THRESHOLD,
   LUMINANCE_GLOW_THRESHOLD,
   CYAN_INFLUENCE,
   BUSAN_CHARS,
