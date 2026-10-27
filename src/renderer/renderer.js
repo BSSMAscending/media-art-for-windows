@@ -5,11 +5,15 @@ const { createFrameLoop } = require('./core/frameLoop');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
-const { canShowPixelValues } = require('./modes/valueView');
+const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
   MODE_HINTS,
+  CELL_SIZE_SLIDER,
+  getCellSizeFloor,
+  MODE_SLIDER_HINTS,
+  getModeSlider,
   selectMode,
   selectModeOption,
 } = require('./data/modeOptions');
@@ -23,8 +27,8 @@ const state = {
   selectedVersion: 'original',
   rgbChannel: 'N',
   levels: 10,
-  showValues: false,
-  currentFontSize: FONT_SIZE,
+  threshold: 128,
+  cellSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
 };
@@ -104,20 +108,17 @@ function renderModeOptions(onSelect) {
   });
 }
 
-function renderValueToggle() {
-  const button = document.getElementById('valueToggle');
-  const stateLabel = document.getElementById('valueToggleState');
-  const mode = state.selectedVersion;
-  const available = canShowPixelValues(mode, state.rgbChannel);
-  const isOn = available && state.showValues;
-  // Stays in place in every mode (disabled where it does not apply) so the
-  // centred buttons never move under a visitor's finger.
-  button.disabled = !available;
-  button.classList.toggle('is-selected', isOn);
-  button.setAttribute('aria-pressed', String(isOn));
-  if (mode === 'rgb' && !available) stateLabel.textContent = 'R · G · B를 고르면 볼 수 있어요';
-  else if (!available) stateLabel.textContent = '색 RGB · 밝기 단계에서 볼 수 있어요';
-  else stateLabel.textContent = isOn ? '켜짐 · 칸마다 숫자' : '꺼짐 · 원본 화질';
+let cellSizeLever = null;
+
+// The right lever slot follows the view; the cell size lever on the left never moves.
+function renderModeSlider() {
+  const slot = document.getElementById('modeSlider');
+  const spec = getModeSlider(state);
+  slot.replaceChildren(
+    spec
+      ? createSlider(spec, state)
+      : createSliderHint(MODE_SLIDER_HINTS[state.selectedVersion] || '')
+  );
 }
 
 function updateModeUI(mathPanel) {
@@ -130,7 +131,9 @@ function updateModeUI(mathPanel) {
     selectModeOption(state, subOptions, value);
     updateModeUI(mathPanel);
   });
-  renderValueToggle();
+  const floor = getCellSizeFloor(state);
+  cellSizeLever?.setFloor(floor.size, floor.note);
+  renderModeSlider();
   mathPanel.updateMode(state.selectedVersion, getModeOption());
 }
 
@@ -185,10 +188,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectMode(state, mode);
     updateModeUI(mathPanel);
   });
-  document.getElementById('valueToggle').addEventListener('click', () => {
-    state.showValues = !state.showValues;
-    updateModeUI(mathPanel);
-  });
+  cellSizeLever = createSlider(CELL_SIZE_SLIDER, state);
+  document.getElementById('cellSizeSlider').appendChild(cellSizeLever);
   updateModeUI(mathPanel);
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
@@ -259,14 +260,14 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getMode: () => state.selectedVersion,
       getRgbChannel: () => state.rgbChannel,
       getLevels: () => state.levels,
-      getShowValues: () => state.showValues,
+      getThreshold: () => state.threshold,
       getArtworkArea: () =>
         getArtworkArea(
           canvasEl.clientWidth,
           canvasEl.clientHeight,
           document.getElementById('sideColumn').getBoundingClientRect()
         ),
-      getFontSize: () => state.currentFontSize,
+      getCellSize: () => state.cellSize,
       onStats: (stats) => {
         mathPanel.update(stats);
       },

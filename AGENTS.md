@@ -25,7 +25,7 @@ MediaPipe Tasks Vision, and Canvas rendering.
 - `src/renderer/core/` — camera access, segmentation, hand gestures,
   and frame processing.
 - `src/renderer/modes/` — visualization-specific Canvas renderers. `rgb.js` and
-  `levels.js` draw full-camera modes over the WebGL layer in
+  `levels.js` draw numbered pixel cells over the WebGL layer in
   `core/channelOverlay.js`; `rgbTransition.js` animates the R/G/B layer split.
 - `src/renderer/core/renderGeometry.js` — artwork area beside the side column,
   full-frame grid fitting, and RGB layer projection bounds.

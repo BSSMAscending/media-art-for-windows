@@ -1,3 +1,7 @@
+const { CELL_SIZES } = require('../config');
+const { getColorValueFontSize } = require('../modes/rgb');
+const { MIN_DIGIT_FONT_SIZE } = require('../utils');
+
 const MODE_OPTIONS = [
   { key: 'original', label: '미디어 아트', caption: '0 / 1 실루엣' },
   { key: 'rgb', label: '색 RGB', caption: '빛의 삼원색' },
@@ -32,6 +36,50 @@ const MODE_HINTS = {
   original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
 };
 
+// Left lever: the cell size, shared by every mode.
+const CELL_SIZE_SLIDER = {
+  stateKey: 'cellSize',
+  label: '칸 크기',
+  values: CELL_SIZES,
+  format: (size) => `${size}px`,
+  ends: ['작게', '크게'],
+};
+
+// The combined RGB view needs room for three stacked numbers per cell, so its
+// lever stops at the first size where they are readable (24px).
+const COLOR_VALUE_CELL_SIZE = CELL_SIZES.find(
+  (size) => getColorValueFontSize(size) >= MIN_DIGIT_FONT_SIZE
+);
+
+function getCellSizeFloor(state) {
+  if (state.selectedVersion === 'rgb' && state.rgbChannel === 'N') {
+    return { size: COLOR_VALUE_CELL_SIZE, note: `전체 색은 ${COLOR_VALUE_CELL_SIZE}px부터` };
+  }
+  return { size: CELL_SIZES[0], note: null };
+}
+
+// Right lever: the current view's own setting, or this hint when it has none.
+const THRESHOLD_SLIDER = {
+  stateKey: 'threshold',
+  label: '흑백 경계값',
+  min: 0,
+  max: 255,
+  step: 1,
+  format: (value) => String(value),
+  ends: ['0', '255'],
+};
+
+const MODE_SLIDER_HINTS = {
+  original: '칸이 작을수록 내 모습이 또렷해져요',
+  rgb: '칸을 키우면 숫자가 더 잘 보여요',
+  levels: '2단계를 고르면 흑백 경계값을 옮길 수 있어요',
+};
+
+function getModeSlider(state) {
+  if (state.selectedVersion === 'levels' && state.levels === 2) return THRESHOLD_SLIDER;
+  return null;
+}
+
 // Pressing a mode button opens its starting view; RGB always starts on the full colour.
 const MODE_START_STATE = {
   rgb: { rgbChannel: 'N' },
@@ -48,4 +96,16 @@ function selectModeOption(state, subOptions, value) {
   state[stateKey] = clearsSelection ? noneValue : value;
 }
 
-module.exports = { MODE_OPTIONS, MODE_SUB_OPTIONS, MODE_HINTS, selectMode, selectModeOption };
+module.exports = {
+  MODE_OPTIONS,
+  MODE_SUB_OPTIONS,
+  MODE_HINTS,
+  CELL_SIZE_SLIDER,
+  COLOR_VALUE_CELL_SIZE,
+  getCellSizeFloor,
+  THRESHOLD_SLIDER,
+  MODE_SLIDER_HINTS,
+  getModeSlider,
+  selectMode,
+  selectModeOption,
+};

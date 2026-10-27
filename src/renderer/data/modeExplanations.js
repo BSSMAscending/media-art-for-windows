@@ -14,7 +14,7 @@ function channelExplanation(channel) {
   return {
     title: `${name} 빛만 남기기`,
     headline: `${name} 손전등의 밝기 손잡이`,
-    body: `'빛의 세기 보기'를 누르면 칸마다 ${name} 빛의 세기가 숫자로 보여요.`,
+    body: `칸마다 적힌 숫자가 그 칸의 ${name} 빛 세기예요.`,
     terms: ['8비트 = 256단계', '0 ~ 255'],
     animation: { type: 'channel-dimmer', color },
   };
@@ -33,7 +33,7 @@ const modeExplanations = {
       N: {
         title: '빛 세 가지로 만든 색',
         headline: '빨강 · 초록 · 파랑 손전등 세 개',
-        body: '세 빛을 겹치면 모든 색이 나와요. R · G · B를 눌러 떼어 보세요.',
+        body: '칸마다 R · G · B 세 숫자가 있어요. 세 빛을 섞은 색이에요.',
         terms: ['빛의 삼원색', '256 × 256 × 256 ≈ 1,677만 색'],
         animation: { type: 'light-mix' },
       },
@@ -47,8 +47,8 @@ const modeExplanations = {
       2: {
         title: '2단계: 검정과 흰색',
         headline: '크레파스 2자루로 그리기',
-        body: '밝으면 1, 어두우면 0. 그림이 굵고 단순해져요.',
-        terms: ['1비트 = 스위치 1개', '2가지 = 2¹'],
+        body: '경계값보다 밝으면 1, 어두우면 0. 경계값을 옮겨 보세요.',
+        terms: ['1비트 = 스위치 1개', '경계값 = 0과 1을 가르는 기준'],
         animation: { type: 'level-steps', levels: 2 },
       },
       10: {
