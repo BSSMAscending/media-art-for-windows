@@ -40,6 +40,12 @@ This is an Electron application called "Binary Media Art" that creates real-time
 
 3. **Real-time Processing**: Uses TensorFlow.js BodyPix model for person segmentation with mirrored video display
 
+### Project Site
+
+- `site/` holds the GitHub Pages site (`index.html`, `patch-notes.html`, `style.css`). `scripts/build-site.js` (`npm run site`) copies it to `_site/` with `docs/images/readme/*` as `images/` and renders `CHANGELOG.md` into the patch notes page; `.github/workflows/pages.yml` deploys it on main pushes that touch those files
+- Pages are plain HTML with `{{VERSION}}`, `{{DOWNLOAD_URL}}`, `{{UPCOMING_NOTE}}` and `<!-- PATCH_NOTES -->` placeholders filled at build time; keep them dependency-free
+- `forge.config.js` keeps `docs/`, `site/`, `tests/`, `scripts/`, dot folders and root Markdown out of the installer
+
 ### Technology Stack
 
 - **Electron 41.1.0**: Desktop application framework

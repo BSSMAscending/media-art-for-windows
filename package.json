@@ -15,6 +15,7 @@
     "format": "prettier --write src/",
     "test": "vitest run",
     "test:watch": "vitest",
+    "site": "node scripts/build-site.js",
     "prepare": "husky"
   },
   "keywords": [],

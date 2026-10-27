@@ -3,6 +3,8 @@
 카메라에 비친 내 모습이 컴퓨터 안에서 **숫자**가 되는 과정을 보여주는 미디어 아트 전시물입니다.
 터치 화면 앞에 서서 모드를 고르면 같은 장면이 **0과 1**, **빛 세 장**, **밝기 계단**, **계산된 숫자**로 바뀝니다.
 
+**[소개 사이트](https://bssmascending.github.io/media-art-for-windows/)** · **[패치노트](https://bssmascending.github.io/media-art-for-windows/patch-notes.html)** · **[설치 파일](https://github.com/BSSMAscending/media-art-for-windows-releases/releases/latest)**
+
 ![색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면](docs/images/readme/hero.webp)
 
 > README의 화면은 실제 카메라 대신 그린 가상 장면(팔을 벌린 사람)과 가상 인물 인식 결과로 캡처했습니다.
@@ -133,6 +135,7 @@ npm run lint
 - **카메라 해상도**: [src/renderer/core/camera.js](src/renderer/core/camera.js)에서 `640×480`을 요청합니다.
 - **숨은 모드**: 키보드 `5`~`9`는 예전 모드(부산 수학문화관, 픽셀 수치, RGB, 8비트 회색, 4비트 컬러)입니다.
 - **배포**: `package.json` 버전을 올리는 bump 커밋과 [CHANGELOG.md](CHANGELOG.md) 새 항목을 함께 `main`에 병합하면 배포됩니다. 자세한 순서는 [docs/windows-distribution.md](docs/windows-distribution.md)에 있습니다.
+- **소개 사이트**: [site/](site/)의 페이지와 README 스크린샷, `CHANGELOG.md`로 만든 패치노트를 `npm run site`가 `_site/`에 묶습니다. `main`에 병합하면 `.github/workflows/pages.yml`이 GitHub Pages에 올립니다.
 
 ### 코드 구조
 
@@ -145,3 +148,4 @@ npm run lint
 | `src/renderer/modes/` | 모드별 칸 · 숫자 그리기와 RGB 전환 애니메이션 |
 | `src/renderer/ui/` | 설명 카드, 애니메이션, 레버, 돋보기 |
 | `src/renderer/data/` | 모드 · 버튼 · 레버 규칙과 설명 문구 |
+| `site/`, `scripts/build-site.js` | 소개 사이트와 패치노트 페이지 |
