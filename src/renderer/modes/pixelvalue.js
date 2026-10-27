@@ -1,5 +1,5 @@
 const { getLuminance, getMirroredMaskIndex } = require('../utils');
-const { getLuminanceChar } = require('./numeric');
+const { getLevel } = require('./levels');
 
 function renderPixelValue(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW) {
   ctx.shadowBlur = 0;
@@ -23,7 +23,7 @@ function renderPixelValue(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW
         ctx.fillText(String(grayValue), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
       } else if (fontSz >= 8) {
         ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
-        ctx.fillText(getLuminanceChar(luminance), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
+        ctx.fillText(String(getLevel(luminance, 10)), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
       } else {
         ctx.fillRect(x * fontSz + 1, y * fontSz + 1, fontSz - 2, fontSz - 2);
       }

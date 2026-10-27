@@ -25,11 +25,15 @@ This is an Electron application called "Binary Media Art" that creates real-time
 ### Key Features
 
 1. **Camera Selection**: Users can select from available cameras via dropdown
-2. **Multiple Visualization Modes**:
-   - Original: Binary overlay (0/1) with cyan color effects on person silhouette
-   - Black/White: Clean white silhouette on black background
-   - Binary: Pure 0/1 characters on person areas with dark background
-   - Numeric: 0-9 characters based on luminance density mapping
+2. **Multiple Visualization Modes** (touch buttons; keys 1-3, legacy modes on 4-8):
+   - `original` (미디어 아트): Binary overlay (0/1) with cyan color effects on the segmented person silhouette
+   - `rgb` (색 RGB): Live video at camera resolution as additive WebGL R/G/B layers; the mode button opens the full colour, R/G/B buttons split the layers apart (1.8s transition) and a second tap on the selected light returns to the full colour (`data/modeOptions.js`)
+   - `levels` (밝기 단계): Live video at camera resolution quantized on the GPU to 2, 10 or 256 brightness steps (buttons, no sliders)
+   - `픽셀별 빛의 세기 보기` toggle (`state.showValues`, `modes/valueView.js`): for R/G/B and every level count, switches to the sampled cell grid with each cell's 0-255 value or step number; disabled (but kept in place) on the combined RGB view and in 미디어 아트
+   - All touch controls sit in one block at exactly mid screen height in the side column; the explanation is split into equal cards above and below it
+   - Every mode draws in the same fixed screen left of the side column (whole camera frame fitted to whole cells); `rgb` and `levels` skip segmentation
+   - There are no slider or F-key filter controls; the exhibit is adjusted only with buttons
+   - The side column's explanation card uses metaphors, a CSS animation and term chips per mode/option (`data/modeExplanations.js`, `ui/explainAnimations.js`)
 
 3. **Real-time Processing**: Uses TensorFlow.js BodyPix model for person segmentation with mirrored video display
 

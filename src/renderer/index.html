@@ -32,43 +32,41 @@
       </div>
     </aside>
 
-    <div id="uiCluster" class="ui-cluster">
+    <div id="sideColumn" class="side-column">
       <div id="panelCards" class="panel-cards" aria-label="미디어 아트 안내 카드"></div>
-    </div>
 
-    <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
-      <div class="mode-cue">변하고 싶은 미디어 아트<br />모드를 선택해주세요</div>
-      <div class="live-controls-row">
+      <!-- Every touch control sits in the vertical middle of the screen, easiest to reach. -->
+      <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
+        <div class="mode-cue">보고 싶은 모드를 선택해주세요</div>
         <div
           id="liveModeButtons"
           class="mode-button-grid mode-button-grid--live"
           role="group"
           aria-label="미디어 아트 모드 선택"
         ></div>
+        <div id="modeOptions" class="mode-options">
+          <div id="modeOptionsLabel" class="mode-options-label"></div>
+          <div
+            id="modeOptionButtons"
+            class="mode-button-grid mode-option-grid"
+            role="group"
+            aria-labelledby="modeOptionsLabel"
+          ></div>
+        </div>
+        <button
+          id="valueToggle"
+          class="mode-button value-toggle"
+          type="button"
+          aria-pressed="false"
+        >
+          <span>픽셀별 빛의 세기 보기</span>
+          <small id="valueToggleState"></small>
+        </button>
       </div>
-    </div>
 
-    <div id="filterPanel" class="filter-panel" style="display: none">
-      <div class="filter-title">이미지 필터 [F키]</div>
-      <div class="filter-row">
-        <label>밝기: <span id="brightnessValue">0.00</span></label>
-        <input type="range" id="brightnessSlider" min="-1" max="1" step="0.05" value="0" />
+      <div class="panel-cards">
+        <div id="detailCard" class="detail-card" aria-label="원리 더 알아보기"></div>
       </div>
-      <div class="filter-row">
-        <label>블러: <span id="blurValue">0</span></label>
-        <input type="range" id="blurSlider" min="0" max="2" step="1" value="0" />
-      </div>
-      <div class="filter-row">
-        <label>샤프닝: <span id="sharpenValue">0.0</span></label>
-        <input type="range" id="sharpenSlider" min="0" max="1" step="0.1" value="0" />
-      </div>
-      <div class="filter-row">
-        <label><input type="checkbox" id="edgeOverlayCheck" /> 엣지 오버레이</label>
-      </div>
-      <div class="filter-row">
-        <label><input type="checkbox" id="maskCleanCheck" /> 마스크 정제</label>
-      </div>
-      <div class="filter-hint">[F] 필터 표시/숨기기</div>
     </div>
 
     <script src="renderer.js"></script>
