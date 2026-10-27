@@ -308,6 +308,9 @@ body {
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
   --live-control-height: clamp(4.5rem, 5.5vw, 7rem);
   --option-control-height: clamp(4rem, 4.6vw, 6rem);
+  --slider-control-height: clamp(5.5rem, 6.2vw, 8rem);
+  --slider-thumb-size: clamp(2.25rem, 2.6vw, 3.25rem);
+  --slider-track-height: clamp(0.625rem, 0.7vw, 0.875rem);
 }
 
 body {
@@ -530,6 +533,110 @@ body {
   background: var(--option-swatch);
   content: '';
   vertical-align: 0.05em;
+}
+
+/* Two levers side by side: cell size on the left, the view's own setting on the right.
+   Both slots always exist so no thumb moves when the mode changes. */
+.mode-sliders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mode-slider-slot {
+  display: flex;
+  min-width: 0;
+}
+
+.mode-slider {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--slider-control-height);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--border-subtle);
+  background: rgba(0, 8, 12, 0.8);
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-slider-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--type-control-label);
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+.mode-slider-value {
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.mode-slider-input {
+  width: 100%;
+  height: var(--slider-thumb-size);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mode-slider-input::-webkit-slider-runnable-track {
+  height: var(--slider-track-height);
+  border: 1px solid var(--border-default);
+  border-radius: calc(var(--slider-track-height) / 2);
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.08), rgba(0, 255, 255, 0.45));
+}
+
+.mode-slider-input::-webkit-slider-thumb {
+  width: var(--slider-thumb-size);
+  height: var(--slider-thumb-size);
+  margin-top: calc((var(--slider-track-height) - var(--slider-thumb-size)) / 2 - 1px);
+  border: 3px solid var(--control-selected-border);
+  border-radius: 50%;
+  background: var(--control-selected-background);
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.65);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mode-slider-input:active::-webkit-slider-thumb {
+  transform: scale(1.08);
+}
+
+.mode-slider-input:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
+.mode-slider-ends {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: var(--type-control-meta);
+}
+
+.mode-slider.is-empty {
+  align-items: center;
+  border-style: dashed;
+  text-align: center;
+}
+
+.mode-slider-hint {
+  color: var(--text-muted);
+  font-size: var(--type-control-meta);
+  line-height: 1.4;
+  word-break: keep-all;
 }
 
 .visual-stage .channel-overlay {

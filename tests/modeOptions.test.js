@@ -1,9 +1,12 @@
 const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
+  CELL_SIZE_SLIDER,
+  MODE_SLIDER_HINTS,
   selectMode,
   selectModeOption,
 } = require('../src/renderer/data/modeOptions');
+const { FONT_SIZE } = require('../src/renderer/config');
 
 describe('mode buttons', () => {
   it('offers the three exhibition modes', () => {
@@ -52,5 +55,18 @@ describe('mode option buttons', () => {
     expect(state.levels).toBe(10);
     selectModeOption(state, MODE_SUB_OPTIONS.levels, 2);
     expect(state.levels).toBe(2);
+  });
+});
+
+describe('levers', () => {
+  it('steps the cell size from fine to coarse and starts on the default size', () => {
+    const sizes = CELL_SIZE_SLIDER.values;
+    expect(sizes).toEqual([...sizes].sort((a, b) => a - b));
+    expect(sizes).toContain(FONT_SIZE);
+    expect(CELL_SIZE_SLIDER.format(24)).toBe('24px');
+  });
+
+  it('gives every mode a hint for the lever slot it does not use', () => {
+    for (const { key } of MODE_OPTIONS) expect(MODE_SLIDER_HINTS[key]).toBeTruthy();
   });
 });

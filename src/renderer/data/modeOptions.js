@@ -1,3 +1,5 @@
+const { CELL_SIZES } = require('../config');
+
 const MODE_OPTIONS = [
   { key: 'original', label: '미디어 아트', caption: '0 / 1 실루엣' },
   { key: 'rgb', label: '색 RGB', caption: '빛의 삼원색' },
@@ -32,6 +34,26 @@ const MODE_HINTS = {
   original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
 };
 
+// Left lever: the cell size, shared by every mode.
+const CELL_SIZE_SLIDER = {
+  stateKey: 'cellSize',
+  label: '칸 크기',
+  values: CELL_SIZES,
+  format: (size) => `${size}px`,
+  ends: ['작게', '크게'],
+};
+
+// Right lever: the current view's own setting, or this hint when it has none.
+const MODE_SLIDER_HINTS = {
+  original: '칸이 작을수록 내 모습이 또렷해져요',
+  rgb: '칸을 키우면 숫자가 더 잘 보여요',
+  levels: '칸을 키우면 숫자가 더 잘 보여요',
+};
+
+function getModeSlider() {
+  return null;
+}
+
 // Pressing a mode button opens its starting view; RGB always starts on the full colour.
 const MODE_START_STATE = {
   rgb: { rgbChannel: 'N' },
@@ -48,4 +70,13 @@ function selectModeOption(state, subOptions, value) {
   state[stateKey] = clearsSelection ? noneValue : value;
 }
 
-module.exports = { MODE_OPTIONS, MODE_SUB_OPTIONS, MODE_HINTS, selectMode, selectModeOption };
+module.exports = {
+  MODE_OPTIONS,
+  MODE_SUB_OPTIONS,
+  MODE_HINTS,
+  CELL_SIZE_SLIDER,
+  MODE_SLIDER_HINTS,
+  getModeSlider,
+  selectMode,
+  selectModeOption,
+};

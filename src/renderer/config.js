@@ -6,8 +6,9 @@ function toLocalURL(relPath) {
   return `local-assets:///${relPath}`;
 }
 
-// 기본 문자 크기(px). UI 선택기는 제거되었으므로 이 값을 코드에서 조절합니다.
+// 기본 칸(문자) 크기(px). 전시 화면에서는 칸 크기 레버로 CELL_SIZES 사이를 고릅니다.
 const FONT_SIZE = 16;
+const CELL_SIZES = [8, 12, 16, 20, 24, 32, 40, 48];
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
 const VISION_TASKS_CONFIG = {
@@ -69,6 +70,7 @@ const BUSAN_CHARS = ['부', '산', '수', '학', '문', '화', '관'];
 
 module.exports = {
   FONT_SIZE,
+  CELL_SIZES,
   MIN_FONT_SIZE,
   MAX_FONT_SIZE,
   VISION_TASKS_CONFIG,

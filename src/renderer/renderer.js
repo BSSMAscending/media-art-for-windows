@@ -5,10 +5,14 @@ const { createFrameLoop } = require('./core/frameLoop');
 const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
 const { getArtworkArea } = require('./core/renderGeometry');
+const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const {
   MODE_OPTIONS,
   MODE_SUB_OPTIONS,
   MODE_HINTS,
+  CELL_SIZE_SLIDER,
+  MODE_SLIDER_HINTS,
+  getModeSlider,
   selectMode,
   selectModeOption,
 } = require('./data/modeOptions');
@@ -22,7 +26,7 @@ const state = {
   selectedVersion: 'original',
   rgbChannel: 'N',
   levels: 10,
-  currentFontSize: FONT_SIZE,
+  cellSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
 };
@@ -102,6 +106,17 @@ function renderModeOptions(onSelect) {
   });
 }
 
+// The right lever slot follows the view; the cell size lever on the left never moves.
+function renderModeSlider() {
+  const slot = document.getElementById('modeSlider');
+  const spec = getModeSlider(state);
+  slot.replaceChildren(
+    spec
+      ? createSlider(spec, state)
+      : createSliderHint(MODE_SLIDER_HINTS[state.selectedVersion] || '')
+  );
+}
+
 function updateModeUI(mathPanel) {
   document.querySelectorAll('.mode-button[data-mode]').forEach((button) => {
     const isSelected = button.dataset.mode === state.selectedVersion;
@@ -112,6 +127,7 @@ function updateModeUI(mathPanel) {
     selectModeOption(state, subOptions, value);
     updateModeUI(mathPanel);
   });
+  renderModeSlider();
   mathPanel.updateMode(state.selectedVersion, getModeOption());
 }
 
@@ -166,6 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectMode(state, mode);
     updateModeUI(mathPanel);
   });
+  document.getElementById('cellSizeSlider').appendChild(createSlider(CELL_SIZE_SLIDER, state));
   updateModeUI(mathPanel);
   document.getElementById('modeControls').style.display = 'block';
   resizeCanvases(canvasEl, bgCanvasEl);
@@ -242,7 +259,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
           canvasEl.clientHeight,
           document.getElementById('sideColumn').getBoundingClientRect()
         ),
-      getFontSize: () => state.currentFontSize,
+      getCellSize: () => state.cellSize,
       onStats: (stats) => {
         mathPanel.update(stats);
       },

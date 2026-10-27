@@ -56,7 +56,7 @@ function createFrameLoop({
   getRgbChannel,
   getLevels,
   getArtworkArea,
-  getFontSize,
+  getCellSize,
   onStats,
 }) {
   let rafId = null;
@@ -146,7 +146,7 @@ function createFrameLoop({
     }
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-    const fontSz = getFontSize ? getFontSize() : FONT_SIZE;
+    const fontSz = getCellSize ? getCellSize() : FONT_SIZE;
     // Every mode draws into the same fixed screen beside the side column.
     const area = getArtworkArea
       ? getArtworkArea()
