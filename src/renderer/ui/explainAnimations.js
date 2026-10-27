@@ -1,4 +1,4 @@
-const { applyImageMath } = require('../core/imageMath');
+const { applyImageMath, getGaussianWeights } = require('../core/imageMath');
 
 // Small looping illustrations for the mode explanation card. Each builder returns
 // a DOM element animated purely by CSS; its un-animated styles are the meaningful
@@ -104,7 +104,7 @@ const MATH_EXAMPLE = Uint8ClampedArray.from([60, 90, 120, 80, 140, 200, 100, 170
 function formatMathOperator(effect, amount) {
   if (effect === 'brightness') return amount < 0 ? `− ${-amount}` : `+ ${amount}`;
   if (effect === 'contrast') return `× ${amount}`;
-  if (effect === 'blur') return `${amount * 2 + 1}×${amount * 2 + 1} 평균`;
+  if (effect === 'blur') return `${amount * 2 + 1}×${amount * 2 + 1} 무게 평균`;
   if (effect === 'sharpen') return `차이 × ${amount}`;
   return '그대로';
 }
@@ -115,11 +115,13 @@ function paintMathCell(cell, value) {
   cell.style.color = value >= 128 ? '#000' : '#fff';
 }
 
-function createMathGrid(values, className) {
+// `weights` (3×3, optional) are shown as small ×n badges on the cells.
+function createMathGrid(values, className, weights) {
   const grid = element('div', `explain-math-grid ${className}`);
   values.forEach((value, index) => {
     const cell = element('span', `explain-math-cell${index === 4 ? ' is-center' : ''}`);
     cell.style.setProperty('--order', index);
+    if (weights) cell.dataset.weight = `×${weights[index]}`;
     paintMathCell(cell, value);
     grid.appendChild(cell);
   });
@@ -130,15 +132,16 @@ function createMathGrid(values, className) {
 // numbers in place as the lever moves, without restarting the animation.
 function createMathOp(effect, amount) {
   const root = element('div', `explain-math explain-math--${effect}`);
-  const before = createMathGrid([...MATH_EXAMPLE], 'is-before');
+  // Blur and sharpen weigh the neighbours: corner 1, side 2, centre 4 (3×3 Gaussian).
+  const weights = ['blur', 'sharpen'].includes(effect) ? getGaussianWeights(1).flat() : null;
+  const before = createMathGrid([...MATH_EXAMPLE], 'is-before', weights);
   const operator = element('span', 'explain-math-op');
   const after = createMathGrid([...MATH_EXAMPLE], 'is-after');
   root.append(before, operator, after);
 
   const output = new Uint8ClampedArray(9);
-  const scratch = new Uint8ClampedArray(9);
   root.updateAmount = (value) => {
-    applyImageMath(effect, value, MATH_EXAMPLE, output, 3, 3, scratch);
+    applyImageMath(effect, value, MATH_EXAMPLE, output, 3, 3);
     after.querySelectorAll('.explain-math-cell').forEach((cell, index) => {
       paintMathCell(cell, output[index]);
     });
