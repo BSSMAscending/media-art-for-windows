@@ -26,7 +26,7 @@ This is an Electron application called "Binary Media Art" that creates real-time
 
 1. **Camera Selection**: Users can select from available cameras via dropdown
 2. **Multiple Visualization Modes** (touch buttons; keys 1-4, legacy modes on 5-9):
-   - `original` (미디어 아트): Binary overlay (0/1) with cyan color effects on the segmented person silhouette
+   - `original` (미디어 아트): Every cell is a bit: cells where segmentation found a person are `1` in the camera colour pulled toward cyan (bright ones glow), all other cells are a dim `0`; an empty room is a screen of zeros
    - `rgb` (색 RGB): The camera sampled into numbered pixel cells, drawn as additive WebGL R/G/B layers; each cell shows its 0-255 value for the selected light, or all three stacked values in the full colour once cells are 24px or larger. The mode button opens the full colour, R/G/B buttons split the layers apart (1.8s transition) and a second tap on the selected light returns to the full colour (`data/modeOptions.js`)
    - `levels` (밝기 단계): The camera sampled into numbered pixel cells quantized to 2, 10 or 256 brightness steps; in 2단계 the black/white threshold (0-255) is set with a lever
    - `math` (수학 처리): The camera as grey numbered cells with one calculation applied (`core/imageMath.js`): 밝기 adds, 대비 stretches around 128, 블러 is a Gaussian weighted average (3×3/5×5/7×7, Pascal-row weights, 3×3 = 1·2·4 ÷ 16), 선명 is an unsharp mask that adds back the difference from the 3×3 Gaussian average. Tapping the selected calculation again returns to the original numbers; the right lever sets its strength (`MATH_SLIDERS`). Its card shows a one-line formula and a 3×3 before → after example computed with the same functions (#39)
