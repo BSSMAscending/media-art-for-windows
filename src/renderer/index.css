@@ -483,6 +483,9 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: var(--space-2);
+  /* Content box: reserve exactly label + gap + one button row, so the control block
+     is the same height whether or not the mode has option buttons. */
+  box-sizing: content-box;
   min-height: calc(var(--option-control-height) + var(--type-control-label) * 1.4 + var(--space-2));
   margin-top: var(--space-3);
   padding-top: var(--space-3);
