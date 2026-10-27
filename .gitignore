@@ -94,3 +94,6 @@ out/
 # Local IDE and agent workspace settings
 .idea/
 .omo/
+
+# GitHub Pages build output (npm run site)
+_site/

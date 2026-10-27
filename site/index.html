@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Binary Media Art</title>
+    <meta
+      name="description"
+      content="카메라에 비친 내 모습이 숫자가 되는 과정을 보여주는 부산수학문화관 미디어 아트 전시물"
+    />
+    <meta property="og:title" content="Binary Media Art" />
+    <meta property="og:description" content="카메라에 비친 내가 숫자가 되는 순간" />
+    <meta property="og:image" content="images/hero.webp" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./" aria-label="Binary Media Art 처음으로">
+          <span class="brand-mark" aria-hidden="true"
+            ><span></span><span></span><span></span><span></span><span></span><span></span
+            ><span></span><span></span><span></span
+          ></span>
+          <span class="brand-name">Binary Media Art</span>
+        </a>
+        <nav class="site-nav" aria-label="사이트 메뉴">
+          <a href="#how">원리</a>
+          <a href="#modes">모드</a>
+          <a href="#play">체험</a>
+          <a href="#install">설치</a>
+          <a href="patch-notes.html">패치노트</a>
+          <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="wrap">
+          <p class="eyebrow">부산수학문화관 · 수학 미디어 아트</p>
+          <h1>카메라에 비친 내가<br /><em>숫자</em>가 되는 순간</h1>
+          <p class="lead">
+            터치 화면 앞에 서면 내 모습이 0과 1, 빛 세 장, 밝기 계단, 계산된 숫자로 바뀝니다.
+            컴퓨터가 사진을 어떻게 숫자로 다루는지 눈으로 보고 손으로 만져 보는 전시물입니다.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="{{DOWNLOAD_URL}}">Windows 설치 파일 받기</a>
+            <a class="button" href="patch-notes.html">패치노트 보기</a>
+          </div>
+          <p class="meta">최신 배포 v{{VERSION}} · {{UPCOMING_NOTE}}</p>
+          <figure class="shot">
+            <img
+              src="images/hero.webp"
+              alt="색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면"
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" id="how">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>사진이 숫자가 되는 4단계</h2>
+            <p>모든 모드는 같은 순서로 화면을 만듭니다. 칸 하나가 픽셀 하나, 숫자 하나입니다.</p>
+          </div>
+          <ol class="steps">
+            <li><strong>카메라</strong><span>640×480 영상을 거울처럼 뒤집어 받습니다.</span></li>
+            <li>
+              <strong>칸 나누기</strong
+              ><span>화면을 같은 크기의 칸으로 나눕니다. 처음에는 24px입니다.</span>
+            </li>
+            <li>
+              <strong>숫자로 바꾸기</strong
+              ><span>칸마다 빛의 세기를 0~255, 또는 0과 1로 적습니다.</span>
+            </li>
+            <li>
+              <strong>다시 그리기</strong
+              ><span>숫자를 다시 색으로 칠하고, 그 위에 숫자를 적습니다.</span>
+            </li>
+          </ol>
+          <figure class="shot">
+            <img
+              src="images/layout.webp"
+              alt="화면 구성: 1 작품 화면, 2 비유 카드, 3 버튼과 레버, 4 설명 카드"
+              loading="lazy"
+            />
+            <figcaption>
+              ① 작품 화면 ② 비유 · 애니메이션 ③ 버튼과 레버 (화면 세로 가운데) ④ 설명 · 용어 · 지금
+              화면
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" id="modes">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>네 가지 모드</h2>
+            <p>같은 장면을 네 가지 방법으로 숫자로 바꿔 봅니다.</p>
+          </div>
+
+          <div class="modes">
+            <article class="mode">
+              <div class="mode-text">
+                <span class="mode-tag">1 · 미디어 아트</span>
+                <h3>0과 1로 그린 나</h3>
+                <p>
+                  인공지능이 사람을 찾은 칸은 <code>1</code>, 나머지 칸은 <code>0</code>입니다.
+                  아무도 없으면 화면이 0으로 가득 차고, 사람이 들어오면 그 자리만 1로 켜집니다.
+                </p>
+                <ul>
+                  <li>칸마다 켜고 끄는 전등 스위치 = 1비트</li>
+                  <li>내 몸의 색과 밝기에 따라 1이 은은하게 빛납니다</li>
+                </ul>
+              </div>
+              <div class="mode-media">
+                <img
+                  src="images/media-art-states.webp"
+                  alt="아무도 없을 때는 0만, 사람이 들어오면 그 자리가 1로 켜진 화면"
+                  loading="lazy"
+                />
+              </div>
+            </article>
+
+            <article class="mode">
+              <div class="mode-text">
+                <span class="mode-tag">2 · 색 RGB</span>
+                <h3>빛 세 가지로 만든 색</h3>
+                <p>
+                  화면의 모든 색은 빨강 · 초록 · 파랑 빛을 섞은 것입니다. <code>R</code>
+                  <code>G</code> <code>B</code>를 누르면 빛 세 장이 벌어진 뒤 고른 빛만 남고, 칸마다
+                  그 빛의 세기가 적힙니다.
+                </p>
+                <ul>
+                  <li>빛 하나의 세기 = 0~255, 8비트</li>
+                  <li>세 빛을 합치면 256 × 256 × 256 ≈ 1,677만 색</li>
+                </ul>
+              </div>
+              <div class="mode-media">
+                <img
+                  src="images/rgb-split.webp"
+                  alt="R을 누르면 빛 세 장이 벌어지고, 다시 누르면 합쳐지는 애니메이션"
+                  loading="lazy"
+                />
+                <img
+                  src="images/rgb-numbers.webp"
+                  alt="전체 색 칸의 R·G·B 세 숫자와 R 칸의 숫자 확대"
+                  loading="lazy"
+                />
+              </div>
+            </article>
+
+            <article class="mode">
+              <div class="mode-text">
+                <span class="mode-tag">3 · 밝기 단계</span>
+                <h3>크레파스 몇 자루로 그릴까</h3>
+                <p>
+                  밝기를 2 · 10 · 256단계 계단으로 나누고 칸마다 단계 번호를 적습니다. 2단계에서는
+                  <strong>흑백 경계값</strong> 레버로 0과 1을 가르는 기준을 직접 옮깁니다.
+                </p>
+                <ul>
+                  <li>양자화 = 매끈한 값을 계단으로 나누기</li>
+                  <li>256단계 = 8비트, 눈에는 거의 사진처럼</li>
+                </ul>
+              </div>
+              <div class="mode-media">
+                <div class="trio">
+                  <img src="images/levels-2.webp" alt="2단계 흑백" loading="lazy" />
+                  <img src="images/levels-10.webp" alt="10단계 회색" loading="lazy" />
+                  <img src="images/levels-256.webp" alt="256단계 회색" loading="lazy" />
+                </div>
+                <img
+                  src="images/threshold.webp"
+                  alt="흑백 경계값을 40에서 220까지 옮기는 애니메이션"
+                  loading="lazy"
+                />
+              </div>
+            </article>
+
+            <article class="mode">
+              <div class="mode-text">
+                <span class="mode-tag">4 · 수학 처리</span>
+                <h3>숫자를 계산하면 사진이 바뀐다</h3>
+                <p>
+                  사진 앱의 밝기 · 대비 · 블러 · 선명은 모두 숫자 계산입니다. 하나를 고르면 칸마다
+                  숫자가 어떻게 바뀌는지 바로 보이고, 레버로 세기를 바꿉니다.
+                </p>
+                <table class="formula">
+                  <tbody>
+                    <tr>
+                      <th>밝기</th>
+                      <td>값 + 더할 수</td>
+                    </tr>
+                    <tr>
+                      <th>대비</th>
+                      <td>(값 − 128) × 곱할 수 + 128</td>
+                    </tr>
+                    <tr>
+                      <th>블러</th>
+                      <td>주변 칸의 가우시안 무게 평균 (모서리 1 · 옆 2 · 가운데 4 ÷ 16)</td>
+                    </tr>
+                    <tr>
+                      <th>선명</th>
+                      <td>값 + (값 − 무게 평균) × 세기</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mode-media">
+                <img
+                  src="images/math-numbers.webp"
+                  alt="같은 칸의 원본 숫자와 밝기·대비·블러·선명 계산 결과"
+                  loading="lazy"
+                />
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="play">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>직접 만져 보기</h2>
+            <p>누르는 버튼과 레버는 모두 화면 세로 가운데에 모여 있어 아이들도 쉽게 닿습니다.</p>
+          </div>
+          <div class="panels">
+            <div class="panel">
+              <h3>칸 크기 레버</h3>
+              <img
+                src="images/cell-size.webp"
+                alt="칸 크기를 8px에서 48px까지 바꾸는 애니메이션"
+                loading="lazy"
+              />
+              <p>칸을 작게 하면 사진에 가까워지고, 크게 하면 숫자가 잘 보입니다.</p>
+            </div>
+            <div class="panel">
+              <h3>돋보기</h3>
+              <img
+                src="images/magnifier.webp"
+                alt="화면을 누르고 끌면 따라오는 3배 돋보기"
+                loading="lazy"
+              />
+              <p>
+                작품 화면을 꾹 누르고 있으면 손가락 위에 3배 돋보기가 떠서 작은 숫자도 읽힙니다.
+              </p>
+            </div>
+            <div class="panel">
+              <h3>설명 카드</h3>
+              <img
+                src="images/math-cards.webp"
+                alt="밝기·대비·블러·선명 설명 카드"
+                loading="lazy"
+              />
+              <p>긴 수식 대신 한 줄 공식과 3×3 숫자 예시로 감을 잡습니다.</p>
+            </div>
+          </div>
+          <figure class="shot">
+            <img
+              src="images/controls.webp"
+              alt="모드별 버튼과 레버: 색 RGB, 밝기 2단계, 수학 처리"
+              loading="lazy"
+            />
+            <figcaption>
+              오른쪽 레버는 화면마다 바뀝니다: 밝기 2단계에서는 흑백 경계값, 수학 처리에서는 계산의
+              세기.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="wrap">
+          <div class="section-head">
+            <h2>설치와 업데이트</h2>
+            <p>Windows용 Electron 앱입니다. 전시 PC에 한 번 설치하면 새 버전을 스스로 받습니다.</p>
+          </div>
+          <div class="install">
+            <div class="panel">
+              <h3>설치 파일</h3>
+              <p>
+                <a href="{{DOWNLOAD_URL}}">최신 Release</a>에서 <code>Setup.exe</code>를 받아
+                실행합니다. 코드 서명을 하지 않아 처음 실행할 때 SmartScreen 경고가 나올 수
+                있습니다.
+              </p>
+            </div>
+            <div class="panel">
+              <h3>자동 업데이트</h3>
+              <p>
+                앱이 켜지고 몇 초 뒤 새 버전을 확인해 내려받고, 다 받으면 재시작을 물어봅니다.
+                확인하지 못해도 전시는 그대로 이어집니다.
+              </p>
+            </div>
+            <div class="panel">
+              <h3>바뀐 점</h3>
+              <p>
+                버전마다 무엇이 바뀌었는지는 <a href="patch-notes.html">패치노트</a>에, 소스 코드는
+                <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>에
+                있습니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>Binary Media Art · BSSM Ascending</span>
+        <span>사이트의 화면은 실제 카메라 대신 가상 장면으로 캡처했습니다.</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -27,6 +27,32 @@ function readReleaseNotes(changelog, version) {
   return { title: `v${version} ${customTitle || DEFAULT_TITLE}`, body };
 }
 
+// Splits the whole file into entries, newest first: the Unreleased section (version
+// null) and every "## [X.Y.Z]" version. Text before the first entry is skipped.
+function parseChangelog(changelog) {
+  const entries = [];
+  let current = null;
+  for (const line of changelog.split(/\r?\n/)) {
+    if (line.startsWith('## ')) {
+      const match = VERSION_HEADING.exec(line);
+      const unreleased = /^## \[Unreleased\]/i.test(line);
+      current =
+        match || unreleased
+          ? {
+              version: match ? match[1] : null,
+              date: match?.[2] ?? null,
+              title: match?.[3] ?? null,
+              lines: [],
+            }
+          : null;
+      if (current) entries.push(current);
+      continue;
+    }
+    current?.lines.push(line);
+  }
+  return entries.map(({ lines, ...entry }) => ({ ...entry, body: lines.join('\n').trim() }));
+}
+
 if (require.main === module) {
   const [version, notesFile] = process.argv.slice(2);
   try {
@@ -40,4 +66,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { readReleaseNotes, DEFAULT_TITLE };
+module.exports = { readReleaseNotes, parseChangelog, DEFAULT_TITLE };
