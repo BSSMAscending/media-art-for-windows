@@ -45,7 +45,7 @@ const MODE_SUB_OPTIONS = {
 };
 
 const MODE_HINTS = {
-  original: '화면 앞에 서면 내 모습이 0과 1로 바뀌어요',
+  original: '화면 앞에 서면 내가 있는 칸이 1로 켜져요',
 };
 
 // Left lever: the cell size, shared by every mode.

@@ -32,9 +32,4 @@ describe('config constants', () => {
       segmentationFps: 12,
     });
   });
-
-  it('LUMINANCE_THRESHOLD is between 0 and 1', () => {
-    expect(config.LUMINANCE_THRESHOLD).toBeGreaterThan(0);
-    expect(config.LUMINANCE_THRESHOLD).toBeLessThan(1);
-  });
 });
