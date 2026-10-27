@@ -1,5 +1,9 @@
 const { modeExplanations, getModeExplanation } = require('../src/renderer/data/modeExplanations');
-const { PERSON_BITMAP } = require('../src/renderer/ui/explainAnimations');
+const {
+  PERSON_BITMAP,
+  MATH_EXAMPLE,
+  formatMathOperator,
+} = require('../src/renderer/ui/explainAnimations');
 const { formatGridMetric } = require('../src/renderer/ui/mathPanel');
 
 const VIEWS = [
@@ -11,6 +15,11 @@ const VIEWS = [
   ['levels', 2],
   ['levels', 10],
   ['levels', 256],
+  ['math', 'none'],
+  ['math', 'brightness'],
+  ['math', 'contrast'],
+  ['math', 'blur'],
+  ['math', 'sharpen'],
 ];
 
 describe('mode explanations', () => {
@@ -46,7 +55,7 @@ describe('mode explanations', () => {
   it('returns null for modes without a metaphor card', () => {
     expect(getModeExplanation('busan')).toBeNull();
     expect(getModeExplanation('rgb', 'X')).toBeNull();
-    expect(Object.keys(modeExplanations)).toEqual(['original', 'rgb', 'levels']);
+    expect(Object.keys(modeExplanations)).toEqual(['original', 'rgb', 'levels', 'math']);
   });
 });
 
@@ -55,6 +64,15 @@ describe('explanation helpers', () => {
     const width = PERSON_BITMAP[0].length;
     expect(PERSON_BITMAP.every((row) => row.length === width)).toBe(true);
     expect(PERSON_BITMAP.join('')).toMatch(/^[.#]+$/);
+  });
+
+  it('names each calculation the way its lever reads', () => {
+    expect(formatMathOperator('brightness', 60)).toBe('+ 60');
+    expect(formatMathOperator('brightness', -40)).toBe('− 40');
+    expect(formatMathOperator('contrast', 2)).toBe('× 2');
+    expect(formatMathOperator('blur', 2)).toBe('5×5 무게 평균');
+    expect(formatMathOperator('sharpen', 1.5)).toBe('차이 × 1.5');
+    expect(MATH_EXAMPLE).toHaveLength(9);
   });
 
   it('reports the live grid as a cell count', () => {

@@ -69,6 +69,43 @@ const modeExplanations = {
   },
 };
 
+// 수학 처리: one calculation per card, written as a one-line formula.
+const mathOp = (effect, copy) => ({ ...copy, animation: { type: 'math-op', effect } });
+modeExplanations.math = {
+  variants: {
+    none: mathOp('none', {
+      title: '수학으로 사진 바꾸기',
+      headline: '칸마다 숫자 하나 = 밝기',
+      body: '계산을 하나 고르면 칸마다 숫자가 바뀌어요.',
+      terms: ['픽셀 = 숫자 하나', '영상 처리 = 숫자 계산'],
+    }),
+    brightness: mathOp('brightness', {
+      title: '밝기: 더하기',
+      headline: '새 값 = 값 + 더할 수',
+      body: '모든 칸에 같은 수를 더해요. 255를 넘으면 255예요.',
+      terms: ['덧셈', '0 ~ 255 안으로 자르기'],
+    }),
+    contrast: mathOp('contrast', {
+      title: '대비: 곱하기',
+      headline: '새 값 = (값 − 128) × 곱할 수 + 128',
+      body: '가운데 128에서 멀어지게 곱해요. 밝은 칸은 더 밝게.',
+      terms: ['곱셈', '128 = 가운데 밝기'],
+    }),
+    blur: mathOp('blur', {
+      title: '블러: 무게 평균',
+      headline: '새 값 = 주변 칸의 무게 평균',
+      body: '가운데 칸일수록 무게를 더 줘서 섞으면 부드럽게 흐려져요.',
+      terms: ['가우시안 블러', '3×3 무게 1 · 2 · 4, 합 16'],
+    }),
+    sharpen: mathOp('sharpen', {
+      title: '선명: 차이 키우기',
+      headline: '새 값 = 값 + (값 − 무게 평균) × 세기',
+      body: '주변 평균과 다른 만큼 더 벌리면 경계가 또렷해져요.',
+      terms: ['뺄셈 · 곱셈 · 덧셈', '언샤프 마스크'],
+    }),
+  },
+};
+
 function getModeExplanation(mode, option) {
   const entry = modeExplanations[mode];
   if (!entry) return null;

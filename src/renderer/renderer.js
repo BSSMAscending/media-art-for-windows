@@ -11,9 +11,11 @@ const {
   MODE_SUB_OPTIONS,
   MODE_HINTS,
   CELL_SIZE_SLIDER,
+  MATH_START_AMOUNTS,
   getCellSizeFloor,
   MODE_SLIDER_HINTS,
   getModeSlider,
+  getMathSettings,
   selectMode,
   selectModeOption,
 } = require('./data/modeOptions');
@@ -28,6 +30,8 @@ const state = {
   rgbChannel: 'N',
   levels: 10,
   threshold: 128,
+  mathEffect: 'none',
+  ...MATH_START_AMOUNTS,
   cellSize: FONT_SIZE,
   bgMode: 'off',
   loop: null,
@@ -37,6 +41,7 @@ const MODES = [
   'original',
   'rgb',
   'levels',
+  'math',
   'busan',
   'pixelvalue',
   'colorrgb',
@@ -111,12 +116,12 @@ function renderModeOptions(onSelect) {
 let cellSizeLever = null;
 
 // The right lever slot follows the view; the cell size lever on the left never moves.
-function renderModeSlider() {
+function renderModeSlider(mathPanel) {
   const slot = document.getElementById('modeSlider');
   const spec = getModeSlider(state);
   slot.replaceChildren(
     spec
-      ? createSlider(spec, state)
+      ? createSlider(spec, state, (value) => mathPanel.updateAmount(value))
       : createSliderHint(MODE_SLIDER_HINTS[state.selectedVersion] || '')
   );
 }
@@ -133,8 +138,8 @@ function updateModeUI(mathPanel) {
   });
   const floor = getCellSizeFloor(state);
   cellSizeLever?.setFloor(floor.size, floor.note);
-  renderModeSlider();
-  mathPanel.updateMode(state.selectedVersion, getModeOption());
+  renderModeSlider(mathPanel);
+  mathPanel.updateMode(state.selectedVersion, getModeOption(), getMathSettings(state).amount);
 }
 
 function setupUpdateNotice() {
@@ -249,7 +254,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
     document.getElementById('modeControls').style.display = 'block';
     canvasEl.style.display = 'block';
     resizeCanvases(canvasEl, document.getElementById('bgCanvas'));
-    mathPanel.updateMode(state.selectedVersion, getModeOption());
+    mathPanel.updateMode(state.selectedVersion, getModeOption(), getMathSettings(state).amount);
     canvasEl.style.display = 'block';
 
     state.loop = createFrameLoop({
@@ -261,6 +266,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getRgbChannel: () => state.rgbChannel,
       getLevels: () => state.levels,
       getThreshold: () => state.threshold,
+      getMathSettings: () => getMathSettings(state),
       getArtworkArea: () =>
         getArtworkArea(
           canvasEl.clientWidth,

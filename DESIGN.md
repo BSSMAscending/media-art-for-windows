@@ -129,8 +129,8 @@ All spacing derives from a base of `4px`.
 
 ### Mode Option Buttons
 
-- **Structure**: a label and a row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels; the original mode shows a hint line in the same space.
-- **Selection**: the RGB mode button always opens the full colour with no light selected; tapping the selected R/G/B again clears it back to the full colour. A brightness step stays selected when tapped again.
+- **Structure**: a label and a row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels, 밝기/대비/블러/선명 for 수학 처리; the original mode shows a hint line in the same space.
+- **Selection**: the RGB mode button always opens the full colour with no light selected; tapping the selected R/G/B again clears it back to the full colour. 수학 처리 opens on the original numbers and works the same way: tapping the selected calculation again turns it off. A brightness step stays selected when tapped again.
 - **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
 - **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
 
@@ -138,7 +138,7 @@ All spacing derives from a base of `4px`.
 
 - **Structure**: two equal slots side by side at the bottom of the centred control block. Each lever has a label with its live value, a range input with a large round thumb, and end labels.
 - **Left**: `칸 크기`, stepping through 8-48px cells in every mode; starts at 24px. In the combined RGB view it cannot go below 24px: the track keeps its length, the blocked part is dark and striped and the low end reads `전체 색은 24px부터`.
-- **Right**: the current view's own lever (`흑백 경계값` 0-255 in 밝기 단계 2단계); views without one show a dashed slot with a short hint, so neither thumb moves when the mode changes.
+- **Right**: the current view's own lever (`흑백 경계값` 0-255 in 밝기 단계 2단계, the calculation's strength in 수학 처리); views without one show a dashed slot with a short hint, so neither thumb moves when the mode changes.
 - **Touch**: `touch-action: none`; tapping the track jumps the thumb there.
 
 ### Update Notice

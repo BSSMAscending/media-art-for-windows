@@ -14,10 +14,12 @@ const { renderGrayscale8bit } = require('../modes/grayscale8bit');
 const { renderColor4k } = require('../modes/color4k');
 const { renderRgb } = require('../modes/rgb');
 const { renderLevels } = require('../modes/levels');
+const { renderMath } = require('../modes/math');
+const { toGrey, applyImageMath } = require('./imageMath');
 const { createChannelTransition } = require('../modes/rgbTransition');
 
 // Modes that show the whole camera frame instead of the segmented person.
-const FULL_FRAME_MODES = new Set(['rgb', 'levels']);
+const FULL_FRAME_MODES = new Set(['rgb', 'levels', 'math']);
 
 function computePixelStats(pixels, segGrid, cols, rows) {
   let sum = 0,
@@ -56,6 +58,7 @@ function createFrameLoop({
   getRgbChannel,
   getLevels,
   getThreshold,
+  getMathSettings,
   getArtworkArea,
   getCellSize,
   onStats,
@@ -215,6 +218,12 @@ function createFrameLoop({
       renderRgb(ctx, overlay, grid, pixels, getRgbChannel ? getRgbChannel() : 'N', layers);
     } else if (mode === 'levels') {
       renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels, getThreshold?.());
+      overlay.renderFlat(grid, buffers.levelPixels);
+    } else if (mode === 'math') {
+      const { effect, amount } = getMathSettings();
+      toGrey(pixels, buffers.mathInput);
+      applyImageMath(effect, amount, buffers.mathInput, buffers.mathOutput, grid.cols, grid.rows);
+      renderMath(ctx, grid, buffers.mathOutput, buffers.levelPixels);
       overlay.renderFlat(grid, buffers.levelPixels);
     }
 

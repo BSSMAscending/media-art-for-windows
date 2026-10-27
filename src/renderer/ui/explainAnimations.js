@@ -1,3 +1,5 @@
+const { applyImageMath, getGaussianWeights } = require('../core/imageMath');
+
 // Small looping illustrations for the mode explanation card. Each builder returns
 // a DOM element animated purely by CSS; its un-animated styles are the meaningful
 // still picture shown when reduced motion is on.
@@ -96,12 +98,66 @@ function createLevelSteps(levels) {
   return root;
 }
 
+// 3×3 numbers the 수학 처리 card calculates with, using the live view's own maths.
+const MATH_EXAMPLE = Uint8ClampedArray.from([60, 90, 120, 80, 140, 200, 100, 170, 230]);
+
+function formatMathOperator(effect, amount) {
+  if (effect === 'brightness') return amount < 0 ? `− ${-amount}` : `+ ${amount}`;
+  if (effect === 'contrast') return `× ${amount}`;
+  if (effect === 'blur') return `${amount * 2 + 1}×${amount * 2 + 1} 무게 평균`;
+  if (effect === 'sharpen') return `차이 × ${amount}`;
+  return '그대로';
+}
+
+function paintMathCell(cell, value) {
+  cell.textContent = value;
+  cell.style.background = `rgb(${value}, ${value}, ${value})`;
+  cell.style.color = value >= 128 ? '#000' : '#fff';
+}
+
+// `weights` (3×3, optional) are shown as small ×n badges on the cells.
+function createMathGrid(values, className, weights) {
+  const grid = element('div', `explain-math-grid ${className}`);
+  values.forEach((value, index) => {
+    const cell = element('span', `explain-math-cell${index === 4 ? ' is-center' : ''}`);
+    cell.style.setProperty('--order', index);
+    if (weights) cell.dataset.weight = `×${weights[index]}`;
+    paintMathCell(cell, value);
+    grid.appendChild(cell);
+  });
+  return grid;
+}
+
+// Before → calculation → after on a 3×3 example. `updateAmount` refreshes the
+// numbers in place as the lever moves, without restarting the animation.
+function createMathOp(effect, amount) {
+  const root = element('div', `explain-math explain-math--${effect}`);
+  // Blur and sharpen weigh the neighbours: corner 1, side 2, centre 4 (3×3 Gaussian).
+  const weights = ['blur', 'sharpen'].includes(effect) ? getGaussianWeights(1).flat() : null;
+  const before = createMathGrid([...MATH_EXAMPLE], 'is-before', weights);
+  const operator = element('span', 'explain-math-op');
+  const after = createMathGrid([...MATH_EXAMPLE], 'is-after');
+  root.append(before, operator, after);
+
+  const output = new Uint8ClampedArray(9);
+  root.updateAmount = (value) => {
+    applyImageMath(effect, value, MATH_EXAMPLE, output, 3, 3);
+    after.querySelectorAll('.explain-math-cell').forEach((cell, index) => {
+      paintMathCell(cell, output[index]);
+    });
+    operator.textContent = formatMathOperator(effect, value);
+  };
+  root.updateAmount(amount);
+  return root;
+}
+
 function createExplainAnimation(spec) {
   if (spec?.type === 'scan-person') return createScanPerson();
   if (spec?.type === 'light-mix') return createLightMix();
   if (spec?.type === 'channel-dimmer') return createChannelDimmer(spec.color);
   if (spec?.type === 'level-steps') return createLevelSteps(spec.levels);
+  if (spec?.type === 'math-op') return createMathOp(spec.effect, spec.amount ?? 0);
   return null;
 }
 
-module.exports = { createExplainAnimation, PERSON_BITMAP };
+module.exports = { createExplainAnimation, formatMathOperator, PERSON_BITMAP, MATH_EXAMPLE };

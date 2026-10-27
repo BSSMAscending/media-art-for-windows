@@ -472,9 +472,14 @@ body {
   margin: 0;
 }
 
+/* Four modes share one row, so labels drop the letter spacing and never break mid-word. */
 .mode-button-grid--live .mode-button {
   min-height: var(--live-control-height);
+  padding-inline: var(--space-2);
   background: rgba(0, 8, 12, 0.8);
+  font-size: clamp(0.875rem, 1.1vw, 1.375rem);
+  letter-spacing: 0;
+  word-break: keep-all;
 }
 
 .mode-button-grid--live .mode-button.is-selected {
@@ -1249,6 +1254,119 @@ body {
 
 .error-text {
   color: var(--status-error);
+}
+
+/* 수학 처리: a 3×3 example before → calculation → after; each cell shows its grey. */
+.explain-math {
+  --math-cell: min(3rem, calc((var(--visual-height) - 4px) / 3), 6cqw);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.explain-math-grid {
+  display: grid;
+  grid-template-columns: repeat(3, var(--math-cell));
+  grid-auto-rows: var(--math-cell);
+  gap: 2px;
+}
+
+.explain-math-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  font-family: 'Courier New', monospace;
+  font-size: calc(var(--math-cell) * 0.44);
+  font-weight: 700;
+}
+
+/* Gaussian weight of each neighbour, as a small badge in the cell's corner. */
+.explain-math-cell[data-weight]::after {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  color: var(--accent-primary);
+  content: attr(data-weight);
+  font-size: calc(var(--math-cell) * 0.28);
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000;
+}
+
+.explain-math-cell.is-center {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.is-after .explain-math-cell {
+  animation: math-cell-in 4.5s ease-out infinite;
+  animation-delay: calc(0.6s + var(--order) * 0.12s);
+}
+
+/* Blur and sharpen read every neighbour of the centre cell. */
+.explain-math--blur .is-before .explain-math-cell,
+.explain-math--sharpen .is-before .explain-math-cell {
+  animation: math-neighbour 4.5s ease-in-out infinite;
+}
+
+.explain-math-op {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--accent-primary);
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  font-size: var(--type-control-meta);
+  font-weight: 700;
+  white-space: nowrap;
+  animation: math-op 4.5s ease-in-out infinite;
+}
+
+.explain-math-op::after {
+  margin-left: var(--space-1);
+  content: '→';
+}
+
+@keyframes math-cell-in {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.8);
+  }
+  12%,
+  88% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0.12;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes math-neighbour {
+  0%,
+  30% {
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
+  }
+  45%,
+  100% {
+    box-shadow: none;
+  }
+}
+
+@keyframes math-op {
+  0%,
+  10% {
+    box-shadow: 0 0 0 rgba(0, 255, 255, 0);
+  }
+  16% {
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.7);
+  }
+  30%,
+  100% {
+    box-shadow: 0 0 0 rgba(0, 255, 255, 0);
+  }
 }
 
 @media (max-width: 1100px) {
