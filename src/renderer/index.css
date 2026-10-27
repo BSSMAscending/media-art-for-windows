@@ -472,9 +472,14 @@ body {
   margin: 0;
 }
 
+/* Four modes share one row, so labels drop the letter spacing and never break mid-word. */
 .mode-button-grid--live .mode-button {
   min-height: var(--live-control-height);
+  padding-inline: var(--space-2);
   background: rgba(0, 8, 12, 0.8);
+  font-size: clamp(0.875rem, 1.1vw, 1.375rem);
+  letter-spacing: 0;
+  word-break: keep-all;
 }
 
 .mode-button-grid--live .mode-button.is-selected {

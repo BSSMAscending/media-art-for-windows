@@ -3,20 +3,34 @@ const {
   MODE_SUB_OPTIONS,
   CELL_SIZE_SLIDER,
   THRESHOLD_SLIDER,
+  MATH_SLIDERS,
+  MATH_START_AMOUNTS,
   MODE_SLIDER_HINTS,
   getModeSlider,
+  getMathSettings,
   selectMode,
   selectModeOption,
 } = require('../src/renderer/data/modeOptions');
 const { FONT_SIZE } = require('../src/renderer/config');
 
 describe('mode buttons', () => {
-  it('offers the three exhibition modes', () => {
+  it('offers the four exhibition modes', () => {
     expect(MODE_OPTIONS.map(({ key, label }) => [key, label])).toEqual([
       ['original', '미디어 아트'],
       ['rgb', '색 RGB'],
       ['levels', '밝기 단계'],
+      ['math', '수학 처리'],
     ]);
+  });
+
+  it('opens 수학 처리 on the original numbers and clears a calculation on a second tap', () => {
+    const state = { mathEffect: 'blur' };
+    selectMode(state, 'math');
+    expect(state.mathEffect).toBe('none');
+    selectModeOption(state, MODE_SUB_OPTIONS.math, 'blur');
+    expect(state.mathEffect).toBe('blur');
+    selectModeOption(state, MODE_SUB_OPTIONS.math, 'blur');
+    expect(state.mathEffect).toBe('none');
   });
 
   it('opens RGB on the full colour, even when a light was picked before', () => {
@@ -73,6 +87,26 @@ describe('levers', () => {
     expect(getModeSlider({ selectedVersion: 'levels', levels: 10 })).toBeNull();
     expect(getModeSlider({ selectedVersion: 'rgb', levels: 2 })).toBeNull();
     expect([THRESHOLD_SLIDER.min, THRESHOLD_SLIDER.max]).toEqual([0, 255]);
+  });
+
+  it('gives each calculation a strength lever that starts away from no change', () => {
+    for (const option of MODE_SUB_OPTIONS.math.options) {
+      const slider = MATH_SLIDERS[option.value];
+      const state = { selectedVersion: 'math', mathEffect: option.value, ...MATH_START_AMOUNTS };
+      expect(getModeSlider(state)).toBe(slider);
+      const { effect, amount } = getMathSettings(state);
+      expect(effect).toBe(option.value);
+      expect(amount).toBe(MATH_START_AMOUNTS[slider.stateKey]);
+      if (slider.values) expect(slider.values).toContain(amount);
+      else expect(amount).toBeGreaterThanOrEqual(slider.min);
+    }
+    expect(MATH_START_AMOUNTS).toMatchObject({ mathBrightness: 60, mathContrast: 2 });
+  });
+
+  it('applies nothing to the original numbers in 수학 처리', () => {
+    const state = { selectedVersion: 'math', mathEffect: 'none', ...MATH_START_AMOUNTS };
+    expect(getModeSlider(state)).toBeNull();
+    expect(getMathSettings(state)).toEqual({ effect: 'none', amount: 0 });
   });
 
   it('gives every mode a hint for the lever slot it does not use', () => {

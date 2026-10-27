@@ -35,9 +35,11 @@ function createMathPanel(container = document.body, detailContainer = container)
   let currentKey = null;
   let currentMode = null;
   let fallbackMetric = '';
+  let animation = null;
 
   // Rebuilds the card only when the view changes so the animation keeps looping.
-  function updateMode(modeKey, option) {
+  // `amount` is the 수학 처리 lever value its example calculates with.
+  function updateMode(modeKey, option, amount) {
     const key = `${modeKey}:${option}`;
     if (key === currentKey) return;
     currentKey = key;
@@ -56,7 +58,7 @@ function createMathPanel(container = document.body, detailContainer = container)
     fallbackMetric = '';
     const visual = element('div', 'explain-visual');
     visual.setAttribute('aria-hidden', 'true');
-    const animation = createExplainAnimation(explanation.animation);
+    animation = createExplainAnimation({ ...explanation.animation, amount });
     if (animation) visual.appendChild(animation);
     const terms = element('div', 'explain-terms');
     explanation.terms.forEach((term) => terms.appendChild(element('span', 'explain-term', term)));
@@ -75,8 +77,14 @@ function createMathPanel(container = document.body, detailContainer = container)
     metric.textContent = fallbackMetric ? `${fallbackMetric} · ${grid}` : grid;
   }
 
+  // Moving a lever only refreshes the example's numbers.
+  function updateAmount(amount) {
+    animation?.updateAmount?.(amount);
+  }
+
   return {
     updateMode,
+    updateAmount,
     update,
   };
 }

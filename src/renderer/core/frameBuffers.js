@@ -20,6 +20,9 @@ class FrameBuffers {
     const rgbaLength = pixelCount * 4;
 
     this.levelPixels = new Uint8ClampedArray(rgbaLength);
+    this.mathInput = new Uint8ClampedArray(pixelCount);
+    this.mathOutput = new Uint8ClampedArray(pixelCount);
+    this.mathScratch = new Uint8ClampedArray(pixelCount);
     this.gridRaw = new Uint8Array(pixelCount);
     this.gridFiltered = new Uint8Array(pixelCount);
     this.regionVisited = new Uint8Array(pixelCount);
