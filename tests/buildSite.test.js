@@ -81,6 +81,11 @@ describe('patch notes', () => {
       }
     }
     expect(fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8')).toContain('id="v0.1.0"');
+    // The 3D opening loads its pictures by path; they must ship with the site.
+    const hero = fs.readFileSync(path.join(out, 'hero.js'), 'utf8');
+    const assets = [...hero.matchAll(/'(assets\/[^']+)'/g)].map(([, file]) => file);
+    expect(assets).toEqual(['assets/scene-64x48.png', 'assets/person-64x48.png']);
+    for (const file of assets) expect(fs.existsSync(path.join(out, file))).toBe(true);
     fs.rmSync(out, { recursive: true, force: true });
   });
 });
