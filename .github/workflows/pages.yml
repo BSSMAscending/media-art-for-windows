@@ -10,6 +10,7 @@ on:
       - 'site/**'
       - 'docs/images/readme/**'
       - 'CHANGELOG.md'
+      - 'CHANGELOG.en.md'
       - 'package.json'
       - 'scripts/build-site.js'
       - 'scripts/changelog.js'
