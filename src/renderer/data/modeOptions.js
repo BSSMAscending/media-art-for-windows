@@ -38,7 +38,7 @@ const MODE_SUB_OPTIONS = {
     options: [
       { value: 'brightness', label: '밝기', caption: '더하기' },
       { value: 'contrast', label: '대비', caption: '곱하기' },
-      { value: 'blur', label: '블러', caption: '평균' },
+      { value: 'blur', label: '블러', caption: '무게 평균' },
       { value: 'sharpen', label: '선명', caption: '차이 키우기' },
     ],
   },
@@ -102,7 +102,7 @@ const MATH_SLIDERS = {
   },
   blur: {
     stateKey: 'mathBlur',
-    label: '평균 낼 범위',
+    label: '흐림 범위',
     values: [1, 2, 3],
     format: (radius) => `${radius * 2 + 1}×${radius * 2 + 1}칸`,
     ends: ['조금', '많이'],

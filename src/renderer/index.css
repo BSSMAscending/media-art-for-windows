@@ -1348,6 +1348,7 @@ body {
 }
 
 .explain-math-cell {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1355,6 +1356,20 @@ body {
   font-family: 'Courier New', monospace;
   font-size: calc(var(--math-cell) * 0.44);
   font-weight: 700;
+}
+
+/* Gaussian weight of each neighbour, as a small badge in the cell's corner. */
+.explain-math-cell[data-weight]::after {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  color: var(--accent-primary);
+  content: attr(data-weight);
+  font-size: calc(var(--math-cell) * 0.28);
+  line-height: 1;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000;
 }
 
 .explain-math-cell.is-center {

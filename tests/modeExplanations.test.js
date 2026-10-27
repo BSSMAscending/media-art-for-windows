@@ -70,7 +70,7 @@ describe('explanation helpers', () => {
     expect(formatMathOperator('brightness', 60)).toBe('+ 60');
     expect(formatMathOperator('brightness', -40)).toBe('− 40');
     expect(formatMathOperator('contrast', 2)).toBe('× 2');
-    expect(formatMathOperator('blur', 2)).toBe('5×5 평균');
+    expect(formatMathOperator('blur', 2)).toBe('5×5 무게 평균');
     expect(formatMathOperator('sharpen', 1.5)).toBe('차이 × 1.5');
     expect(MATH_EXAMPLE).toHaveLength(9);
   });

@@ -225,15 +225,7 @@ function createFrameLoop({
     } else if (mode === 'math') {
       const { effect, amount } = getMathSettings();
       toGrey(pixels, buffers.mathInput);
-      applyImageMath(
-        effect,
-        amount,
-        buffers.mathInput,
-        buffers.mathOutput,
-        grid.cols,
-        grid.rows,
-        buffers.mathScratch
-      );
+      applyImageMath(effect, amount, buffers.mathInput, buffers.mathOutput, grid.cols, grid.rows);
       renderMath(ctx, grid, buffers.mathOutput, buffers.levelPixels);
       overlay.renderFlat(grid, buffers.levelPixels);
     }
