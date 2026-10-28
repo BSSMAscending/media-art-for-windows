@@ -108,6 +108,13 @@ describe('patch notes', () => {
     expect(ico.subarray(imageOffset, imageOffset + 8).toString('hex')).toBe('89504e470d0a1a0a');
     expect(ico.readUInt32BE(imageOffset + 16)).toBe(32);
     expect(ico.readUInt32BE(imageOffset + 20)).toBe(32);
+    const home = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+    expect(home).toContain(
+      'https://github.com/BSSMAscending/media-art-for-windows-releases/releases/latest'
+    );
+    expect(home).toContain('https://github.com/BSSMAscending/media-art-beta/releases/latest');
+    expect(home).toContain('brew tap BSSMAscending/tap');
+    expect(home).toContain('brew install --cask binary-media-art-beta');
     expect(fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8')).toContain('id="v0.1.0"');
     // The 3D opening loads its pictures by path; they must ship with the site.
     const hero = fs.readFileSync(path.join(out, 'hero.js'), 'utf8');

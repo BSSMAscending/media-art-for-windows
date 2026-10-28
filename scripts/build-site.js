@@ -5,9 +5,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { parseChangelog } = require('./changelog');
+const { betaRepository, stableRepository } = require('./channels');
 
 const ROOT = path.join(__dirname, '..');
-const RELEASES_URL = 'https://github.com/BSSMAscending/media-art-for-windows-releases/releases';
+const RELEASES_URL = `https://github.com/${stableRepository}/releases`;
+const BETA_URL = `https://github.com/${betaRepository}/releases/latest`;
 
 function escapeHtml(text) {
   return text
@@ -154,6 +156,7 @@ function build(outDir) {
   const values = {
     '{{VERSION}}': escapeHtml(version),
     '{{DOWNLOAD_URL}}': `${RELEASES_URL}/latest`,
+    '{{BETA_URL}}': BETA_URL,
     '{{UPCOMING_NOTE}}': upcoming
       ? bilingual(
           '다음 버전 준비 중 · <a href="patch-notes.html#upcoming">무엇이 바뀌나요?</a>',
