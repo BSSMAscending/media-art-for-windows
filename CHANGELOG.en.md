@@ -19,6 +19,7 @@ this file is shown in Korean on the site.
 - Rule card: each mode shows its name, its rule as one calculation with the lever's value, and one picture.
 - Marked cell: one cell of the picture is outlined, and the card right under the levers puts its real numbers into the rule (`(140 − 128) × 2 + 128 = 152`). Moving a lever changes the calculation, and pressing the picture moves the mark to that cell.
 - Media Art: the magnifier shows the AI's chance that the pressed cell is a person (63% or more becomes 1), and the marked-cell card shows how much of the screen is 1.
+- Blur tip: picking blur briefly shows "① Shrink cells to 12px ② Then change the blur size" under the levers and makes the lever to move next glow. Small cells drop their digits, so the blur shows clearly.
 
 ### Changed
 
