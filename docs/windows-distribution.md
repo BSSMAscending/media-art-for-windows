@@ -76,11 +76,11 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 
 Windows 베타 설치본은 베타 저장소만 업데이트 피드로 보므로 줄이 끝나도 정식 `2.0.0`으로 넘어가지 않고, 베타 저장소에 새 Release가 올라올 때까지 마지막 베타에 머뭅니다. 베타를 쓰던 사람은 베타를 지우고 소개 사이트의 정식 설치 파일로 `2.0.0`을 새로 설치합니다. 그 설치본부터 전시 저장소를 따라 업데이트합니다. 다음 줄(예: `2.1.0-beta.1`)을 시작하려면 `scripts/channels.js`의 `upcomingRelease`를 바꿉니다. 그러면 베타 설치본은 그 줄의 베타를 이어서 받습니다.
 
-Actions의 **Publish beta**(`publish-beta.yml`)를 수동으로 실행하고 버전을 `2.0.0-beta.1`처럼 넣습니다. 워크플로가 그 번호로 Windows와 Mac(Apple Silicon, Intel)을 만들어 공개 저장소 `BSSMAscending/media-art-beta`에만 올립니다. 올리기 전에 `scripts/release-target.js`가 대상 저장소를 검사하고, 대상이 정식 저장소이거나 버전이 `X.Y.Z`이면 업로드 전에 멈춥니다. 정식 배포 워크플로도 반대로, 베타 버전은 `media-art-for-windows-releases`에 올리지 않고 멈춥니다. Windows 베타 설치본만 베타 저장소를 업데이트 피드로 봅니다. 이미 설치된 정식 버전은 `media-art-for-windows-releases`만 보므로 베타를 받지 않습니다.
+Actions의 **Publish beta**(`publish-beta.yml`)를 수동으로 실행하고 버전을 `2.0.0-beta.1`처럼 넣습니다. 워크플로가 그 번호로 Windows와 Mac(Apple Silicon, Intel)을 만들어 공개 저장소 `BSSMAscending/media-art-beta`에만 올립니다. 올리기 전에 `scripts/release-target.js`가 대상 저장소를 검사하고, 대상이 정식 저장소이거나 버전이 `X.Y.Z`이면 업로드 전에 멈춥니다. 정식 배포 워크플로도 반대로, 베타 버전은 `media-art-for-windows-releases`에 올리지 않고 멈춥니다. Windows 베타 설치본은 베타 저장소를 업데이트 피드로 보고, Mac 베타 앱은 같은 저장소의 최신 Release를 확인합니다. 이미 설치된 정식 버전은 `media-art-for-windows-releases`만 보므로 베타를 받지 않습니다.
 
 시작할 때 베타 저장소가 공개가 아니면 빌드 전에 멈춥니다. 비공개 저장소는 업데이트 서버도 받는 사람도 볼 수 없기 때문입니다. 릴리스는 처음에 초안(Draft)으로 만들고, 캐스크와 소스 태그까지 끝난 뒤 마지막 단계에서 공개합니다. 그 전에 실패하면 공개된 것이 없으므로 같은 버전으로 워크플로를 다시 실행하면 파일, 캐스크의 해시, 태그를 처음부터 다시 맞춥니다. 마지막 공개 단계만 실패했다면 초안을 베타 저장소에서 직접 공개합니다. 파일과 캐스크는 이미 맞아 있습니다. 소스 태그가 이미 있으면 그 번호는 쓰인 것으로 보고 다음 번호를 씁니다.
 
-베타 Release에는 Windows 설치 파일과 Mac 압축 파일 두 종류가 함께 있습니다. Mac은 Apple Silicon과 Intel로 나뉩니다. 받는 주소는 `https://github.com/BSSMAscending/media-art-beta/releases/latest`입니다. Mac은 서명하지 않아 앱이 스스로 업데이트하지 않고, 압축을 풀어 처음 열 때 Mac이 막을 수 있습니다. 소개 사이트의 베타 버튼이 이 배포를 가리킵니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
+베타 Release에는 Windows 설치 파일과 Mac 압축 파일 두 종류가 함께 있습니다. Mac은 Apple Silicon과 Intel로 나뉩니다. 받는 주소는 `https://github.com/BSSMAscending/media-art-beta/releases/latest`입니다. Mac은 공증하지 않아 압축을 풀어 처음 열 때 Mac이 막을 수 있습니다. Mac 베타 앱은 새 베타를 스스로 알려 주고 Homebrew로 설치했다면 눌러서 업데이트합니다(아래). 소개 사이트의 베타 버튼이 이 배포를 가리킵니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
 
 Homebrew는 같은 Mac 파일을 더 쉽게 받는 선택입니다. 탭 `BSSMAscending/homebrew-tap`이 있으면 워크플로가 `binary-media-art-beta` 캐스크도 그 버전으로 바꿉니다. 탭이 없어도 베타 Release는 올라갑니다. 받는 명령은 다음과 같습니다.
 
@@ -89,9 +89,33 @@ brew tap BSSMAscending/tap
 brew install --cask binary-media-art-beta
 ```
 
-다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 캐스크의 `postflight_steps`는 설치가 끝난 뒤 그 Mac에서 두 명령을 실행합니다. `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시를 지우고, `/usr/bin/codesign --force --deep -s -`로 그 자리에서 ad-hoc 서명을 합니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 서명되지 않은 앱의 이 처리를 받지 않습니다.
+다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 캐스크의 `postflight_steps`는 설치가 끝난 뒤 `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시만 지웁니다. 서명은 캐스크가 하지 않고 CI가 미리 해 둡니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 공증하지 않은 앱의 이 처리를 받지 않습니다.
 
-이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`에 릴리스를 만들 수 있어야 합니다. 탭을 같이 갱신하려면 `homebrew-tap`에도 푸시할 수 있어야 합니다. 탭이 없을 때(404)만 캐스크를 건너뛰고, 탭이 있는데 권한이 없거나 확인이 실패하면 빌드 전에 멈춥니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
+### Mac 베타 서명
+
+Mac 베타는 CI가 인증서 하나로 서명합니다. 예전처럼 설치하는 Mac에서 ad-hoc 서명(`codesign -s -`)을 하면 앱의 지정 요구 사항(designated requirement)이 빌드마다 바뀌는 cdhash가 되어, macOS(TCC)가 업데이트할 때마다 카메라 허용을 잊고 다시 묻습니다. 같은 자체 서명(self-signed) 인증서로 서명하면 요구 사항이 `identifier "…" and certificate leaf = H"<SHA-1>"`로 고정되어 허용이 유지됩니다. 인증서는 공증이 아니므로 Mac이 처음 여는 앱을 막는 것은 그대로이고, 캐스크가 격리 표시를 지웁니다.
+
+- **한 번만 만듭니다.** `scripts/create-mac-beta-signing-cert.sh`가 10년짜리 인증서와 무작위 비밀번호를 만들어 `~/media-art-mac-beta-signing/`(첫 인자로 바꿀 수 있음)에 `mac-beta-signing.p12`와 `password.txt`로 둡니다. 이미 있으면 덮어쓰지 않고 멈춥니다. 스크립트가 알려 주는 두 명령으로 GitHub 비밀값을 저장합니다.
+
+  ```bash
+  base64 -i ~/media-art-mac-beta-signing/mac-beta-signing.p12 | gh secret set MAC_BETA_SIGNING_P12 -R BSSMAscending/media-art-for-windows
+  gh secret set MAC_BETA_SIGNING_PASSWORD -R BSSMAscending/media-art-for-windows < ~/media-art-mac-beta-signing/password.txt
+  ```
+
+- **백업을 보관합니다.** 그 폴더가 인증서의 유일한 사본입니다. 인증서를 바꾸면 모든 테스터가 카메라를 한 번 더 허용해야 합니다. 비밀값만 지워졌다면 새로 만들지 말고 백업에서 다시 저장합니다.
+- **워크플로가 하는 일.** Mac 작업은 두 비밀값이 비어 있으면 빌드 전에 멈춥니다. 있으면 임시 키체인에 가져와 `MAC_BETA_SIGN_IDENTITY`(인증서 SHA-1)와 `MAC_BETA_SIGN_KEYCHAIN`을 정하고, `forge.config.js`의 `postPackage` 훅(`scripts/mac-beta-sign.js`)이 Fuses 플러그인의 ad-hoc 서명 뒤에 `codesign --force --deep`으로 서명합니다. 빌드 뒤에는 두 zip 모두 `codesign --verify --deep --strict`를 통과하고 지정 요구 사항이 `certificate leaf = H"<SHA-1>"`(cdhash가 아님)인지 확인하며, 끝나면 키체인을 지웁니다. 하드닝 런타임과 entitlements는 쓰지 않습니다.
+
+### Mac 베타 업데이트 확인
+
+패키징된 Mac 베타 앱(`X.Y.Z-beta.N`)은 시작 5초 뒤와 이후 6시간마다 `https://api.github.com/repos/BSSMAscending/media-art-beta/releases/latest`를 조회합니다. 더 높은 베타(또는 정식)가 있으면 Windows 업데이트와 같은 왼쪽 위 패널로 알리고, 같은 버전은 한 번만 알립니다. 확인이 실패하면 로그만 남기고 조용히 넘어갑니다.
+
+- `brew list --cask binary-media-art-beta`가 성공하면 `지금 업데이트`를 보여 줍니다. 누르면 앱이 닫히고 분리된 스크립트가 앱이 끝나기를 기다린 뒤 `brew update; brew upgrade --cask binary-media-art-beta`를 실행하고(최대 300초) 앱을 다시 엽니다. 스크립트의 출력은 앱 로그 폴더(`~/Library/Logs/media-art-for-windows/mac-beta-update.log`)에 남습니다.
+- Homebrew로 설치하지 않았다면 `페이지 열기`가 릴리스 페이지를 엽니다.
+- 정식 빌드, 개발 실행, Windows는 이 확인을 하지 않습니다. 업데이트 주소는 `src/main/updater.js`의 `UPDATE_REPOSITORY`이고, 베타 워크플로가 베타 저장소로 바꿉니다.
+
+**2.0.0-beta.1을 쓰는 Mac은 한 번 직접 올려야 합니다.** beta.1에는 업데이트 확인이 없고 캐스크가 입힌 ad-hoc 서명이 있습니다. 다음 베타가 나오면 `brew upgrade --cask binary-media-art-beta`를 직접 한 번 실행하고, 그때 macOS가 카메라 허용을 한 번 더 묻습니다. 그 뒤로는 허용이 유지되고 앱이 다음 베타부터 알려 줍니다.
+
+이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`에 릴리스를 만들 수 있어야 합니다. 탭을 같이 갱신하려면 `homebrew-tap`에도 푸시할 수 있어야 합니다. 탭이 없을 때(404)만 캐스크를 건너뛰고, 탭이 있는데 권한이 없거나 확인이 실패하면 빌드 전에 멈춥니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못하고, Mac 베타의 `releases/latest` 확인도 그 Release를 찾지 못합니다.
 
 ## 변경 기록 쓰기
 
