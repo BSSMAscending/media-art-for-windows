@@ -103,6 +103,12 @@ jobs:
       - name: Check out bump commit
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
       - name: Verify release target
         shell: pwsh
         run: |
@@ -119,24 +125,16 @@ jobs:
           }
           $global:LASTEXITCODE = 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+          # update.electronjs.org offers the newest X.Y.Z here to every installed exhibit.
+          # A beta version, or any other repository, stops the job before it builds.
+          node scripts/release-target.js stable $env:RELEASE_REPOSITORY ($env:RELEASE_TAG -replace '^v','')
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: Install dependencies
         run: npm install
 
       - name: Build unsigned installer
         run: npm run make -- --platform=win32 --arch=x64
-
-      - name: Refuse a beta upload to the exhibit repository
-        shell: pwsh
-        run: |
-          # update.electronjs.org offers the newest X.Y.Z here to every installed exhibit.
-          # A beta version, or any other repository, stops the job before gh runs.
-          node scripts/release-target.js stable $env:RELEASE_REPOSITORY ($env:RELEASE_TAG -replace '^v','')
 
       - name: Publish public release assets
         shell: pwsh

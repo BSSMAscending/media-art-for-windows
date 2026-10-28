@@ -64,6 +64,16 @@
     applyThemeLabel();
   });
 
+  // The sticky header grows a second row below 740px. Its height goes to the CSS
+  // (--header-h) so links to a section land below it.
+  function setupHeaderHeight() {
+    const header = document.querySelector('.site-header');
+    if (!header) return;
+    const measure = () => root.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    new ResizeObserver(measure).observe(header);
+    measure();
+  }
+
   // Patch notes: the version list stays in view and marks the version being read.
   // The sticky header and bar heights go to the CSS so anchors land below them.
   function setupNotesToc() {
@@ -158,5 +168,6 @@
 
   applyLanguage(root.dataset.lang || 'ko');
   applyThemeLabel();
+  setupHeaderHeight();
   setupNotesToc();
 })();

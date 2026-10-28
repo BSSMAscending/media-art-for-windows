@@ -500,6 +500,9 @@ h1 em {
 .section {
   padding: clamp(56px, 8vw, 96px) 0;
   border-top: 1px solid var(--border);
+  /* Menu and button links to a section land it just below the sticky header.
+     site/app.js measures the header (--header-h): it is taller once the menu wraps. */
+  scroll-margin-top: var(--header-h, 65px);
 }
 
 .section-head {
@@ -1270,7 +1273,8 @@ h3 {
 
   .steps,
   .panels,
-  .install {
+  .install,
+  .install.channels {
     grid-template-columns: minmax(0, 1fr);
   }
 

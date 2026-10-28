@@ -3,10 +3,13 @@ name: Publish beta
 # Manual only. Builds a Windows beta and a Mac beta (Apple Silicon and Intel)
 # and publishes both to BSSMAscending/media-art-beta. The Homebrew tap is
 # updated when that repository exists; a missing tap does not block the files.
-# It does not run on pushes
-# to main, does not change package.json on main, and cannot upload to the
-# exhibit repository media-art-for-windows-releases. Exhibit PCs keep updating
-# from that repository alone.
+# It does not run on pushes to main, does not change package.json on main, and
+# cannot upload to the exhibit repository media-art-for-windows-releases.
+# Exhibit PCs keep updating from that repository alone.
+#
+# The release is created as a draft, the cask and the source tag follow, and the
+# draft goes public last. A run that fails before that leaves nothing public and
+# can be run again with the same version.
 on:
   workflow_dispatch:
     inputs:
@@ -18,6 +21,11 @@ on:
 permissions:
   contents: read
 
+# The version is typed by whoever runs the workflow. It reaches every script as
+# an environment variable and is never pasted into script text.
+env:
+  BETA_VERSION: ${{ inputs.version }}
+
 concurrency:
   group: publish-beta
   cancel-in-progress: false
@@ -28,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+    outputs:
+      tap: ${{ steps.tap.outputs.state }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -35,36 +45,60 @@ jobs:
           fetch-depth: 0
 
       - name: Accept only a beta version aimed away from the exhibit
-        run: node scripts/release-target.js beta "${{ inputs.version }}"
+        id: target
+        run: |
+          set -euo pipefail
+          node scripts/release-target.js beta "$BETA_VERSION" | tee -a "$GITHUB_OUTPUT"
 
-      - name: Require the beta repository
+      # update.electronjs.org and the site's download buttons only see a public repository.
+      - name: Require a public beta repository
         env:
-          BETA_VERSION: ${{ inputs.version }}
+          BETA_REPOSITORY: ${{ steps.target.outputs.repository }}
         run: |
           set -euo pipefail
           if [[ -z "${GH_TOKEN}" ]]; then
             echo "::error::RELEASES_REPOSITORY_TOKEN is not configured."
             exit 1
           fi
-          node <<'NODE'
-          const { execFileSync } = require('node:child_process');
-          const { betaRepository, homebrewTap } = require('./scripts/channels');
-          const { assertBetaVersion } = require('./scripts/release-target');
-          const tag = assertBetaVersion(process.env.BETA_VERSION);
-          execFileSync('gh', ['repo', 'view', betaRepository, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
-          try {
-            execFileSync('gh', ['repo', 'view', homebrewTap, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
-          } catch (error) {
-            if (error.status === undefined) throw error;
-            console.warn(`Homebrew tap ${homebrewTap} is absent. The Mac and Windows files still publish.`);
-          }
-          try {
-            execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
-            throw new Error(`${tag} is already published. Pick the next beta number.`);
-          } catch (error) {
-            if (error.status !== 1) throw error;
-          }
-          NODE
+          visibility=$(gh repo view "$BETA_REPOSITORY" --json visibility --jq .visibility)
+          if [[ "$visibility" != "PUBLIC" ]]; then
+            echo "::error::$BETA_REPOSITORY is $visibility. Make it public so Windows betas can update and testers can download."
+            exit 1
+          fi
+
+      # A missing tap is fine. Any other failure (no access, a server error) is not,
+      # so it cannot pass for "absent" and skip the cask silently.
+      - name: Check the Homebrew tap
+        id: tap
+        env:
+          TAP: ${{ steps.target.outputs.tap }}
+        run: |
+          set -euo pipefail
+          if ! can_push=$(gh api "repos/$TAP" --jq .permissions.push 2>&1); then
+            if [[ "$can_push" == *"HTTP 404"* ]]; then
+              echo "::warning::Homebrew tap $TAP does not exist. The Mac and Windows files still publish."
+              echo "state=absent" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Could not read Homebrew tap $TAP: $can_push"
+            exit 1
+          fi
+          if [[ "$can_push" != "true" ]]; then
+            echo "::error::RELEASES_REPOSITORY_TOKEN cannot push to $TAP. Fix its access before publishing."
+            exit 1
+          fi
+          echo "state=present" >> "$GITHUB_OUTPUT"
+
+      # Squirrel only offers an update that sorts higher, so the new beta has to be
+      # numbered above every published one (source tags and the beta repository's
+      # releases), not just differ from them. Unpublished drafts do not count.
+      - name: Require a beta numbered above the published ones
+        env:
+          BETA_REPOSITORY: ${{ steps.target.outputs.repository }}
+        run: |
+          set -euo pipefail
+          releases=$(gh release list --repo "$BETA_REPOSITORY" --limit 1000 --json tagName,isDraft --jq '.[] | select(.isDraft | not) | .tagName')
+          { git tag -l 'v*'; printf '%s\n' "$releases"; } | node scripts/release-target.js beta-newer "$BETA_VERSION"
 
   windows:
     name: windows
@@ -85,23 +119,44 @@ jobs:
 
       - name: Set the beta version without committing it
         shell: pwsh
-        run: npm version "${{ inputs.version }}" --no-git-tag-version
+        run: |
+          npm version "$env:BETA_VERSION" --no-git-tag-version
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
+      # A failing native command does not stop a pwsh step, so each one is checked.
       - name: Point this build at the beta feed
         shell: pwsh
         run: |
-          node scripts/release-target.js beta "${{ inputs.version }}"
+          node scripts/release-target.js beta "$env:BETA_VERSION"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $betaRepo = (node -p "require('./scripts/channels').betaRepository").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           node scripts/set-update-repository.js $betaRepo
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $feed = (node -p "require('./src/main/updater').UPDATE_REPOSITORY").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $beta = (node -p "require('./scripts/channels').betaRepository").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $stable = (node -p "require('./scripts/channels').stableRepository").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if ($feed -ne $beta -or $feed -eq $stable) {
             throw "Beta build feed is '$feed', not the beta repository."
           }
 
       - name: Build the Windows beta
         run: npm run make -- --platform=win32 --arch=x64
+
+      # Squirrel orders betas by the text after the dash, so the nupkg must carry the
+      # zero-padded number (2.0.0-beta010). Stop here if forge did not apply it.
+      - name: Check the Squirrel version of the Windows beta
+        shell: pwsh
+        run: |
+          $nuget = (node -p "require('./scripts/channels').squirrelVersion(process.env.BETA_VERSION)").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $releases = Get-Content out/make/squirrel.windows/x64/RELEASES -Raw
+          if ($releases -notmatch "-$([regex]::Escape($nuget))-full\.nupkg") {
+            throw "RELEASES does not list Squirrel version $nuget, so betas would not sort by number:`n$releases"
+          }
 
       - name: Upload the Windows beta
         uses: actions/upload-artifact@v4
@@ -128,12 +183,12 @@ jobs:
         run: npm ci
 
       - name: Set the beta version without committing it
-        run: npm version "${{ inputs.version }}" --no-git-tag-version
+        run: npm version "$BETA_VERSION" --no-git-tag-version
 
       - name: Point this build at the beta feed
         run: |
           set -euo pipefail
-          node scripts/release-target.js beta "${{ inputs.version }}"
+          node scripts/release-target.js beta "$BETA_VERSION"
           node scripts/set-update-repository.js "$(node -p "require('./scripts/channels').betaRepository")"
           node <<'NODE'
           const { UPDATE_REPOSITORY } = require('./src/main/updater');
@@ -146,7 +201,7 @@ jobs:
       - name: Build Apple Silicon and Intel betas
         run: |
           set -euo pipefail
-          version="${{ inputs.version }}"
+          version="$BETA_VERSION"
           mkdir -p "$RUNNER_TEMP/mac-beta"
           copy_zip() {
             local arch="$1"
@@ -173,14 +228,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      BETA_VERSION: ${{ inputs.version }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
+      # Prints the repository and tag this beta goes to, and stops unless the
+      # version is X.Y.Z-beta.N aimed at the beta repository, never the exhibit one.
       - name: Refuse the exhibit repository again
-        run: node scripts/release-target.js beta "$BETA_VERSION"
+        id: target
+        run: |
+          set -euo pipefail
+          node scripts/release-target.js beta "$BETA_VERSION" | tee -a "$GITHUB_OUTPUT"
 
       - name: Download the builds
         uses: actions/download-artifact@v4
@@ -189,36 +247,54 @@ jobs:
           merge-multiple: true
           path: dist
 
-      - name: Publish the beta release
-        env:
-          GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+      # Every file a tester needs must be here before a release exists. A glob that
+      # matches nothing is not an error in bash, so each one is checked by name.
+      - name: Check the build files
         run: |
           set -euo pipefail
-          version="$BETA_VERSION"
-          printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$version" > dist/notes.md
-          # betaPublishArgs throws unless the version is X.Y.Z-beta.N and the
-          # repository it returns is the beta repository, never the exhibit one.
-          repo=$(node -e "const {betaPublishArgs}=require('./scripts/release-target'); process.stdout.write(betaPublishArgs(process.env.BETA_VERSION, [])[1])")
-          tag=$(node -e "const {betaPublishArgs}=require('./scripts/release-target'); process.stdout.write(betaPublishArgs(process.env.BETA_VERSION, [])[2])")
-          if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
-            gh release create "$tag" --repo "$repo" --title "$tag beta" --notes-file dist/notes.md
-          fi
-          shopt -s nullglob
-          files=(dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES)
-          test "${#files[@]}" -gt 0
-          gh release upload "$tag" "${files[@]}" --repo "$repo" --clobber
+          nuget=$(node -p "require('./scripts/channels').squirrelVersion(process.env.BETA_VERSION)")
+          missing=0
+          need() {
+            if ! compgen -G "$1" > /dev/null; then
+              echo "::error::Missing build file: $1"
+              missing=1
+            fi
+          }
+          need "dist/RELEASES"
+          need "dist/*Setup.exe"
+          need "dist/*-${nuget}-full.nupkg"
+          need "dist/media-art-for-windows-darwin-arm64-${BETA_VERSION}.zip"
+          need "dist/media-art-for-windows-darwin-x64-${BETA_VERSION}.zip"
+          test "$missing" -eq 0
+          grep -qF -- "-${nuget}-full.nupkg" dist/RELEASES
 
-      - name: Update the Homebrew tap
+      # The release stays a draft until the cask and the source tag are done, so the
+      # update feed never sees half-uploaded files, and a failed run can be started
+      # again from the top: the files, the cask hashes and the tag are all redone
+      # together (--clobber replaces the draft's files).
+      - name: Upload the beta as a draft release
         env:
           GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+          repo: ${{ steps.target.outputs.repository }}
+          tag: ${{ steps.target.outputs.tag }}
+        run: |
+          set -euo pipefail
+          printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$BETA_VERSION" > dist/notes.md
+          drafts=$(gh release list --repo "$repo" --limit 1000 --json tagName,isDraft --jq '.[] | select(.isDraft) | .tagName')
+          if ! grep -qxF "$tag" <<< "$drafts"; then
+            gh release create "$tag" --repo "$repo" --draft --title "$tag beta" --notes-file dist/notes.md
+          fi
+          gh release upload "$tag" dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES --repo "$repo" --clobber
+
+      # The guard job found the tap and checked that the token can push to it.
+      - name: Update the Homebrew tap
+        if: needs.guard.outputs.tap == 'present'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+          tap: ${{ steps.target.outputs.tap }}
         run: |
           set -euo pipefail
           version="$BETA_VERSION"
-          tap=$(node -e "const {homebrewTap, stableRepository, betaRepository}=require('./scripts/channels'); if (homebrewTap===stableRepository || homebrewTap===betaRepository) process.exit(1); process.stdout.write(homebrewTap)")
-          if ! gh repo view "$tap" --json name >/dev/null 2>&1; then
-            echo "Homebrew tap $tap is absent. The Mac and Windows files are already published."
-            exit 0
-          fi
           arm=$(sha256sum "dist/media-art-for-windows-darwin-arm64-${version}.zip" | awk '{print $1}')
           intel=$(sha256sum "dist/media-art-for-windows-darwin-x64-${version}.zip" | awk '{print $1}')
           node scripts/beta-cask.js "$version" "$arm" "$intel" > dist/binary-media-art-beta.rb
@@ -233,8 +309,18 @@ jobs:
           git -C tap-repo push origin HEAD:main
 
       - name: Tag the source commit
+        env:
+          tag: ${{ steps.target.outputs.tag }}
         run: |
           set -euo pipefail
-          tag=$(node -e "const {assertBetaVersion}=require('./scripts/release-target'); process.stdout.write(assertBetaVersion(process.env.BETA_VERSION))")
           git tag "$tag" "$GITHUB_SHA"
           git push origin "refs/tags/$tag"
+
+      # Last, so a release only goes public once its files, the cask and the tag all
+      # agree. If this step fails, publish the draft by hand; nothing else is missing.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+          repo: ${{ steps.target.outputs.repository }}
+          tag: ${{ steps.target.outputs.tag }}
+        run: gh release edit "$tag" --repo "$repo" --draft=false --latest
