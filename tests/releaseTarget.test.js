@@ -1,8 +1,11 @@
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
 const { betaRepository, stableRepository } = require('../scripts/channels');
-const { assertBetaVersion, assertStableTarget, betaPublishArgs } = require('../scripts/release-target');
+const { assertBetaVersion, assertStableTarget, betaTarget } = require('../scripts/release-target');
 const { renderBetaCask } = require('../scripts/beta-cask');
 const { setUpdateRepository } = require('../scripts/set-update-repository');
 
+const script = path.join(__dirname, '..', 'scripts', 'release-target.js');
 const ARM = 'a'.repeat(64);
 const INTEL = 'b'.repeat(64);
 
@@ -20,22 +23,24 @@ describe('release targets stay split', () => {
     expect(assertBetaVersion('2.0.0-beta.1')).toBe('v2.0.0-beta.1');
     expect(assertBetaVersion('2.0.0-beta.10')).toBe('v2.0.0-beta.10');
     expect(assertBetaVersion('2.0.0-beta.12')).toBe('v2.0.0-beta.12');
-    expect(betaPublishArgs('2.0.0-beta.2', ['--title', 'beta'])).toEqual([
-      '--repo',
-      betaRepository,
-      'v2.0.0-beta.2',
-      '--title',
-      'beta',
-    ]);
-    expect(betaPublishArgs('2.0.0-beta.2', [])).not.toContain('--prerelease');
-    expect(betaPublishArgs('2.0.0-beta.2', []).join(' ')).not.toContain(stableRepository);
+    expect(betaTarget('2.0.0-beta.2')).toEqual({ repository: betaRepository, tag: 'v2.0.0-beta.2' });
+    expect(JSON.stringify(betaTarget('2.0.0-beta.2'))).not.toContain(stableRepository);
+  });
+
+  it('prints the repository and tag for a workflow to read', () => {
+    const output = execFileSync(process.execPath, [script, 'beta', '2.0.0-beta.2'], { encoding: 'utf8' });
+    expect(output).toBe(`repository=${betaRepository}\ntag=v2.0.0-beta.2\n`);
+    expect(() => execFileSync(process.execPath, [script, 'beta', '2.0.0'], { stdio: 'pipe' })).toThrow();
+    expect(() =>
+      execFileSync(process.execPath, [script, 'stable', stableRepository, '2.0.0-beta.2'], { stdio: 'pipe' })
+    ).toThrow();
   });
 
   it('refuses a stable number or a beta from another line', () => {
     expect(() => assertBetaVersion('2.0.0')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => assertBetaVersion('1.1.0-beta.1')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => assertBetaVersion('2.0.0-beta.01')).toThrow(/2\.0\.0-beta\.1/);
-    expect(() => betaPublishArgs('2.0.0', [])).toThrow(/beta/);
+    expect(() => betaTarget('2.0.0')).toThrow(/beta/);
   });
 });
 

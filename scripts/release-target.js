@@ -3,10 +3,16 @@
 // Usage:
 //   node scripts/release-target.js stable <owner/repo> <X.Y.Z>
 //   node scripts/release-target.js beta <X.Y.Z-beta.N>
-const { betaRepository, homebrewTap, stableRepository, upcomingRelease } = require('./channels');
-const { VERSION } = require('./beta-cask');
-
-const STABLE_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+$/;
+// `beta` prints key=value lines (the repository and tag to publish to), the
+// format a workflow appends to $GITHUB_OUTPUT.
+const {
+  BETA_VERSION,
+  STABLE_VERSION,
+  betaRepository,
+  homebrewTap,
+  stableRepository,
+  upcomingRelease,
+} = require('./channels');
 
 function assertRepositoriesStaySplit() {
   const names = [stableRepository, betaRepository, homebrewTap];
@@ -34,7 +40,7 @@ function assertStableTarget(repository, version) {
 
 function assertBetaVersion(version) {
   assertRepositoriesStaySplit();
-  if (!VERSION.test(version)) {
+  if (!BETA_VERSION.test(version)) {
     throw new Error(
       `Refusing to publish "${version}". A beta must look like ${upcomingRelease}-beta.1 and is never a stable X.Y.Z.`
     );
@@ -42,19 +48,21 @@ function assertBetaVersion(version) {
   return `v${version}`;
 }
 
-function betaPublishArgs(version, extra) {
-  const tag = assertBetaVersion(version);
-  return ['--repo', betaRepository, tag, ...extra];
+// Where a beta goes: only ever the beta repository, under the beta's own tag.
+function betaTarget(version) {
+  return { repository: betaRepository, tag: assertBetaVersion(version) };
 }
 
 if (require.main === module) {
   const [channel, first, second] = process.argv.slice(2);
   if (channel === 'stable') assertStableTarget(first, second);
-  else if (channel === 'beta') assertBetaVersion(first);
-  else {
+  else if (channel === 'beta') {
+    const { repository, tag } = betaTarget(first);
+    process.stdout.write(`repository=${repository}\ntag=${tag}\n`);
+  } else {
     console.error('Usage: node scripts/release-target.js <stable|beta> ...');
     process.exit(1);
   }
 }
 
-module.exports = { assertStableTarget, assertBetaVersion, betaPublishArgs };
+module.exports = { assertStableTarget, assertBetaVersion, betaTarget };

@@ -179,8 +179,13 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      # Prints the repository and tag this beta goes to, and stops unless the
+      # version is X.Y.Z-beta.N aimed at the beta repository, never the exhibit one.
       - name: Refuse the exhibit repository again
-        run: node scripts/release-target.js beta "$BETA_VERSION"
+        id: target
+        run: |
+          set -euo pipefail
+          node scripts/release-target.js beta "$BETA_VERSION" | tee -a "$GITHUB_OUTPUT"
 
       - name: Download the builds
         uses: actions/download-artifact@v4
@@ -192,14 +197,11 @@ jobs:
       - name: Publish the beta release
         env:
           GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+          repo: ${{ steps.target.outputs.repository }}
+          tag: ${{ steps.target.outputs.tag }}
         run: |
           set -euo pipefail
-          version="$BETA_VERSION"
-          printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$version" > dist/notes.md
-          # betaPublishArgs throws unless the version is X.Y.Z-beta.N and the
-          # repository it returns is the beta repository, never the exhibit one.
-          repo=$(node -e "const {betaPublishArgs}=require('./scripts/release-target'); process.stdout.write(betaPublishArgs(process.env.BETA_VERSION, [])[1])")
-          tag=$(node -e "const {betaPublishArgs}=require('./scripts/release-target'); process.stdout.write(betaPublishArgs(process.env.BETA_VERSION, [])[2])")
+          printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$BETA_VERSION" > dist/notes.md
           if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$repo" --title "$tag beta" --notes-file dist/notes.md
           fi
@@ -233,8 +235,9 @@ jobs:
           git -C tap-repo push origin HEAD:main
 
       - name: Tag the source commit
+        env:
+          tag: ${{ steps.target.outputs.tag }}
         run: |
           set -euo pipefail
-          tag=$(node -e "const {assertBetaVersion}=require('./scripts/release-target'); process.stdout.write(assertBetaVersion(process.env.BETA_VERSION))")
           git tag "$tag" "$GITHUB_SHA"
           git push origin "refs/tags/$tag"

@@ -3,22 +3,12 @@
 // Gatekeeper quarantine and ad-hoc signs the app on the installing Mac.
 // Official homebrew/cask rejects an unsigned app, so this stays on our tap.
 // Usage: node scripts/beta-cask.js <version> <arm64-sha256> <x64-sha256>
-const { betaRepository, caskName, appBundle, upcomingRelease } = require('./channels');
+const { betaRepository, caskName, appBundle, upcomingRelease, BETA_VERSION } = require('./channels');
 
-const STABLE = /^[0-9]+\.[0-9]+\.[0-9]+$/;
-
-// N is any integer ≥ 1 with no leading zero. Nothing caps it at 10.
-// beta.10 still sorts after beta.2.
-function betaVersionPattern(release) {
-  if (!STABLE.test(release)) throw new Error(`The next stable version must look like 2.0.0: ${release}`);
-  return new RegExp(`^${release.replaceAll('.', '\\.')}-beta\\.([1-9]\\d*)$`);
-}
-
-const VERSION = betaVersionPattern(upcomingRelease);
 const SHA256 = /^[a-f0-9]{64}$/;
 
 function renderBetaCask({ version, armSha256, intelSha256 }) {
-  if (!VERSION.test(version)) {
+  if (!BETA_VERSION.test(version)) {
     throw new Error(`Beta version must look like ${upcomingRelease}-beta.1: ${version}`);
   }
   for (const sha of [armSha256, intelSha256]) {
@@ -65,4 +55,4 @@ if (require.main === module) {
   process.stdout.write(renderBetaCask({ version, armSha256, intelSha256 }));
 }
 
-module.exports = { renderBetaCask, VERSION };
+module.exports = { renderBetaCask };
