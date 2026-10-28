@@ -141,7 +141,7 @@ function renderPatchNotes(entries, english = []) {
   <header class="release-head">
     <span class="release-version">${label}</span>
     <h2 class="release-title">${titleOf(entry)}</h2>
-    ${when}${exhibitNote(entry)}
+    <span class="release-meta">${when}${exhibitNote(entry)}</span>
   </header>
   <div class="release-body" data-l="ko">
 ${renderMarkdown(entry.body)}

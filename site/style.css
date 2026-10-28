@@ -880,9 +880,18 @@ h3 {
 
 .release-head time,
 .release-note {
-  margin-left: auto;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+/* The date and the note after it (a beta, or a change not on the exhibit PCs)
+   sit together at the right edge. */
+.release-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-left: auto;
 }
 
 .release-body h3 {
@@ -1265,8 +1274,7 @@ h3 {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .release-head time,
-  .release-note {
+  .release-meta {
     margin-left: 0;
     width: 100%;
   }

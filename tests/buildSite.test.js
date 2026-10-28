@@ -90,6 +90,10 @@ describe('patch notes', () => {
     expect(index).toContain('href="#v2.0.0-beta.12" class="is-pending is-beta"');
     expect(notes).toContain('<article class="release is-pending is-beta" id="v2.0.0-beta.12">');
     expect(notes).toContain('전시 PC에는 나가지 않습니다');
+    // The date and the note share one group, so they sit together at the right.
+    expect(notes).toMatch(
+      /<span class="release-meta"><time datetime="2026-11-20">[^<]+<\/time><span class="release-note">/
+    );
     expect(notes).toContain('<span data-l="en">Twelfth</span>');
     const at = (id) => notes.indexOf(`id="${id}"`);
     expect(at('v2.0.0')).toBeLessThan(at('v2.0.0-beta.12'));
