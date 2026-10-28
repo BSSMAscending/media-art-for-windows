@@ -244,6 +244,27 @@ jobs:
           merge-multiple: true
           path: dist
 
+      # Every file a tester needs must be here before a release exists. A glob that
+      # matches nothing is not an error in bash, so each one is checked by name.
+      - name: Check the build files
+        run: |
+          set -euo pipefail
+          nuget=$(node -p "require('./scripts/channels').squirrelVersion(process.env.BETA_VERSION)")
+          missing=0
+          need() {
+            if ! compgen -G "$1" > /dev/null; then
+              echo "::error::Missing build file: $1"
+              missing=1
+            fi
+          }
+          need "dist/RELEASES"
+          need "dist/*Setup.exe"
+          need "dist/*-${nuget}-full.nupkg"
+          need "dist/media-art-for-windows-darwin-arm64-${BETA_VERSION}.zip"
+          need "dist/media-art-for-windows-darwin-x64-${BETA_VERSION}.zip"
+          test "$missing" -eq 0
+          grep -qF -- "-${nuget}-full.nupkg" dist/RELEASES
+
       - name: Publish the beta release
         env:
           GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
@@ -255,10 +276,7 @@ jobs:
           if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$repo" --title "$tag beta" --notes-file dist/notes.md
           fi
-          shopt -s nullglob
-          files=(dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES)
-          test "${#files[@]}" -gt 0
-          gh release upload "$tag" "${files[@]}" --repo "$repo" --clobber
+          gh release upload "$tag" dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES --repo "$repo" --clobber
 
       # The guard job found the tap and checked that the token can push to it.
       - name: Update the Homebrew tap
