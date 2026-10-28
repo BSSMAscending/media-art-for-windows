@@ -1,4 +1,9 @@
-const { getArtworkArea, getFullFrameGrid } = require('../src/renderer/core/renderGeometry');
+const {
+  getArtworkArea,
+  getFullFrameGrid,
+  getGridSpot,
+  getSpotCell,
+} = require('../src/renderer/core/renderGeometry');
 
 describe('getArtworkArea', () => {
   it('uses the space left of a right-hand side column with its outer margin', () => {
@@ -31,5 +36,27 @@ describe('getFullFrameGrid', () => {
 
   it('returns null before the camera reports a frame size', () => {
     expect(getFullFrameGrid(area, 0, 0, 16)).toBeNull();
+  });
+});
+
+describe('picked cell', () => {
+  const grid = { x: 40, y: 20, cols: 10, rows: 5, cellSize: 24 };
+
+  it('keeps a pressed point as a spot on the picture and finds its cell', () => {
+    const spot = getGridSpot(grid, { x: 40 + 24 * 3 + 5, y: 20 + 24 * 4 + 23 });
+    expect(getSpotCell(grid, spot)).toEqual({ x: 3, y: 4 });
+  });
+
+  it('stays on the picture at its edges', () => {
+    expect(getGridSpot(grid, { x: 0, y: 999 })).toEqual({ u: 0, v: 1 });
+    expect(getSpotCell(grid, { u: 1, v: 1 })).toEqual({ x: 9, y: 4 });
+  });
+
+  it('lands on the same part of the picture after the cell size changes', () => {
+    const spot = getGridSpot(grid, { x: 40 + 120, y: 20 + 60 });
+    expect(getSpotCell({ ...grid, cols: 20, rows: 10, cellSize: 12 }, spot)).toEqual({
+      x: 10,
+      y: 5,
+    });
   });
 });

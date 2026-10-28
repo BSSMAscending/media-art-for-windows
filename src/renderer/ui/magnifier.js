@@ -54,7 +54,8 @@ function mapLayer(region, rect, backing, zoom, ratio) {
   };
 }
 
-function createMagnifier({ area, getLayers, getArtworkRect }) {
+// `onPoint` hears every point the lens shows, so the cards can calculate that cell.
+function createMagnifier({ area, getLayers, getArtworkRect, onPoint }) {
   const lens = document.createElement('div');
   lens.className = 'magnifier-lens';
   lens.hidden = true;
@@ -96,6 +97,7 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
     point.x = Math.max(rect.left, Math.min(rect.right, event.clientX));
     point.y = Math.max(rect.top, Math.min(rect.bottom, event.clientY));
     place();
+    onPoint?.(point);
   }
 
   function show(event) {

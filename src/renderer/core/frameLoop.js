@@ -174,6 +174,8 @@ function createFrameLoop({
     try {
       if (!fullFrame) channelOverlay?.hide();
       frame.mode = mode;
+      // RGB layers fanning out are not on the flat grid until they settle.
+      frame.moving = Boolean(layers?.active);
       const stats = fullFrame ? drawFullFrame(mode, grid, layers) : drawSilhouetteFrame(mode, grid);
       // Read the canvases now, before the browser presents and clears the WebGL frame.
       onDrawn?.(frame);

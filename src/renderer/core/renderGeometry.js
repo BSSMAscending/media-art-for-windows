@@ -56,4 +56,31 @@ function getProjectionBounds(layers, bounds) {
   bounds[1] = fit;
 }
 
-module.exports = { getArtworkArea, getFullFrameGrid, getProjectionBounds };
+/**
+ * Where a screen point falls on the drawn grid, as fractions 0-1 of its width and
+ * height. A spot kept this way stays on the same part of the picture when the cell
+ * size (and so the grid) changes.
+ */
+function getGridSpot(grid, point) {
+  const fraction = (value, start, size) => Math.max(0, Math.min(1, (value - start) / size));
+  return {
+    u: fraction(point.x, grid.x, grid.cols * grid.cellSize),
+    v: fraction(point.y, grid.y, grid.rows * grid.cellSize),
+  };
+}
+
+/** The cell (column x, row y) under a spot from getGridSpot. */
+function getSpotCell(grid, spot) {
+  return {
+    x: Math.min(grid.cols - 1, Math.floor(spot.u * grid.cols)),
+    y: Math.min(grid.rows - 1, Math.floor(spot.v * grid.rows)),
+  };
+}
+
+module.exports = {
+  getArtworkArea,
+  getFullFrameGrid,
+  getProjectionBounds,
+  getGridSpot,
+  getSpotCell,
+};

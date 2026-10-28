@@ -4,6 +4,7 @@ const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
 const { createMathPanel } = require('./ui/mathPanel');
 const { createCellCard } = require('./ui/cellCard');
+const { createCellPicker } = require('./ui/cellPicker');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const { createMagnifier } = require('./ui/magnifier');
@@ -73,8 +74,8 @@ const STATIC_TEXT = [
   {
     selector: '.magnifier-hint',
     text: {
-      ko: '화면을 꾹 누르고 있으면 돋보기로 크게 보여요',
-      en: 'Press and hold the picture to magnify it',
+      ko: '화면을 꾹 누르면 크게 보이고 그 칸을 계산해요',
+      en: 'Press and hold to zoom in and work out that cell',
     },
   },
   { selector: '#restartUpdateButton', text: { ko: '지금 재시작', en: 'Restart now' } },
@@ -99,7 +100,7 @@ const STATIC_TEXT = [
   {
     selector: '#detailCard',
     attr: 'aria-label',
-    text: { ko: '원리 더 알아보기', en: 'How it works' },
+    text: { ko: '표시한 칸의 계산', en: "The marked cell's math" },
   },
 ];
 
@@ -302,6 +303,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const mathPanel = createMathPanel(document.getElementById('panelCards'));
   const cellCard = createCellCard(document.getElementById('detailCard'));
+  const cellPicker = createCellPicker({
+    marker: document.getElementById('cellMarker'),
+    getViewKey: () => `${getModeOption()}:${getLeverValue()}`,
+    onReading: (reading, frame) => cellCard.update(reading, frame),
+  });
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
 
@@ -340,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     getLayers: () =>
       [document.querySelector('#visualStage .channel-overlay'), canvasEl].filter(Boolean),
     getArtworkRect: () => magnifierArea.getBoundingClientRect(),
+    onPoint: (point) => cellPicker.pick(point),
   });
   layoutMagnifierArea(canvasEl);
 
@@ -367,14 +374,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     state.model = await loadModel();
-    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, cellCard);
+    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, (frame) => {
+      state.magnifier?.render();
+      cellPicker.update(frame);
+    });
   } catch (err) {
     console.error('Failed to load model:', err);
     showError(ERRORS.modelFailed, String(err.message || err));
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, cellCard) {
+// `onDrawn` runs right after each frame is drawn, with the frame loop's `frame`.
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, onDrawn) {
   if (!state.model) {
     showError(ERRORS.modelLoading);
     return;
@@ -414,8 +425,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, cellCar
       getMathSettings: () => getMathSettings(state),
       getArtworkArea: () => getStageArtworkArea(canvasEl),
       getCellSize: () => state.cellSize,
-      onStats: (stats) => cellCard.updateGrid(stats.cols, stats.rows),
-      onDrawn: () => state.magnifier?.render(),
+      onDrawn,
       // 손하트 감지 및 안내 패널 호출은 현재 비활성화했습니다.
       // onGesture: () => heartOverlay.show(),
     });

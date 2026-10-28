@@ -9,7 +9,7 @@ const {
   MATH_EXAMPLE,
   formatMathOperator,
 } = require('../src/renderer/ui/explainAnimations');
-const { formatGridMetric } = require('../src/renderer/ui/cellCard');
+const { formatGridMetric, getCellColor } = require('../src/renderer/ui/cellCard');
 
 const VIEWS = [
   ['original', undefined],
@@ -93,6 +93,14 @@ describe('explanation helpers', () => {
     expect(formatMathOperator('blur', 2)).toBe('5×5 무게 평균');
     expect(formatMathOperator('sharpen', 1.5)).toBe('차이 × 1.5');
     expect(MATH_EXAMPLE).toHaveLength(9);
+  });
+
+  it('paints the card swatch the colour the marked cell has on screen', () => {
+    const cell = { kind: 'rgb', r: 230, g: 124, b: 17 };
+    expect(getCellColor({ ...cell, channel: 'N' })).toBe('rgb(230, 124, 17)');
+    expect(getCellColor({ ...cell, channel: 'G' })).toBe('rgb(0, 124, 0)');
+    expect(getCellColor({ kind: 'levels', levels: 10, level: 5 })).toBe('rgb(142, 142, 142)');
+    expect(getCellColor({ kind: 'math', result: 236 })).toBe('rgb(236, 236, 236)');
   });
 
   it('reports the live grid as a cell count', () => {
