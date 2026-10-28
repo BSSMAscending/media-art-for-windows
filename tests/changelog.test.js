@@ -104,10 +104,17 @@ describe('beta notes share the changelog', () => {
     ]);
   });
 
+  it('takes beta numbers up to 999, the same range a publish accepts', () => {
+    expect(
+      parseChangelog('## [2.0.0-beta.999]\n- 마지막 번호\n').map((entry) => entry.version)
+    ).toEqual(['2.0.0-beta.999']);
+  });
+
   it('rejects a heading that looks like a version but is not a valid one', () => {
     for (const heading of [
       '## [2.0.0-beta.01]',
       '## [2.0.0-beta.0]',
+      '## [2.0.0-beta.1000]',
       '## [2.0.0-beta1]',
       '## [2.0.0-Beta.1]',
       '## [2.0.0-beta.1]2026-10-29',
