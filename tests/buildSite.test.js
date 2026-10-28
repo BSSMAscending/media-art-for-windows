@@ -90,7 +90,24 @@ describe('patch notes', () => {
       for (const [, src] of html.matchAll(/src="((?:images|assets)\/[^"]+)"/g)) {
         expect(fs.existsSync(path.join(out, src))).toBe(true);
       }
+      expect(html).toContain('<link rel="icon" href="favicon.ico" sizes="32x32" />');
+      expect(html).toContain('<link rel="icon" href="favicon.svg" type="image/svg+xml" />');
     }
+    const icon = fs.readFileSync(path.join(out, 'favicon.svg'), 'utf8');
+    expect(icon).toContain('viewBox="0 0 22 22"');
+    expect(icon).toContain('#00e5e5');
+    expect(icon).toContain('#007c87');
+    const rects = [...icon.matchAll(/<rect\b([^>]*)\/?>/g)].map((match) => match[1]);
+    expect(rects).toHaveLength(9);
+    expect(rects.filter((attrs) => attrs.includes('class="dim"'))).toHaveLength(4);
+    const ico = fs.readFileSync(path.join(out, 'favicon.ico'));
+    expect(ico.readUInt16LE(2)).toBe(1);
+    expect(ico.readUInt8(6)).toBe(32);
+    expect(ico.readUInt8(7)).toBe(32);
+    const imageOffset = ico.readUInt32LE(18);
+    expect(ico.subarray(imageOffset, imageOffset + 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(ico.readUInt32BE(imageOffset + 16)).toBe(32);
+    expect(ico.readUInt32BE(imageOffset + 20)).toBe(32);
     expect(fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8')).toContain('id="v0.1.0"');
     // The 3D opening loads its pictures by path; they must ship with the site.
     const hero = fs.readFileSync(path.join(out, 'hero.js'), 'utf8');
