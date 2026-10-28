@@ -43,10 +43,14 @@ function parseEntries(changelog, accept) {
   return entries.map(({ lines, ...entry }) => ({ ...entry, body: lines.join('\n').trim() }));
 }
 
-// "## [2.0.0-beta.12]". N is any integer, including a leading zero, so a bad
-// number can be rejected instead of disappearing from the page.
+// "## [2.0.0-beta.12]". N is 1 or more with no leading zero.
 const BETA_HEADING =
-  /^## \[(\d+\.\d+\.\d+)-beta\.(\d+)\](?: - (\d{4}-\d{2}-\d{2}))?(?: - (.+?))?\s*$/;
+  /^## \[(\d+\.\d+\.\d+)-beta\.([1-9]\d*)\](?: - (\d{4}-\d{2}-\d{2}))?(?: - (.+?))?\s*$/;
+
+// A heading that starts like a version but is neither a stable version nor a
+// valid beta ("-beta1", "-Beta.1", "-beta.01", "-rc.1", text glued after the "]").
+// It is a typo, so it is rejected instead of dropping its notes from the page.
+const VERSION_LIKE_HEADING = /^## \[\d+\.\d+\.\d+/;
 
 // The Unreleased section, every "## [X.Y.Z]" version, and every
 // "## [X.Y.Z-beta.N]". A beta stays in this file; readReleaseNotes still ignores
@@ -66,13 +70,16 @@ function parseChangelog(changelog) {
       };
     }
     const beta = BETA_HEADING.exec(line);
-    if (!beta) return null;
-    const number = beta[2];
-    if (!/^[1-9]\d*$/.test(number)) {
-      throw new Error(`A beta number starts at 1 and has no leading zero: ${line}`);
+    if (!beta) {
+      if (VERSION_LIKE_HEADING.test(line)) {
+        throw new Error(
+          `A changelog heading must look like "## [1.2.3]" or "## [2.0.0-beta.1]" (beta numbers start at 1, no leading zero): ${line}`
+        );
+      }
+      return null;
     }
     return {
-      version: `${beta[1]}-beta.${number}`,
+      version: `${beta[1]}-beta.${beta[2]}`,
       date: beta[3] ?? null,
       title: beta[4] ?? null,
       beta: true,

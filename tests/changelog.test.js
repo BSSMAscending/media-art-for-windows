@@ -87,7 +87,7 @@ describe('beta notes share the changelog', () => {
     expect(() => readReleaseNotes(mixed, '2.0.0-beta.1')).toThrow('no "## [2.0.0-beta.1]" entry');
   });
 
-  it('accepts any beta number, and rejects a leading zero', () => {
+  it('accepts any beta number', () => {
     const notes = `## [2.0.0-beta.12] - 2026-11-02 - 열두 번째
 - 더 감
 
@@ -102,7 +102,27 @@ describe('beta notes share the changelog', () => {
       '2.0.0',
       '2.0.0-beta.2',
     ]);
-    expect(() => parseChangelog('## [2.0.0-beta.01]\n- 앞자리\n')).toThrow(/leading zero/);
+  });
+
+  it('rejects a heading that looks like a version but is not a valid one', () => {
+    for (const heading of [
+      '## [2.0.0-beta.01]',
+      '## [2.0.0-beta.0]',
+      '## [2.0.0-beta1]',
+      '## [2.0.0-Beta.1]',
+      '## [2.0.0-beta.1]2026-10-29',
+      '## [2.0.0-rc.1]',
+      '## [2.0.0]2026-10-29',
+    ]) {
+      expect(() => parseChangelog(`${heading}\n- 사라질 뻔한 내용\n`), heading).toThrow(
+        /must look like "## \[1\.2\.3\]" or "## \[2\.0\.0-beta\.1\]"/
+      );
+    }
+  });
+
+  it('skips headings that are not versions', () => {
+    const notes = '## 참고\n- 버전 아님\n\n## [1.0.1]\n- 정식\n';
+    expect(parseChangelog(notes).map((entry) => entry.version)).toEqual(['1.0.1']);
   });
 
   it('keeps the betas of an earlier line once the next line starts', () => {
