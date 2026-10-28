@@ -1,6 +1,7 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 const { squirrelVersion } = require('./scripts/channels');
+const { signMacBetaApps } = require('./scripts/mac-beta-sign');
 const { version } = require('./package.json');
 
 // A beta's NuGet version is zero-padded (2.0.0-beta.10 becomes 2.0.0-beta010) so
@@ -24,6 +25,13 @@ module.exports = {
     ],
   },
   rebuildConfig: {},
+  hooks: {
+    // The Fuses plugin re-signs the app ad hoc while packaging, so the beta's stable
+    // certificate has to go on afterwards. Only the beta workflow sets the identity.
+    postPackage: async (_forgeConfig, { platform, outputPaths }) => {
+      signMacBetaApps({ platform, outputPaths });
+    },
+  },
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
