@@ -91,6 +91,7 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 - **본문**: 제목 줄 아래부터 다음 `## ` 제목 전까지가 그대로 Release 본문이 됩니다. 항목 안의 소제목은 `###`로 씁니다. `##`를 쓰면 거기서 항목이 끝납니다.
 - **소제목**: 자유롭게 정해도 되지만 `새 기능`, `바뀐 점`, `고친 점`으로 나누면 읽기 쉽습니다.
 - **이미 배포한 항목**: 고쳐도 이미 만들어진 Release 본문은 바뀌지 않습니다. 필요하면 Release 페이지에서 직접 고칩니다.
+- **영문 패치노트 (선택)**: [`CHANGELOG.en.md`](../CHANGELOG.en.md)에 같은 형식으로 영어 항목을 적으면 사이트를 영어로 볼 때 그 내용이 나옵니다. 영어 항목이 없는 버전은 한국어 내용이 그대로 보입니다. Release 본문과 배포 검사는 `CHANGELOG.md`만 씁니다.
 - **패치노트 페이지**: [소개 사이트의 패치노트](https://bssmascending.github.io/media-art-for-windows/patch-notes.html)는 이 파일로 만들어지고, `main`에 병합할 때마다 다시 올라갑니다. `## [Unreleased]`에 적은 내용은 "다음 버전 · 준비 중"으로 보입니다.
 
 `npm test`도 현재 `package.json` 버전의 항목이 있는지 확인합니다. 버전만 올리고 커밋하려 하면 pre-commit에서 바로 알려줍니다.
