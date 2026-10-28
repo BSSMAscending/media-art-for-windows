@@ -45,7 +45,8 @@ function squirrelVersion(version) {
 module.exports = {
   stableRepository: 'BSSMAscending/media-art-for-windows-releases',
   betaRepository: 'BSSMAscending/media-art-beta',
-  // `brew tap BSSMAscending/tap` clones this repository.
+  // `brew install --cask BSSMAscending/tap/binary-media-art-beta` taps (clones)
+  // this repository before installing.
   homebrewTap: 'BSSMAscending/homebrew-tap',
   caskName: 'binary-media-art-beta',
   appBundle: 'media-art-for-windows.app',
