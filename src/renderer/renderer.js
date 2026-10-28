@@ -5,6 +5,7 @@ const { createFrameLoop } = require('./core/frameLoop');
 const { createMathPanel } = require('./ui/mathPanel');
 const { createCellCard } = require('./ui/cellCard');
 const { createCellPicker } = require('./ui/cellPicker');
+const { createBlurTip } = require('./ui/blurTip');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const { createMagnifier, drawLensMarks } = require('./ui/magnifier');
@@ -217,6 +218,7 @@ function renderModeOptions(onSelect) {
 }
 
 let cellSizeLever = null;
+let blurTip = null;
 
 // The right lever slot follows the view; the cell size lever on the left never moves.
 function renderModeSlider(mathPanel) {
@@ -224,7 +226,10 @@ function renderModeSlider(mathPanel) {
   const spec = getModeSlider(state);
   slot.replaceChildren(
     spec
-      ? createSlider(spec, state, (value) => mathPanel.updateAmount(value))
+      ? createSlider(spec, state, (value) => {
+          mathPanel.updateAmount(value);
+          blurTip?.onBlurSize();
+        })
       : createSliderHint(t(MODE_SLIDER_HINTS[state.selectedVersion]) || '')
   );
 }
@@ -243,6 +248,7 @@ function updateModeUI(mathPanel) {
   cellSizeLever?.setFloor(floor.size, floor.note);
   renderModeSlider(mathPanel);
   mathPanel.updateMode(state.selectedVersion, getModeOption(), getLeverValue());
+  blurTip?.sync(state);
 }
 
 function setupUpdateNotice() {
@@ -323,6 +329,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       state.magnifier?.setCaption(reading ? t(formatCellMath(reading)) : '');
     },
   });
+  blurTip = createBlurTip({
+    container: document.getElementById('modeControls'),
+    levers: [document.getElementById('cellSizeSlider'), document.getElementById('modeSlider')],
+  });
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
 
@@ -334,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const renderControls = () => {
     renderModeButtons(document.getElementById('liveModeButtons'), onModeSelect);
-    cellSizeLever = createSlider(CELL_SIZE_SLIDER, state);
+    cellSizeLever = createSlider(CELL_SIZE_SLIDER, state, () => blurTip.sync(state));
     document.getElementById('cellSizeSlider').replaceChildren(cellSizeLever);
     updateModeUI(mathPanel);
     applyStaticText();
