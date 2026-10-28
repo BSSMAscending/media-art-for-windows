@@ -20,6 +20,7 @@
   --glow: rgba(0, 229, 229, 0.35);
   --title-glow: rgba(0, 229, 229, 0.55);
   --shot-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  --logo-plate: #e8eff1;
   --radius: 14px;
   --max: 1120px;
   --gutter: clamp(16px, 4vw, 40px);
@@ -49,6 +50,7 @@
   --glow: rgba(0, 124, 135, 0.25);
   --title-glow: rgba(0, 124, 135, 0.18);
   --shot-shadow: 0 24px 60px rgba(8, 38, 43, 0.18);
+  --logo-plate: #ffffff;
   color-scheme: light;
 }
 
@@ -73,6 +75,7 @@
     --glow: rgba(0, 124, 135, 0.25);
     --title-glow: rgba(0, 124, 135, 0.18);
     --shot-shadow: 0 24px 60px rgba(8, 38, 43, 0.18);
+    --logo-plate: #ffffff;
     color-scheme: light;
   }
 }
@@ -180,7 +183,7 @@ code {
 }
 
 .site-nav a {
-  padding: 6px 12px;
+  padding: 6px clamp(8px, 1vw, 12px);
   border-radius: 999px;
   color: var(--text-secondary);
   font-size: 15px;
@@ -856,7 +859,153 @@ h3 {
   margin-top: 4px;
 }
 
+/* Credits */
+.credits-group {
+  padding: 24px 0 clamp(48px, 7vw, 80px);
+}
+
+.credits-group + .credits-group {
+  padding-top: clamp(48px, 7vw, 80px);
+  border-top: 1px solid var(--border);
+}
+
+.credits-note {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.credits-note a {
+  white-space: nowrap;
+}
+
+.people,
+.partners {
+  display: grid;
+  gap: 16px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.people {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 24px 12px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.person:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.person-avatar {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 10px;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-strong);
+}
+
+.person-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.person-handle {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.partners {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.partner {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* Logos keep their own colors, so they sit on a light plate in both themes. */
+.partner-logo {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--logo-plate);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.partner p {
+  margin: 0;
+  padding: 0 6px;
+}
+
+.partner-role {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.partner-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.partner-org {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.credits-thanks {
+  margin: 28px 0 0;
+  color: var(--text-secondary);
+}
+
 @media (max-width: 860px) {
+  /* Logo and switches on the first row, the menu on its own row below. */
+  .site-header .wrap {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding-top: 8px;
+    padding-bottom: 4px;
+  }
+
+  .site-tools {
+    margin-left: auto;
+  }
+
+  .site-nav {
+    order: 3;
+    width: 100%;
+    margin-left: -12px;
+  }
+
   .steps,
   .panels,
   .install {
@@ -942,6 +1091,28 @@ h3 {
   .release {
     scroll-margin-top: calc(var(--header-h, 65px) + var(--toc-h, 50px) + 16px);
   }
+
+  .people {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Partners become rows: the logo plate beside the role and name. */
+  .partners {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .partner {
+    display: grid;
+    grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+    column-gap: 20px;
+    align-content: center;
+    padding: 14px;
+  }
+
+  .partner-logo {
+    grid-row: span 3;
+    margin: 0;
+  }
 }
 
 @media (max-width: 560px) {
@@ -949,26 +1120,13 @@ h3 {
     font-size: 16px;
   }
 
-  /* Logo and switches on the first row, the menu on its own row below. */
-  .site-header .wrap {
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    padding-top: 8px;
-    padding-bottom: 4px;
-  }
-
-  .site-tools {
-    margin-left: auto;
-  }
-
   .site-nav {
-    order: 3;
-    width: 100%;
-    margin-left: -7px;
+    gap: 0;
+    margin-left: -5px;
   }
 
   .site-nav a {
-    padding: 6px 7px;
+    padding: 6px 5px;
     font-size: 14px;
   }
 
@@ -1006,6 +1164,36 @@ h3 {
   .release-note {
     margin-left: 0;
     width: 100%;
+  }
+
+  .people {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .person {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: center;
+    padding: 12px 16px;
+    text-align: left;
+  }
+
+  .person-avatar {
+    grid-row: span 2;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+  }
+
+  .partner {
+    display: flex;
+  }
+
+  .partner-logo {
+    height: 100px;
+    margin-bottom: 14px;
   }
 }
 
