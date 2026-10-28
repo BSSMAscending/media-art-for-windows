@@ -3,7 +3,6 @@
 // Prints the release title and writes the entry body to notesFile.
 const fs = require('node:fs');
 const path = require('node:path');
-const { upcomingRelease } = require('./channels');
 
 const DEFAULT_TITLE = 'Busan Mathematical Culture Center – Media Art';
 
@@ -49,9 +48,11 @@ function parseEntries(changelog, accept) {
 const BETA_HEADING =
   /^## \[(\d+\.\d+\.\d+)-beta\.(\d+)\](?: - (\d{4}-\d{2}-\d{2}))?(?: - (.+?))?\s*$/;
 
-// The Unreleased section, every "## [X.Y.Z]" version, and betas of the next
-// stable line. A beta stays in this file; readReleaseNotes still ignores it.
-function parseChangelog(changelog, release = upcomingRelease) {
+// The Unreleased section, every "## [X.Y.Z]" version, and every
+// "## [X.Y.Z-beta.N]". A beta stays in this file; readReleaseNotes still ignores
+// it. Which beta line is current is up to whoever publishes a beta, so the notes
+// of an earlier line survive when the next one starts.
+function parseChangelog(changelog) {
   return parseEntries(changelog, (line) => {
     const match = VERSION_HEADING.exec(line);
     const unreleased = /^## \[Unreleased\]/i.test(line);
@@ -67,8 +68,8 @@ function parseChangelog(changelog, release = upcomingRelease) {
     const beta = BETA_HEADING.exec(line);
     if (!beta) return null;
     const number = beta[2];
-    if (beta[1] !== release || !/^[1-9]\d*$/.test(number)) {
-      throw new Error(`A beta in the changelog must look like ${release}-beta.1: ${line}`);
+    if (!/^[1-9]\d*$/.test(number)) {
+      throw new Error(`A beta number starts at 1 and has no leading zero: ${line}`);
     }
     return {
       version: `${beta[1]}-beta.${number}`,

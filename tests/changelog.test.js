@@ -87,7 +87,7 @@ describe('beta notes share the changelog', () => {
     expect(() => readReleaseNotes(mixed, '2.0.0-beta.1')).toThrow('no "## [2.0.0-beta.1]" entry');
   });
 
-  it('accepts any later beta number and rejects another line', () => {
+  it('accepts any beta number, and rejects a leading zero', () => {
     const notes = `## [2.0.0-beta.12] - 2026-11-02 - 열두 번째
 - 더 감
 
@@ -102,7 +102,30 @@ describe('beta notes share the changelog', () => {
       '2.0.0',
       '2.0.0-beta.2',
     ]);
-    expect(() => parseChangelog('## [1.1.0-beta.1]\n- 다른 줄\n')).toThrow(/2\.0\.0-beta\.1/);
-    expect(() => parseChangelog('## [2.0.0-beta.01]\n- 앞자리\n')).toThrow(/2\.0\.0-beta\.1/);
+    expect(() => parseChangelog('## [2.0.0-beta.01]\n- 앞자리\n')).toThrow(/leading zero/);
+  });
+
+  it('keeps the betas of an earlier line once the next line starts', () => {
+    const notes = `## [2.1.0-beta.1] - 2027-02-01
+- 다음 줄 시험
+
+## [2.0.0] - 2026-12-01
+- 정식
+
+## [2.0.0-beta.2] - 2026-11-02
+- 지난 줄 둘째
+
+## [2.0.0-beta.1] - 2026-10-29
+- 지난 줄 첫째
+`;
+    const entries = parseChangelog(notes);
+    expect(entries.map((entry) => entry.version)).toEqual([
+      '2.1.0-beta.1',
+      '2.0.0',
+      '2.0.0-beta.2',
+      '2.0.0-beta.1',
+    ]);
+    expect(entries.map((entry) => entry.beta)).toEqual([true, false, true, true]);
+    expect(entries[3].body).toBe('- 지난 줄 첫째');
   });
 });
