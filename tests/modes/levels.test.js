@@ -1,5 +1,4 @@
 const { getLevel, renderLevels } = require('../../src/renderer/modes/levels');
-const { getLuminance } = require('../../src/renderer/utils');
 
 function createRecordingContext() {
   return {
@@ -15,34 +14,33 @@ function grayPixels(values) {
 }
 
 describe('getLevel', () => {
-  it('numbers ten equal brightness steps 0 through 9 in order', () => {
-    for (let level = 0; level < 10; level++) {
-      expect(getLevel(level / 10, 10)).toBe(level);
-      expect(getLevel((level + 0.5) / 10, 10)).toBe(level);
-    }
-    expect(getLevel(1, 10)).toBe(9);
+  it('numbers ten equal brightness steps 0 through 9, each 25.5 wide, rounding down', () => {
+    expect(
+      [0, 25, 26, 127, 128, 152, 153, 229, 230, 254].map((grey) => getLevel(grey, 10))
+    ).toEqual([0, 0, 1, 4, 5, 5, 6, 8, 9, 9]);
+    expect(getLevel(255, 10)).toBe(9);
   });
 
   it('splits two levels at the middle of the brightness range', () => {
-    expect(getLevel(getLuminance(127, 127, 127), 2)).toBe(0);
-    expect(getLevel(getLuminance(128, 128, 128), 2)).toBe(1);
+    expect(getLevel(127, 2)).toBe(0);
+    expect(getLevel(128, 2)).toBe(1);
   });
 
   it('splits two levels at a chosen threshold, inclusive', () => {
-    expect(getLevel(99 / 255, 2, 100)).toBe(0);
-    expect(getLevel(100 / 255, 2, 100)).toBe(1);
-    expect(getLevel(200 / 255, 2, 220)).toBe(0);
-    expect(getLevel(1, 2, 255)).toBe(1);
+    expect(getLevel(99, 2, 100)).toBe(0);
+    expect(getLevel(100, 2, 100)).toBe(1);
+    expect(getLevel(200, 2, 220)).toBe(0);
+    expect(getLevel(255, 2, 255)).toBe(1);
     expect(getLevel(0, 2, 0)).toBe(1);
   });
 
   it('ignores the threshold for more than two levels', () => {
-    expect(getLevel(0.95, 10, 250)).toBe(9);
+    expect(getLevel(242, 10, 250)).toBe(9);
   });
 
   it('matches the 8-bit grey value exactly at 256 levels', () => {
     for (const value of [0, 1, 64, 127, 128, 200, 254, 255]) {
-      expect(getLevel(getLuminance(value, value, value), 256)).toBe(value);
+      expect(getLevel(value, 256)).toBe(value);
     }
   });
 });
@@ -57,13 +55,21 @@ describe('renderLevels', () => {
     renderLevels(ctx, grid, grayPixels(values), levels, output);
 
     const digits = ctx.draws.map(({ char }) => Number(char));
-    expect(digits).toEqual(values.map((value) => getLevel(value / 255, levels)));
+    expect(digits).toEqual(values.map((value) => getLevel(value, levels)));
     expect(digits[0]).toBe(0);
     expect(digits[3]).toBe(levels - 1);
     digits.forEach((level, cell) => {
       const gray = Math.round((level * 255) / (levels - 1));
       expect([...output.slice(cell * 4, cell * 4 + 4)]).toEqual([gray, gray, gray, 255]);
     });
+  });
+
+  it('steps the same whole-number brightness the other views show', () => {
+    // 0.299·153 + 0.587·153 + 0.114·152 = 152.9, shown as 153: step 6, not 5.
+    const ctx = createRecordingContext();
+    const pixels = Uint8ClampedArray.from([153, 153, 152, 255]);
+    renderLevels(ctx, { ...grid, cols: 1 }, pixels, 10, new Uint8ClampedArray(4));
+    expect(ctx.draws[0].char).toBe('6');
   });
 
   it('draws two levels from the threshold', () => {

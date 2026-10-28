@@ -1,4 +1,5 @@
-const { getLuminance, getMirroredMaskIndex } = require('../utils');
+const { getMirroredMaskIndex } = require('../utils');
+const { greyOf } = require('../core/imageMath');
 const { getLevel } = require('./levels');
 
 function renderPixelValue(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW) {
@@ -13,8 +14,7 @@ function renderPixelValue(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW
       const r = pixels[i];
       const g = pixels[i + 1];
       const b = pixels[i + 2];
-      const luminance = getLuminance(r, g, b);
-      const grayValue = Math.round(luminance * 255);
+      const grayValue = greyOf(r, g, b);
 
       ctx.fillStyle = `rgb(${r},${g},${b})`;
 
@@ -23,7 +23,11 @@ function renderPixelValue(ctx, cols, rows, fontSz, segmentation, pixels, hiddenW
         ctx.fillText(String(grayValue), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
       } else if (fontSz >= 8) {
         ctx.font = `bold ${fontSz}px 'Courier New', monospace`;
-        ctx.fillText(String(getLevel(luminance, 10)), x * fontSz + fontSz / 2, y * fontSz + fontSz / 2);
+        ctx.fillText(
+          String(getLevel(grayValue, 10)),
+          x * fontSz + fontSz / 2,
+          y * fontSz + fontSz / 2
+        );
       } else {
         ctx.fillRect(x * fontSz + 1, y * fontSz + 1, fontSz - 2, fontSz - 2);
       }

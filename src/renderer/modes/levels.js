@@ -1,10 +1,12 @@
-const { getLuminance, getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../utils');
+const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../utils');
+const { greyOf } = require('../core/imageMath');
 
-// Splits brightness 0..1 into `levels` equal steps numbered 0..levels-1. Two levels
-// may instead split at a chosen 0-255 `threshold`: at or above it is 1, below is 0.
-function getLevel(luminance, levels, threshold) {
-  if (levels === 2 && threshold !== undefined) return luminance * 255 >= threshold ? 1 : 0;
-  return Math.min(levels - 1, Math.floor(luminance * levels));
+// Splits the 0-255 brightness into `levels` equal steps numbered 0..levels-1, each
+// 255 ÷ levels wide, rounding down. Two levels may instead split at a chosen
+// `threshold`: at or above it is 1, below is 0.
+function getLevel(grey, levels, threshold) {
+  if (levels === 2 && threshold !== undefined) return grey >= threshold ? 1 : 0;
+  return Math.min(levels - 1, Math.floor((grey * levels) / 255));
 }
 
 /**
@@ -25,8 +27,7 @@ function renderLevels(ctx, grid, pixels, levels, output, threshold) {
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       const i = (y * cols + x) * 4;
-      const luminance = getLuminance(pixels[i], pixels[i + 1], pixels[i + 2]);
-      const level = getLevel(luminance, levels, threshold);
+      const level = getLevel(greyOf(pixels[i], pixels[i + 1], pixels[i + 2]), levels, threshold);
       const gray = Math.round((level * 255) / maxLevel);
       output[i] = gray;
       output[i + 1] = gray;

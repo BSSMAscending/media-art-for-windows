@@ -8,11 +8,16 @@ function clampByte(value) {
   return Math.max(0, Math.min(255, Math.round(value)));
 }
 
-// One brightness number per cell, the same weights the levels mode uses.
+// A cell's brightness as the whole number 0-255 that the levels and math views show.
+function greyOf(r, g, b) {
+  return clampByte(0.299 * r + 0.587 * g + 0.114 * b);
+}
+
+// One brightness number per cell.
 function toGrey(pixels, output) {
   for (let i = 0; i < output.length; i++) {
     const p = i * 4;
-    output[i] = clampByte(0.299 * pixels[p] + 0.587 * pixels[p + 1] + 0.114 * pixels[p + 2]);
+    output[i] = greyOf(pixels[p], pixels[p + 1], pixels[p + 2]);
   }
   return output;
 }
@@ -88,6 +93,7 @@ function applyImageMath(effect, amount, input, output, cols, rows) {
 
 module.exports = {
   clampByte,
+  greyOf,
   toGrey,
   addBrightness,
   scaleContrast,
