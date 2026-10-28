@@ -42,7 +42,7 @@ function assertBetaVersion(version) {
   assertRepositoriesStaySplit();
   if (!BETA_VERSION.test(version)) {
     throw new Error(
-      `Refusing to publish "${version}". A beta must look like ${upcomingRelease}-beta.1 and is never a stable X.Y.Z.`
+      `Refusing to publish "${version}". A beta must look like ${upcomingRelease}-beta.1 (N from 1 to 999) and is never a stable X.Y.Z.`
     );
   }
   return `v${version}`;

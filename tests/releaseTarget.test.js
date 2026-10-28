@@ -1,6 +1,7 @@
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
-const { betaRepository, stableRepository } = require('../scripts/channels');
+const { convertVersion } = require('electron-winstaller');
+const { betaRepository, stableRepository, squirrelVersion } = require('../scripts/channels');
 const { assertBetaVersion, assertStableTarget, betaTarget } = require('../scripts/release-target');
 const { renderBetaCask } = require('../scripts/beta-cask');
 const { setUpdateRepository } = require('../scripts/set-update-repository');
@@ -23,6 +24,7 @@ describe('release targets stay split', () => {
     expect(assertBetaVersion('2.0.0-beta.1')).toBe('v2.0.0-beta.1');
     expect(assertBetaVersion('2.0.0-beta.10')).toBe('v2.0.0-beta.10');
     expect(assertBetaVersion('2.0.0-beta.12')).toBe('v2.0.0-beta.12');
+    expect(assertBetaVersion('2.0.0-beta.999')).toBe('v2.0.0-beta.999');
     expect(betaTarget('2.0.0-beta.2')).toEqual({ repository: betaRepository, tag: 'v2.0.0-beta.2' });
     expect(JSON.stringify(betaTarget('2.0.0-beta.2'))).not.toContain(stableRepository);
   });
@@ -40,7 +42,39 @@ describe('release targets stay split', () => {
     expect(() => assertBetaVersion('2.0.0')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => assertBetaVersion('1.1.0-beta.1')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => assertBetaVersion('2.0.0-beta.01')).toThrow(/2\.0\.0-beta\.1/);
+    expect(() => assertBetaVersion('2.0.0-beta.1000')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => betaTarget('2.0.0')).toThrow(/beta/);
+  });
+});
+
+describe('Squirrel version of a beta', () => {
+  // Squirrel.Windows compares the text after the dash as one string.
+  const ordinalOrder = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
+  it('is what electron-winstaller writes into the nupkg, dots and all', () => {
+    expect(squirrelVersion('2.0.0-beta.1')).toBe('2.0.0-beta001');
+    expect(squirrelVersion('2.0.0-beta.10')).toBe('2.0.0-beta010');
+    expect(squirrelVersion('2.0.0-beta.999')).toBe('2.0.0-beta999');
+    expect(convertVersion(squirrelVersion('2.0.0-beta.10'))).toBe('2.0.0-beta010');
+  });
+
+  it('keeps the unpadded number from sorting beta.10 before beta.9', () => {
+    expect(ordinalOrder(convertVersion('2.0.0-beta.10'), convertVersion('2.0.0-beta.9'))).toBe(-1);
+    expect(ordinalOrder(squirrelVersion('2.0.0-beta.10'), squirrelVersion('2.0.0-beta.9'))).toBe(1);
+  });
+
+  it('orders every beta number after the one before it', () => {
+    for (let n = 1; n < 999; n += 1) {
+      const lower = squirrelVersion(`2.0.0-beta.${n}`);
+      const higher = squirrelVersion(`2.0.0-beta.${n + 1}`);
+      expect(ordinalOrder(lower, higher)).toBe(-1);
+    }
+  });
+
+  it('leaves a stable version alone, and the repository stays on one', () => {
+    expect(squirrelVersion('1.0.2')).toBe('1.0.2');
+    const { version } = require('../package.json');
+    expect(squirrelVersion(version)).toBe(version);
   });
 });
 

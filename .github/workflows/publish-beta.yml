@@ -106,6 +106,18 @@ jobs:
       - name: Build the Windows beta
         run: npm run make -- --platform=win32 --arch=x64
 
+      # Squirrel orders betas by the text after the dash, so the nupkg must carry the
+      # zero-padded number (2.0.0-beta010). Stop here if forge did not apply it.
+      - name: Check the Squirrel version of the Windows beta
+        shell: pwsh
+        run: |
+          $nuget = (node -p "require('./scripts/channels').squirrelVersion(process.env.BETA_VERSION)").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $releases = Get-Content out/make/squirrel.windows/x64/RELEASES -Raw
+          if ($releases -notmatch "-$([regex]::Escape($nuget))-full\.nupkg") {
+            throw "RELEASES does not list Squirrel version $nuget, so betas would not sort by number:`n$releases"
+          }
+
       - name: Upload the Windows beta
         uses: actions/upload-artifact@v4
         with:
