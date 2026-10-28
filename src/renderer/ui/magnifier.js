@@ -1,8 +1,11 @@
 // Press-and-hold magnifier for the artwork (#40). Pressing the artwork shows a round
 // lens with a fixed 3× view of the cells under the finger; it follows the finger
-// while held and disappears on release, so small numbers can be read up close.
+// while held, so small numbers can be read up close. After release it stays on the
+// last spot for HOLD_AFTER_RELEASE: the exhibit's radar sensor turns a touch into a
+// short press, which would otherwise close the lens before anyone could read it.
 
 const ZOOM = 3;
+const HOLD_AFTER_RELEASE = 2000;
 // Lens sits this far above the finger so the finger never hides it.
 const LENS_GAP = 28;
 const CAPTION_GAP = 10;
@@ -138,6 +141,7 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
   const ctx = canvas.getContext('2d');
 
   let pointerId = null;
+  let holdTimer = null;
   const point = { x: 0, y: 0 };
 
   function lensSize() {
@@ -177,6 +181,8 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
 
   function show(event) {
     if (pointerId !== null || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    // A new press while the lens is held moves it straight to the new spot.
+    window.clearTimeout(holdTimer);
     pointerId = event.pointerId;
     try {
       // Keeps the lens following the finger even when it slides off the artwork.
@@ -191,25 +197,31 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
     render();
   }
 
-  function hide(event) {
-    if (event && event.pointerId !== pointerId) return;
-    pointerId = null;
+  function close() {
     lens.hidden = true;
     marker.hidden = true;
     caption.hidden = true;
+  }
+
+  // The lens keeps showing the released spot, live, then closes.
+  function release(event) {
+    if (event.pointerId !== pointerId) return;
+    pointerId = null;
+    window.clearTimeout(holdTimer);
+    holdTimer = window.setTimeout(close, HOLD_AFTER_RELEASE);
   }
 
   /** Shows `text` next to the lens while it is open. */
   function setCaption(text) {
     if (caption.textContent === text) return;
     caption.textContent = text;
-    caption.hidden = !text || pointerId === null;
+    caption.hidden = !text || lens.hidden;
     if (!caption.hidden) place();
   }
 
   /** Copies the freshly drawn frame into the lens; call right after each frame. */
   function render() {
-    if (pointerId === null) return;
+    if (lens.hidden) return;
     const size = lensSize();
     const ratio = window.devicePixelRatio || 1;
     const backing = Math.round(size * ratio);
@@ -235,13 +247,13 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
   area.addEventListener('pointermove', (event) => {
     if (event.pointerId === pointerId) follow(event);
   });
-  area.addEventListener('pointerup', hide);
-  area.addEventListener('pointercancel', hide);
-  area.addEventListener('lostpointercapture', hide);
+  area.addEventListener('pointerup', release);
+  area.addEventListener('pointercancel', release);
+  area.addEventListener('lostpointercapture', release);
   // A long touch would otherwise open the context menu on Windows.
   area.addEventListener('contextmenu', (event) => event.preventDefault());
 
-  return { render, setCaption, hide: () => hide({ pointerId }) };
+  return { render, setCaption };
 }
 
 module.exports = {
@@ -252,4 +264,5 @@ module.exports = {
   getCaptionPlacement,
   mapLayer,
   ZOOM,
+  HOLD_AFTER_RELEASE,
 };

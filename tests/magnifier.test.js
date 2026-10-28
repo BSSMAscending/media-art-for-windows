@@ -4,12 +4,17 @@ const {
   getCaptionPlacement,
   mapLayer,
   ZOOM,
+  HOLD_AFTER_RELEASE,
 } = require('../src/renderer/ui/magnifier');
 
 describe('magnifier geometry', () => {
   it('shows a fixed 3× view centred on the pressed point', () => {
     expect(ZOOM).toBe(3);
     expect(getSourceRegion({ x: 500, y: 400 }, 300)).toEqual({ left: 450, top: 350, size: 100 });
+  });
+
+  it('stays open for two seconds after release, long enough to read a short touch', () => {
+    expect(HOLD_AFTER_RELEASE).toBe(2000);
   });
 
   it('floats the lens above the finger, or below it near the top edge', () => {
