@@ -86,20 +86,16 @@ jobs:
           fi
           echo "state=present" >> "$GITHUB_OUTPUT"
 
-      - name: Refuse a beta number that is already tagged
+      # Squirrel only offers an update that sorts higher, so the new beta has to be
+      # numbered above every published one (source tags and the beta repository's
+      # releases), not just differ from them. Unpublished drafts do not count.
+      - name: Require a beta numbered above the published ones
+        env:
+          BETA_REPOSITORY: ${{ steps.target.outputs.repository }}
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const { execFileSync } = require('node:child_process');
-          const { assertBetaVersion } = require('./scripts/release-target');
-          const tag = assertBetaVersion(process.env.BETA_VERSION);
-          try {
-            execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
-            throw new Error(`${tag} is already published. Pick the next beta number.`);
-          } catch (error) {
-            if (error.status !== 1) throw error;
-          }
-          NODE
+          releases=$(gh release list --repo "$BETA_REPOSITORY" --limit 1000 --json tagName,isDraft --jq '.[] | select(.isDraft | not) | .tagName')
+          { git tag -l 'v*'; printf '%s\n' "$releases"; } | node scripts/release-target.js beta-newer "$BETA_VERSION"
 
   windows:
     name: windows

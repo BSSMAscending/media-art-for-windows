@@ -2,7 +2,12 @@ const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 const { convertVersion } = require('electron-winstaller');
 const { betaRepository, homebrewTap, stableRepository, squirrelVersion } = require('../scripts/channels');
-const { assertBetaVersion, assertStableTarget, betaTarget } = require('../scripts/release-target');
+const {
+  assertBetaVersion,
+  assertNewerBeta,
+  assertStableTarget,
+  betaTarget,
+} = require('../scripts/release-target');
 const { renderBetaCask } = require('../scripts/beta-cask');
 const { setUpdateRepository } = require('../scripts/set-update-repository');
 
@@ -48,6 +53,34 @@ describe('release targets stay split', () => {
     expect(() => assertBetaVersion('2.0.0-beta.01')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => assertBetaVersion('2.0.0-beta.1000')).toThrow(/2\.0\.0-beta\.1/);
     expect(() => betaTarget('2.0.0')).toThrow(/beta/);
+  });
+});
+
+describe('beta numbers only go up', () => {
+  it('accepts a beta above every published one, gaps included', () => {
+    expect(() => assertNewerBeta('2.0.0-beta.1', [])).not.toThrow();
+    expect(() => assertNewerBeta('2.0.0-beta.3', ['v2.0.0-beta.1', 'v2.0.0-beta.2'])).not.toThrow();
+    expect(() => assertNewerBeta('2.0.0-beta.10', ['v2.0.0-beta.9', 'v2.0.0-beta.2'])).not.toThrow();
+    expect(() => assertNewerBeta('2.0.0-beta.5', ['v2.0.0-beta.2'])).not.toThrow();
+  });
+
+  it('refuses a beta that is already published or numbered below one', () => {
+    expect(() => assertNewerBeta('2.0.0-beta.2', ['v2.0.0-beta.2'])).toThrow(/already published/);
+    expect(() => assertNewerBeta('2.0.0-beta.2', ['v2.0.0-beta.3', 'v2.0.0-beta.1'])).toThrow(/beta\.3/);
+    expect(() => assertNewerBeta('2.0.0-beta.9', ['v2.0.0-beta.10'])).toThrow(/beta\.10/);
+  });
+
+  it('ignores tags that are not betas of this line', () => {
+    const tags = ['v1.0.2', 'v1.0.3', 'v2.0.0', 'v1.1.0-beta.40', 'v0.9.0'];
+    expect(() => assertNewerBeta('2.0.0-beta.1', tags)).not.toThrow();
+  });
+
+  it('reads the published tags from stdin in the CLI', () => {
+    const run = (version, input) =>
+      execFileSync(process.execPath, [script, 'beta-newer', version], { input, stdio: 'pipe' });
+    expect(() => run('2.0.0-beta.4', 'v1.0.2\nv2.0.0-beta.3\n\n')).not.toThrow();
+    expect(() => run('2.0.0-beta.3', 'v1.0.2\nv2.0.0-beta.3\n')).toThrow();
+    expect(() => run('2.0.0-beta.1', '')).not.toThrow();
   });
 });
 
