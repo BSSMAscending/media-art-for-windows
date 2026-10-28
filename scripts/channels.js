@@ -33,7 +33,8 @@ module.exports = {
   caskName: 'binary-media-art-beta',
   appBundle: 'media-art-for-windows.app',
   // Shipping this version on the exhibit repository is what ends the beta line,
-  // whenever that happens.
+  // whenever that happens. Windows betas stay on the beta feed: testers reinstall
+  // the stable release (docs/windows-distribution.md).
   upcomingRelease,
   STABLE_VERSION,
   BETA_VERSION,

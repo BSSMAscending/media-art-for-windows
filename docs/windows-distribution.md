@@ -70,9 +70,14 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 
 베타는 정식 배포와 저장소가 다릅니다. `package.json`은 `1.0.2`로 두고, 베타 번호를 `main`에 커밋하지 않습니다. 커밋하면 정식 배포 검사가 실패하거나, 검사를 통과할 경우 전시 PC가 받는 저장소로 올라갑니다.
 
-베타 번호는 다음 정식 버전의 semver 시험 번호입니다. 지금 줄은 `2.0.0-beta.1`부터 시작하고, 몇 번째에서 끝낼지는 정하지 않습니다. `2.0.0-beta.3`에서 멈춰도 되고 `2.0.0-beta.12`까지 가도 됩니다. 번호는 1~999이고 앞자리 0은 넣지 않습니다. Windows 업데이트(Squirrel.Windows)는 대시 뒤를 한 문자열로 비교하는데 electron-winstaller가 `beta.10`의 점을 지워 `beta10`으로 만들기 때문에, 그대로 두면 `beta10`이 `beta9`보다 앞서 Windows 베타가 10번부터 업데이트되지 않습니다. 그래서 설치 파일 안의 NuGet 버전만 `2.0.0-beta010`처럼 세 자리로 맞추고(`forge.config.js`, `squirrelVersion`), 앱 버전과 태그는 `2.0.0-beta.10`으로 둡니다. 베타 Release의 `.nupkg`와 `RELEASES`에 `beta010`이 적혀 있는 것은 이 때문입니다. 줄을 마치기로 하면 정식 `2.0.0`을 평소처럼 `main`의 버전을 올려 전시 저장소에 올립니다. 그때 전시 PC가 업데이트됩니다. 그 전의 베타 번호는 전시 저장소로 올리지 않습니다.
+베타 번호는 다음 정식 버전의 semver 시험 번호입니다. 지금 줄은 `2.0.0-beta.1`부터 시작하고, 몇 번째에서 끝낼지는 정하지 않습니다. `2.0.0-beta.3`에서 멈춰도 되고 `2.0.0-beta.12`까지 가도 됩니다. 번호는 1~999이고 앞자리 0은 넣지 않습니다. Windows 업데이트(Squirrel.Windows)는 대시 뒤를 한 문자열로 비교하는데 electron-winstaller가 `beta.10`의 점을 지워 `beta10`으로 만들기 때문에, 그대로 두면 `beta10`이 `beta9`보다 앞서 Windows 베타가 10번부터 업데이트되지 않습니다. 그래서 설치 파일 안의 NuGet 버전만 `2.0.0-beta010`처럼 세 자리로 맞추고(`forge.config.js`, `squirrelVersion`), 앱 버전과 태그는 `2.0.0-beta.10`으로 둡니다. 베타 Release의 `.nupkg`와 `RELEASES`에 `beta010`이 적혀 있는 것은 이 때문입니다.
+
+줄을 마치기로 하면 정식 `2.0.0`을 평소처럼 `main`의 버전을 올려 전시 저장소에 올립니다. 그때 전시 PC가 업데이트됩니다. 그 전의 베타 번호는 전시 저장소로 올리지 않습니다. 정식 `2.0.0`을 베타 저장소에 올리는 일도 없습니다.
+
+Windows 베타 설치본은 베타 저장소만 업데이트 피드로 보므로 줄이 끝나도 정식 `2.0.0`으로 넘어가지 않고, 베타 저장소에 새 Release가 올라올 때까지 마지막 베타에 머뭅니다. 베타를 쓰던 사람은 베타를 지우고 소개 사이트의 정식 설치 파일로 `2.0.0`을 새로 설치합니다. 그 설치본부터 전시 저장소를 따라 업데이트합니다. 다음 줄(예: `2.1.0-beta.1`)을 시작하려면 `scripts/channels.js`의 `upcomingRelease`를 바꿉니다. 그러면 베타 설치본은 그 줄의 베타를 이어서 받습니다.
 
 Actions의 **Publish beta**(`publish-beta.yml`)를 수동으로 실행하고 버전을 `2.0.0-beta.1`처럼 넣습니다. 워크플로가 그 번호로 Windows와 Mac(Apple Silicon, Intel)을 만들어 공개 저장소 `BSSMAscending/media-art-beta`에만 올립니다. 올리기 전에 `scripts/release-target.js`가 대상 저장소를 검사하고, 대상이 정식 저장소이거나 버전이 `X.Y.Z`이면 업로드 전에 멈춥니다. 정식 배포 워크플로도 반대로, 베타 버전은 `media-art-for-windows-releases`에 올리지 않고 멈춥니다. Windows 베타 설치본만 베타 저장소를 업데이트 피드로 봅니다. 이미 설치된 정식 버전은 `media-art-for-windows-releases`만 보므로 베타를 받지 않습니다.
+
 
 베타 Release에는 Windows 설치 파일과 Mac 압축 파일 두 종류가 함께 있습니다. Mac은 Apple Silicon과 Intel로 나뉩니다. 받는 주소는 `https://github.com/BSSMAscending/media-art-beta/releases/latest`입니다. Mac은 서명하지 않아 앱이 스스로 업데이트하지 않고, 압축을 풀어 처음 열 때 Mac이 막을 수 있습니다. 소개 사이트의 베타 버튼이 이 배포를 가리킵니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
 
