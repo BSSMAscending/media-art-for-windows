@@ -633,13 +633,19 @@
               <h3>Mac</h3>
               <p data-l="ko">
                 같은 베타 배포의 Mac 압축 파일입니다. Apple Silicon과 Intel이 나뉘어 있습니다.
-                서명하지 않아 처음 열 때 Mac이 막을 수 있습니다. Homebrew로 받으면 그 확인을
-                설치할 때 대신 합니다.
+                공증하지 않아 처음 열 때 Mac이 막을 수 있고, Homebrew로 받으면 그 확인을 설치할 때
+                대신 합니다. 앱이 새 베타를 알려 주고, Homebrew로 설치했다면 눌러서 업데이트하며
+                카메라 허용도 유지됩니다. 2.0.0-beta.1을 쓰고 있다면
+                <code>brew upgrade --cask binary-media-art-beta</code>를 한 번 직접 실행하세요. 그때
+                카메라 허용을 한 번 더 묻습니다.
               </p>
               <p data-l="en">
                 The Mac zip is on the same beta release: one for Apple Silicon, one for Intel. It
-                is unsigned, so the first open may be blocked. Homebrew is the easier install and
-                clears quarantine.
+                is not notarized, so the first open may be blocked; Homebrew clears quarantine when
+                it installs. The app tells you about a new beta and, if you installed with Homebrew,
+                updates with one click and keeps the camera permission. On 2.0.0-beta.1, run
+                <code>brew upgrade --cask binary-media-art-beta</code> once by hand; macOS asks for
+                the camera once more.
               </p>
               <p>
                 <a class="button" href="{{BETA_URL}}"
