@@ -79,12 +79,16 @@ describe('beta notes share the changelog', () => {
     expect(entries[2].body).toBe('- 이전');
   });
 
-  it('does not publish a beta heading as the exhibit release', () => {
+  it('reads a stable entry and a beta entry as their own releases', () => {
     expect(readReleaseNotes(mixed, '1.0.2')).toEqual({
       title: `v1.0.2 ${DEFAULT_TITLE}`,
       body: '- 정식',
     });
-    expect(() => readReleaseNotes(mixed, '2.0.0-beta.1')).toThrow('no "## [2.0.0-beta.1]" entry');
+    expect(readReleaseNotes(mixed, '2.0.0-beta.1')).toEqual({
+      title: 'v2.0.0-beta.1 첫 시험',
+      body: '- 베타',
+    });
+    expect(() => readReleaseNotes(mixed, '2.0.0-beta.2')).toThrow('no "## [2.0.0-beta.2]" entry');
   });
 
   it('accepts any beta number', () => {

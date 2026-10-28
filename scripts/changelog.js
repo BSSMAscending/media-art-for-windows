@@ -14,9 +14,11 @@ const DATE_AND_TITLE = '(?: - (\\d{4}-\\d{2}-\\d{2}))?(?: - (.+?))?\\s*$';
 // grammar comes from channels.js, which the release guard and the cask use too.
 const VERSION_HEADING = new RegExp(`^## \\[${STABLE_SOURCE}\\]${DATE_AND_TITLE}`);
 
+// A beta's entry is its beta Release's notes; the exhibit workflow only ever asks
+// for an X.Y.Z version.
 function readReleaseNotes(changelog, version) {
   const lines = changelog.split(/\r?\n/);
-  const start = lines.findIndex((line) => VERSION_HEADING.exec(line)?.[1] === version);
+  const start = lines.findIndex((line) => line.startsWith('## ') && readHeading(line)?.version === version);
   if (start === -1) {
     throw new Error(`CHANGELOG.md has no "## [${version}]" entry.`);
   }
@@ -28,7 +30,7 @@ function readReleaseNotes(changelog, version) {
   if (!body) {
     throw new Error(`CHANGELOG.md entry for ${version} is empty.`);
   }
-  const customTitle = VERSION_HEADING.exec(lines[start])[3];
+  const customTitle = readHeading(lines[start]).title;
   return { title: `v${version} ${customTitle || DEFAULT_TITLE}`, body };
 }
 
@@ -65,10 +67,9 @@ function sortKey(version, beta = Infinity) {
 }
 
 // Reads one heading as an entry: the Unreleased section, a "## [X.Y.Z]" version
-// or a "## [X.Y.Z-beta.N]" beta; null for any other heading. A beta stays in this
-// file; readReleaseNotes still ignores it. Which beta line is current is up to
-// whoever publishes a beta, so the notes of an earlier line survive when the
-// next one starts.
+// or a "## [X.Y.Z-beta.N]" beta; null for any other heading. Which beta line is
+// current is up to whoever publishes a beta, so the notes of an earlier line
+// survive when the next one starts.
 function readHeading(line) {
   const match = VERSION_HEADING.exec(line);
   const unreleased = /^## \[Unreleased\]/i.test(line);

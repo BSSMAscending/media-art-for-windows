@@ -7,6 +7,9 @@ name: Publish beta
 # cannot upload to the exhibit repository media-art-for-windows-releases.
 # Exhibit PCs keep updating from that repository alone.
 #
+# The release's title and notes are the beta's CHANGELOG.md entry, so that entry
+# has to be on the branch before the run.
+#
 # The Mac betas are signed with one self-signed certificate kept in the secrets
 # MAC_BETA_SIGNING_P12 and MAC_BETA_SIGNING_PASSWORD (scripts/create-mac-beta-signing-cert.sh),
 # so macOS keeps the camera permission from one beta to the next.
@@ -103,6 +106,16 @@ jobs:
           set -euo pipefail
           releases=$(gh release list --repo "$BETA_REPOSITORY" --limit 1000 --json tagName,isDraft --jq '.[] | select(.isDraft | not) | .tagName')
           { git tag -l 'v*'; printf '%s\n' "$releases"; } | node scripts/release-target.js beta-newer "$BETA_VERSION"
+
+      # The beta's CHANGELOG.md entry is its Release title and notes, so a missing or
+      # empty entry stops the run here, before the builds.
+      - name: Require the beta's CHANGELOG.md entry
+        run: |
+          set -euo pipefail
+          if ! node scripts/changelog.js "$BETA_VERSION" > /dev/null; then
+            echo "::error::CHANGELOG.md has no [$BETA_VERSION] entry, or it is empty. Write the beta's notes first."
+            exit 1
+          fi
 
   windows:
     name: windows
@@ -360,10 +373,21 @@ jobs:
           tag: ${{ steps.target.outputs.tag }}
         run: |
           set -euo pipefail
-          printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$BETA_VERSION" > dist/notes.md
+          # Title and notes come from the beta's CHANGELOG.md entry, then what is in the release.
+          title=$(node scripts/changelog.js "$BETA_VERSION" dist/notes.md)
+          cat >> dist/notes.md <<'NOTES'
+
+          ---
+
+          Windows 설치 파일과 Mac(Apple Silicon, Intel) 압축 파일이 들어 있습니다. 전시 PC에는 배포되지 않는 베타입니다.
+
+          Mac은 Homebrew로도 설치할 수 있습니다: `brew install --cask BSSMAscending/tap/binary-media-art-beta`
+          NOTES
           drafts=$(gh release list --repo "$repo" --limit 1000 --json tagName,isDraft --jq '.[] | select(.isDraft) | .tagName')
-          if ! grep -qxF "$tag" <<< "$drafts"; then
-            gh release create "$tag" --repo "$repo" --draft --title "$tag beta" --notes-file dist/notes.md
+          if grep -qxF "$tag" <<< "$drafts"; then
+            gh release edit "$tag" --repo "$repo" --title "$title" --notes-file dist/notes.md
+          else
+            gh release create "$tag" --repo "$repo" --draft --title "$title" --notes-file dist/notes.md
           fi
           gh release upload "$tag" dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES --repo "$repo" --clobber
 

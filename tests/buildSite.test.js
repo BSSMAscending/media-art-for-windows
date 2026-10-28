@@ -156,10 +156,11 @@ describe('patch notes', () => {
     );
     expect(home.match(/https:\/\/github.com\/BSSMAscending\/media-art-beta\/releases\/latest/g)).toHaveLength(2);
     expect(home).toContain('Windows 베타 받기');
-    expect(home).toContain('brew tap BSSMAscending/tap');
+    expect(home).toContain('brew install --cask BSSMAscending/tap/binary-media-art-beta');
+    expect(home).not.toContain('brew tap BSSMAscending/tap');
     expect(home).toContain('Mac 베타 받기');
     expect(home).toContain('2.0.0-beta.1');
-    expect(home).toContain('brew install --cask binary-media-art-beta');
+    expect(home).toContain('brew upgrade --cask binary-media-art-beta');
     expect(home).toContain('quarantine');
     expect(home).not.toContain('Control-click');
     const notesPage = fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8');
