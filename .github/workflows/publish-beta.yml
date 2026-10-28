@@ -18,6 +18,11 @@ on:
 permissions:
   contents: read
 
+# The version is typed by whoever runs the workflow. It reaches every script as
+# an environment variable and is never pasted into script text.
+env:
+  BETA_VERSION: ${{ inputs.version }}
+
 concurrency:
   group: publish-beta
   cancel-in-progress: false
@@ -35,11 +40,9 @@ jobs:
           fetch-depth: 0
 
       - name: Accept only a beta version aimed away from the exhibit
-        run: node scripts/release-target.js beta "${{ inputs.version }}"
+        run: node scripts/release-target.js beta "$BETA_VERSION"
 
       - name: Require the beta repository
-        env:
-          BETA_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           if [[ -z "${GH_TOKEN}" ]]; then
@@ -85,12 +88,12 @@ jobs:
 
       - name: Set the beta version without committing it
         shell: pwsh
-        run: npm version "${{ inputs.version }}" --no-git-tag-version
+        run: npm version "$env:BETA_VERSION" --no-git-tag-version
 
       - name: Point this build at the beta feed
         shell: pwsh
         run: |
-          node scripts/release-target.js beta "${{ inputs.version }}"
+          node scripts/release-target.js beta "$env:BETA_VERSION"
           $betaRepo = (node -p "require('./scripts/channels').betaRepository").Trim()
           node scripts/set-update-repository.js $betaRepo
           $feed = (node -p "require('./src/main/updater').UPDATE_REPOSITORY").Trim()
@@ -128,12 +131,12 @@ jobs:
         run: npm ci
 
       - name: Set the beta version without committing it
-        run: npm version "${{ inputs.version }}" --no-git-tag-version
+        run: npm version "$BETA_VERSION" --no-git-tag-version
 
       - name: Point this build at the beta feed
         run: |
           set -euo pipefail
-          node scripts/release-target.js beta "${{ inputs.version }}"
+          node scripts/release-target.js beta "$BETA_VERSION"
           node scripts/set-update-repository.js "$(node -p "require('./scripts/channels').betaRepository")"
           node <<'NODE'
           const { UPDATE_REPOSITORY } = require('./src/main/updater');
@@ -146,7 +149,7 @@ jobs:
       - name: Build Apple Silicon and Intel betas
         run: |
           set -euo pipefail
-          version="${{ inputs.version }}"
+          version="$BETA_VERSION"
           mkdir -p "$RUNNER_TEMP/mac-beta"
           copy_zip() {
             local arch="$1"
@@ -173,8 +176,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      BETA_VERSION: ${{ inputs.version }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
