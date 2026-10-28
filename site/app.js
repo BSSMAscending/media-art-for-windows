@@ -75,11 +75,11 @@
   }
 
   // Patch notes: the version list stays in view and marks the version being read.
-  // The sticky header and bar heights go to the CSS so anchors land below them.
+  // The bar height goes to the CSS (--toc-h) so anchors land below it; the header
+  // height (--header-h) comes from setupHeaderHeight.
   function setupNotesToc() {
     const toc = document.getElementById('notesToc');
     if (!toc) return;
-    const header = document.querySelector('.site-header');
     const list = toc.querySelector('ol');
     const links = [...toc.querySelectorAll('a[href^="#"]')];
     const sections = links.map((link) => document.getElementById(link.hash.slice(1)));
@@ -92,7 +92,6 @@
     let frame = 0;
 
     function measure() {
-      root.style.setProperty('--header-h', `${header ? header.offsetHeight : 0}px`);
       root.style.setProperty('--toc-h', `${toc.offsetHeight}px`);
     }
 
