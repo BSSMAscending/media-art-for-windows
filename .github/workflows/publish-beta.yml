@@ -40,21 +40,35 @@ jobs:
           fetch-depth: 0
 
       - name: Accept only a beta version aimed away from the exhibit
-        run: node scripts/release-target.js beta "$BETA_VERSION"
+        id: target
+        run: |
+          set -euo pipefail
+          node scripts/release-target.js beta "$BETA_VERSION" | tee -a "$GITHUB_OUTPUT"
 
-      - name: Require the beta repository
+      # update.electronjs.org and the site's download buttons only see a public repository.
+      - name: Require a public beta repository
+        env:
+          BETA_REPOSITORY: ${{ steps.target.outputs.repository }}
         run: |
           set -euo pipefail
           if [[ -z "${GH_TOKEN}" ]]; then
             echo "::error::RELEASES_REPOSITORY_TOKEN is not configured."
             exit 1
           fi
+          visibility=$(gh repo view "$BETA_REPOSITORY" --json visibility --jq .visibility)
+          if [[ "$visibility" != "PUBLIC" ]]; then
+            echo "::error::$BETA_REPOSITORY is $visibility. Make it public so Windows betas can update and testers can download."
+            exit 1
+          fi
+
+      - name: Check the Homebrew tap and the beta tag
+        run: |
+          set -euo pipefail
           node <<'NODE'
           const { execFileSync } = require('node:child_process');
-          const { betaRepository, homebrewTap } = require('./scripts/channels');
+          const { homebrewTap } = require('./scripts/channels');
           const { assertBetaVersion } = require('./scripts/release-target');
           const tag = assertBetaVersion(process.env.BETA_VERSION);
-          execFileSync('gh', ['repo', 'view', betaRepository, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
           try {
             execFileSync('gh', ['repo', 'view', homebrewTap, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
           } catch (error) {
