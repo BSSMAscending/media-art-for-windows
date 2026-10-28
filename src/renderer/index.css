@@ -1354,6 +1354,28 @@ body {
   }
 }
 
+/* Screens shorter than the 1080p projector: the controls shrink with the height so
+   the cards keep room for their pictures. */
+@media (max-height: 900px) {
+  :root {
+    --live-control-height: max(6.2vh, 3.3rem);
+    --option-control-height: max(6vh, 3.1rem);
+    --slider-control-height: 10vh;
+    --slider-thumb-size: clamp(1.75rem, 4.2vh, 3.25rem);
+  }
+
+  .mode-option-button {
+    padding-block: 2px;
+  }
+}
+
+/* 720p and below: the cell card keeps its calculation and drops the cell count. */
+@media (max-height: 760px) {
+  .cell-card .math-metric {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   .side-column {
     top: auto;
