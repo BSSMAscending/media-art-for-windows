@@ -1,11 +1,11 @@
 # Binary Media Art
 
 카메라에 비친 내 모습이 컴퓨터 안에서 **숫자**가 되는 과정을 보여주는 미디어 아트 전시물입니다.
-터치 화면 앞에 서서 모드를 고르면 같은 장면이 **0과 1**, **빛 세 장**, **밝기 계단**, **계산된 숫자**로 바뀝니다.
+터치 화면 앞에 서서 모드를 고르면 같은 장면이 **0과 1**, **빛의 삼원색**, **밝기 계단**, **계산된 숫자**로 바뀝니다.
 
 **[소개 사이트](https://bssmascending.github.io/media-art-for-windows/)** · **[패치노트](https://bssmascending.github.io/media-art-for-windows/patch-notes.html)** · **[설치 파일](https://github.com/BSSMAscending/media-art-for-windows-releases/releases/latest)**
 
-![색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면](docs/images/readme/hero.webp)
+![색 RGB 모드에서 빨강·초록·파랑 빛이 층층이 나뉘는 전시 화면](docs/images/readme/hero.webp)
 
 > README의 화면은 실제 카메라 대신 그린 가상 장면(팔을 벌린 사람)과 가상 인물 인식 결과로 캡처했습니다.
 
@@ -42,9 +42,9 @@
 
 ### 색 RGB: 빛 세 가지로 만든 색
 
-`R`/`G`/`B`를 누르면 빛 세 장이 옆으로 벌어진 뒤 고른 빛만 남고, 같은 버튼을 한 번 더 누르면 다시 합쳐집니다.
+`R`/`G`/`B`를 누르면 겹쳐 있던 세 빛이 층층이 나뉜 뒤 고른 빛만 남고, 같은 버튼을 한 번 더 누르면 다시 합쳐집니다.
 
-![R을 눌렀다가 다시 누를 때 빛 세 장이 벌어지고 합쳐지는 애니메이션](docs/images/readme/rgb-split.webp)
+![R을 눌렀다가 다시 누를 때 세 빛이 층층이 나뉘고 다시 겹쳐지는 애니메이션](docs/images/readme/rgb-split.webp)
 
 고른 빛만 남기면 칸마다 그 빛의 세기(`0`~`255`)가, 전체 색에서는 R · G · B 세 숫자가 그 빛의 색으로 적힙니다. 세 숫자가 들어가도록 전체 색은 칸 크기가 24px 아래로 내려가지 않습니다.
 

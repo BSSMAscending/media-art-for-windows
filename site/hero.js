@@ -1,5 +1,5 @@
 // Opening 3D animation: the exhibit's maths on one 64×48 picture. Each pixel is a
-// block; the loop shows the photo, brightness as height, the three R/G/B lights
+// block; the loop shows the photo, brightness as height, the R/G/B layers of light
 // pulled apart and added back, and the person as 1s. Falls back to the static
 // screenshot when WebGL or the module cannot load.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -31,8 +31,8 @@ const STEPS = [
   },
   {
     at: 6,
-    ko: '빛 세 장: R · G · B',
-    en: 'Three lights: R · G · B',
+    ko: '빛의 삼원색: R · G · B',
+    en: 'Primary colors of light: R · G · B',
     sample: ({ r, g, b }) => `R ${r} · G ${g} · B ${b}`,
   },
   {
@@ -186,7 +186,7 @@ async function start() {
   const target = new THREE.Vector3();
   const pointer = { x: 0, y: 0 };
 
-  // Reduced motion shows one still frame: the three lights pulled apart.
+  // Reduced motion shows one still frame: the R/G/B layers pulled apart.
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const stillTime = 9.5;
   let running = false;

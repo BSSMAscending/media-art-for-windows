@@ -9,8 +9,8 @@ const mathDescriptions = {
   },
   rgb: {
     title: '빛의 삼원색 (RGB)',
-    desc: '카메라 화면의 모든 색은 빨강(R)·초록(G)·파랑(B) 빛 세 장을 겹쳐 만듭니다.',
-    shortDesc: '화면의 색을 빨강·초록·파랑 빛 세 장으로 나누어 보여줍니다.',
+    desc: '카메라 화면의 모든 색은 빨강(R)·초록(G)·파랑(B) 세 빛을 겹쳐 만듭니다.',
+    shortDesc: '화면의 색을 빨강·초록·파랑 세 빛으로 나누어 보여줍니다.',
     metric: '빛마다 0~255 · 256단계',
     formula: 'color = (R, G, B)',
     colorDepth: '24bit (1677만색)',
