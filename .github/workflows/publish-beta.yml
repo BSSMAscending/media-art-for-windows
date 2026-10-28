@@ -3,10 +3,13 @@ name: Publish beta
 # Manual only. Builds a Windows beta and a Mac beta (Apple Silicon and Intel)
 # and publishes both to BSSMAscending/media-art-beta. The Homebrew tap is
 # updated when that repository exists; a missing tap does not block the files.
-# It does not run on pushes
-# to main, does not change package.json on main, and cannot upload to the
-# exhibit repository media-art-for-windows-releases. Exhibit PCs keep updating
-# from that repository alone.
+# It does not run on pushes to main, does not change package.json on main, and
+# cannot upload to the exhibit repository media-art-for-windows-releases.
+# Exhibit PCs keep updating from that repository alone.
+#
+# The release is created as a draft, the cask and the source tag follow, and the
+# draft goes public last. A run that fails before that leaves nothing public and
+# can be run again with the same version.
 on:
   workflow_dispatch:
     inputs:
@@ -265,7 +268,11 @@ jobs:
           test "$missing" -eq 0
           grep -qF -- "-${nuget}-full.nupkg" dist/RELEASES
 
-      - name: Publish the beta release
+      # The release stays a draft until the cask and the source tag are done, so the
+      # update feed never sees half-uploaded files, and a failed run can be started
+      # again from the top: the files, the cask hashes and the tag are all redone
+      # together (--clobber replaces the draft's files).
+      - name: Upload the beta as a draft release
         env:
           GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
           repo: ${{ steps.target.outputs.repository }}
@@ -273,8 +280,9 @@ jobs:
         run: |
           set -euo pipefail
           printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$BETA_VERSION" > dist/notes.md
-          if ! gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
-            gh release create "$tag" --repo "$repo" --title "$tag beta" --notes-file dist/notes.md
+          drafts=$(gh release list --repo "$repo" --limit 1000 --json tagName,isDraft --jq '.[] | select(.isDraft) | .tagName')
+          if ! grep -qxF "$tag" <<< "$drafts"; then
+            gh release create "$tag" --repo "$repo" --draft --title "$tag beta" --notes-file dist/notes.md
           fi
           gh release upload "$tag" dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES --repo "$repo" --clobber
 
@@ -307,3 +315,12 @@ jobs:
           set -euo pipefail
           git tag "$tag" "$GITHUB_SHA"
           git push origin "refs/tags/$tag"
+
+      # Last, so a release only goes public once its files, the cask and the tag all
+      # agree. If this step fails, publish the draft by hand; nothing else is missing.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+          repo: ${{ steps.target.outputs.repository }}
+          tag: ${{ steps.target.outputs.tag }}
+        run: gh release edit "$tag" --repo "$repo" --draft=false --latest
