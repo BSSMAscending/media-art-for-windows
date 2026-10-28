@@ -88,17 +88,26 @@ jobs:
 
       - name: Set the beta version without committing it
         shell: pwsh
-        run: npm version "$env:BETA_VERSION" --no-git-tag-version
+        run: |
+          npm version "$env:BETA_VERSION" --no-git-tag-version
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
+      # A failing native command does not stop a pwsh step, so each one is checked.
       - name: Point this build at the beta feed
         shell: pwsh
         run: |
           node scripts/release-target.js beta "$env:BETA_VERSION"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $betaRepo = (node -p "require('./scripts/channels').betaRepository").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           node scripts/set-update-repository.js $betaRepo
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $feed = (node -p "require('./src/main/updater').UPDATE_REPOSITORY").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $beta = (node -p "require('./scripts/channels').betaRepository").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $stable = (node -p "require('./scripts/channels').stableRepository").Trim()
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if ($feed -ne $beta -or $feed -eq $stable) {
             throw "Beta build feed is '$feed', not the beta repository."
           }
