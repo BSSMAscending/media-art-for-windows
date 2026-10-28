@@ -81,6 +81,8 @@ brew install --cask binary-media-art-beta
 
 다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 소개 사이트의 베타 버튼이 이 경로를 안내합니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
 
+캐스크의 `postflight_steps`는 설치가 끝난 뒤 그 Mac에서 두 명령을 실행합니다. `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시를 지우고, `/usr/bin/codesign --force --deep -s -`로 그 자리에서 ad-hoc 서명을 합니다. 받는 사람이 속성을 직접 지우거나 컨트롤-클릭으로 열 필요는 없습니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 서명되지 않은 앱의 이 처리를 받지 않으므로 탭은 비공식인 `BSSMAscending/homebrew-tap`입니다.
+
 이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`와 `homebrew-tap` 두 공개 저장소에 릴리스와 푸시가 가능해야 합니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
 
 ## 변경 기록 쓰기

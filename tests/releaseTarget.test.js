@@ -56,6 +56,13 @@ describe('beta packaging', () => {
     expect(cask).toContain(`github.com/${betaRepository}/releases/download/v#{version}/`);
     expect(cask).toContain('media-art-for-windows-darwin-arm64-#{version}.zip');
     expect(cask).toContain('media-art-for-windows-darwin-x64-#{version}.zip');
+    expect(cask).toContain('postflight_steps do');
+    expect(cask).toContain('"/usr/bin/xattr"');
+    expect(cask).toContain('"-dr", "com.apple.quarantine", "{{appdir}}/media-art-for-windows.app"');
+    expect(cask).toContain('"/usr/bin/codesign"');
+    expect(cask).toContain('"--force", "--deep", "-s", "-", "{{appdir}}/media-art-for-windows.app"');
+    expect(cask).not.toMatch(/^\s*postflight do\s*$/m);
+    expect(cask).not.toContain('Control-click');
     expect(cask).not.toContain(stableRepository);
     expect(() => renderBetaCask({ version: '1.0.3', armSha256: ARM, intelSha256: INTEL })).toThrow(/beta/);
   });

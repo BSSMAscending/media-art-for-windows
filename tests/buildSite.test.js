@@ -115,6 +115,8 @@ describe('patch notes', () => {
     expect(home).toContain('https://github.com/BSSMAscending/media-art-beta/releases/latest');
     expect(home).toContain('brew tap BSSMAscending/tap');
     expect(home).toContain('brew install --cask binary-media-art-beta');
+    expect(home).toContain('quarantine');
+    expect(home).not.toContain('Control-click');
     expect(fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8')).toContain('id="v0.1.0"');
     // The 3D opening loads its pictures by path; they must ship with the site.
     const hero = fs.readFileSync(path.join(out, 'hero.js'), 'utf8');

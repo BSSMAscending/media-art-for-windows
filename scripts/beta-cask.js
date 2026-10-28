@@ -1,5 +1,7 @@
 // Homebrew cask for one beta. The beta workflow fills the version and hashes
-// and commits the result into the tap repository.
+// and commits the result into the tap repository. postflight_steps clears
+// Gatekeeper quarantine and ad-hoc signs the app on the installing Mac.
+// Official homebrew/cask rejects an unsigned app, so this stays on our tap.
 // Usage: node scripts/beta-cask.js <version> <arm64-sha256> <x64-sha256>
 const { betaRepository, caskName, appBundle } = require('./channels');
 
@@ -31,9 +33,16 @@ function renderBetaCask({ version, armSha256, intelSha256 }) {
 
   app "${appBundle}"
 
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "{{appdir}}/${appBundle}"]
+    run "/usr/bin/codesign",
+        args: ["--force", "--deep", "-s", "-", "{{appdir}}/${appBundle}"]
+  end
+
   caveats <<~EOS
     This is a beta, not the Windows exhibit release.
-    It is not notarized. If macOS blocks it, Control-click the app and choose Open.
+    It is not notarized. The cask removes quarantine and ad-hoc signs the app during install.
     It does not update itself. The next beta is \`brew upgrade --cask ${caskName}\`.
   EOS
 end
