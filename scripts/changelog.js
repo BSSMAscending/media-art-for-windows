@@ -3,6 +3,7 @@
 // Prints the release title and writes the entry body to notesFile.
 const fs = require('node:fs');
 const path = require('node:path');
+const { upcomingRelease } = require('./channels');
 
 const DEFAULT_TITLE = 'Busan Mathematical Culture Center – Media Art';
 
@@ -27,30 +28,56 @@ function readReleaseNotes(changelog, version) {
   return { title: `v${version} ${customTitle || DEFAULT_TITLE}`, body };
 }
 
-// Splits the whole file into entries, newest first: the Unreleased section (version
-// null) and every "## [X.Y.Z]" version. Text before the first entry is skipped.
-function parseChangelog(changelog) {
+// Splits the file at "## " headings. `accept` returns an entry, or null to skip
+// that heading and the lines under it. Text before the first entry is skipped.
+function parseEntries(changelog, accept) {
   const entries = [];
   let current = null;
   for (const line of changelog.split(/\r?\n/)) {
     if (line.startsWith('## ')) {
-      const match = VERSION_HEADING.exec(line);
-      const unreleased = /^## \[Unreleased\]/i.test(line);
-      current =
-        match || unreleased
-          ? {
-              version: match ? match[1] : null,
-              date: match?.[2] ?? null,
-              title: match?.[3] ?? null,
-              lines: [],
-            }
-          : null;
+      current = accept(line);
       if (current) entries.push(current);
       continue;
     }
     current?.lines.push(line);
   }
   return entries.map(({ lines, ...entry }) => ({ ...entry, body: lines.join('\n').trim() }));
+}
+
+// "## [2.0.0-beta.12]". N is any integer, including a leading zero, so a bad
+// number can be rejected instead of disappearing from the page.
+const BETA_HEADING =
+  /^## \[(\d+\.\d+\.\d+)-beta\.(\d+)\](?: - (\d{4}-\d{2}-\d{2}))?(?: - (.+?))?\s*$/;
+
+// The Unreleased section, every "## [X.Y.Z]" version, and betas of the next
+// stable line. A beta stays in this file; readReleaseNotes still ignores it.
+function parseChangelog(changelog, release = upcomingRelease) {
+  return parseEntries(changelog, (line) => {
+    const match = VERSION_HEADING.exec(line);
+    const unreleased = /^## \[Unreleased\]/i.test(line);
+    if (match || unreleased) {
+      return {
+        version: match ? match[1] : null,
+        date: match?.[2] ?? null,
+        title: match?.[3] ?? null,
+        beta: false,
+        lines: [],
+      };
+    }
+    const beta = BETA_HEADING.exec(line);
+    if (!beta) return null;
+    const number = beta[2];
+    if (beta[1] !== release || !/^[1-9]\d*$/.test(number)) {
+      throw new Error(`A beta in the changelog must look like ${release}-beta.1: ${line}`);
+    }
+    return {
+      version: `${beta[1]}-beta.${number}`,
+      date: beta[3] ?? null,
+      title: beta[4] ?? null,
+      beta: true,
+      lines: [],
+    };
+  });
 }
 
 if (require.main === module) {

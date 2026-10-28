@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { readReleaseNotes, DEFAULT_TITLE } = require('../scripts/changelog');
+const { readReleaseNotes, parseChangelog, DEFAULT_TITLE } = require('../scripts/changelog');
 
 const CHANGELOG = `# 변경 기록
 
@@ -57,5 +57,52 @@ describe('release notes from CHANGELOG.md', () => {
     const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
     const { version } = require('../package.json');
     expect(() => readReleaseNotes(changelog, version)).not.toThrow();
+  });
+});
+
+describe('beta notes share the changelog', () => {
+  const mixed = `## [1.0.2] - 2026-10-28
+- 정식
+
+## [2.0.0-beta.1] - 2026-10-29 - 첫 시험
+- 베타
+
+## [1.0.1]
+- 이전
+`;
+
+  it('keeps a beta heading beside the stable entries', () => {
+    const entries = parseChangelog(mixed);
+    expect(entries.map((entry) => entry.version)).toEqual(['1.0.2', '2.0.0-beta.1', '1.0.1']);
+    expect(entries[0]).toMatchObject({ beta: false, body: '- 정식' });
+    expect(entries[1]).toMatchObject({ beta: true, title: '첫 시험', body: '- 베타' });
+    expect(entries[2].body).toBe('- 이전');
+  });
+
+  it('does not publish a beta heading as the exhibit release', () => {
+    expect(readReleaseNotes(mixed, '1.0.2')).toEqual({
+      title: `v1.0.2 ${DEFAULT_TITLE}`,
+      body: '- 정식',
+    });
+    expect(() => readReleaseNotes(mixed, '2.0.0-beta.1')).toThrow('no "## [2.0.0-beta.1]" entry');
+  });
+
+  it('accepts any later beta number and rejects another line', () => {
+    const notes = `## [2.0.0-beta.12] - 2026-11-02 - 열두 번째
+- 더 감
+
+## [2.0.0]
+- 정식이 되면
+
+## [2.0.0-beta.2]
+- 둘째
+`;
+    expect(parseChangelog(notes).map((entry) => entry.version)).toEqual([
+      '2.0.0-beta.12',
+      '2.0.0',
+      '2.0.0-beta.2',
+    ]);
+    expect(() => parseChangelog('## [1.1.0-beta.1]\n- 다른 줄\n')).toThrow(/2\.0\.0-beta\.1/);
+    expect(() => parseChangelog('## [2.0.0-beta.01]\n- 앞자리\n')).toThrow(/2\.0\.0-beta\.1/);
   });
 });

@@ -66,6 +66,44 @@ describe('patch notes', () => {
     expect(v100.match(/<li>첫 버전<\/li>/g)).toHaveLength(2);
   });
 
+  it('places betas between the stable release and the one before it', () => {
+    const mixed = `## [1.0.2] - 2026-10-28
+- 지금
+
+## [2.0.0-beta.2] - 2026-11-02 - 둘째
+- 시험
+
+## [2.0.0] - 2026-12-01 - 정식
+- 나중
+
+## [2.0.0-beta.12] - 2026-11-20 - 열둘
+- 더 나중 시험
+`;
+    const english = `## [2.0.0-beta.12] - 2026-11-20 - Twelfth\n\n- Later trial\n`;
+    const { index, notes } = renderPatchNotes(parseChangelog(mixed), parseChangelog(english));
+    expect(index.match(/href="#[^"]+"/g)).toEqual([
+      'href="#v2.0.0"',
+      'href="#v2.0.0-beta.12"',
+      'href="#v2.0.0-beta.2"',
+      'href="#v1.0.2"',
+    ]);
+    expect(index).toContain('href="#v2.0.0-beta.12" class="is-beta"');
+    expect(notes).toContain('<article class="release is-beta" id="v2.0.0-beta.12">');
+    expect(notes).toContain('전시 PC에는 나가지 않습니다');
+    expect(notes).toContain('<span data-l="en">Twelfth</span>');
+    const at = (id) => notes.indexOf(`id="${id}"`);
+    expect(at('v2.0.0')).toBeLessThan(at('v2.0.0-beta.12'));
+    expect(at('v2.0.0-beta.12')).toBeLessThan(at('v2.0.0-beta.2'));
+    expect(at('v2.0.0-beta.2')).toBeLessThan(at('v1.0.2'));
+    const withoutStable = mixed.replace('## [2.0.0] - 2026-12-01 - 정식\n- 나중\n', '');
+    const parked = renderPatchNotes(parseChangelog(withoutStable)).index;
+    expect(parked.match(/href="#[^"]+"/g)).toEqual([
+      'href="#v2.0.0-beta.12"',
+      'href="#v2.0.0-beta.2"',
+      'href="#v1.0.2"',
+    ]);
+  });
+
   it('marks the Unreleased section as not yet deployed, and hides it when empty', () => {
     const { notes } = renderPatchNotes(parseChangelog(changelog));
     expect(notes).toContain('<article class="release is-upcoming" id="upcoming">');
@@ -120,7 +158,11 @@ describe('patch notes', () => {
     expect(home).toContain('brew install --cask binary-media-art-beta');
     expect(home).toContain('quarantine');
     expect(home).not.toContain('Control-click');
-    expect(fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8')).toContain('id="v0.1.0"');
+    const notesPage = fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8');
+    expect(notesPage).toContain('id="v0.1.0"');
+    expect(notesPage).toContain('id="v1.0.2"');
+    expect(notesPage).not.toContain('id="v2.0.0-beta');
+    expect(notesPage).not.toContain('id="beta-notes"');
     // The 3D opening loads its pictures by path; they must ship with the site.
     const hero = fs.readFileSync(path.join(out, 'hero.js'), 'utf8');
     const assets = [...hero.matchAll(/'(assets\/[^']+)'/g)].map(([, file]) => file);

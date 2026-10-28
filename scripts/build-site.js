@@ -1,6 +1,7 @@
 // Builds the GitHub Pages site into _site/: the pages in site/, the README
 // screenshots, and a patch notes page generated from CHANGELOG.md, so the site
-// never disagrees with the release notes.
+// never disagrees with the release notes. Beta headings in that file stay in the
+// same list, between the stable version they follow and the one they precede.
 // Usage: node scripts/build-site.js [outDir]
 const fs = require('node:fs');
 const path = require('node:path');
@@ -73,13 +74,38 @@ function bilingual(ko, en, tag = 'span') {
   return `<${tag} data-l="ko">${ko}</${tag}><${tag} data-l="en">${en}</${tag}>`;
 }
 
+// Stable 2.0.0 sorts ahead of 2.0.0-beta.12, which sorts ahead of 1.0.2.
+// A missing stable release leaves its betas directly above the previous one.
+function versionKey(version) {
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/.exec(version);
+  if (!match) return [0, 0, 0, 0];
+  return [
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    match[4] === undefined ? Infinity : Number(match[4]),
+  ];
+}
+
+function newestFirst(a, b) {
+  if (!a.version) return b.version ? -1 : 0;
+  if (!b.version) return 1;
+  const ka = versionKey(a.version);
+  const kb = versionKey(b.version);
+  for (let i = 0; i < ka.length; i += 1) {
+    if (ka[i] !== kb[i]) return kb[i] - ka[i];
+  }
+  return 0;
+}
+
 /**
  * The version list and one article per entry, newest first, in Korean and English.
  * `english` comes from CHANGELOG.en.md; a version missing there shows its Korean
- * notes in both. An empty Unreleased section is left out.
+ * notes in both. An empty Unreleased section is left out. Betas of the next
+ * stable version sit between that version and the previous stable release.
  */
 function renderPatchNotes(entries, english = []) {
-  const shown = entries.filter((entry) => entry.version || entry.body);
+  const shown = entries.filter((entry) => entry.version || entry.body).sort(newestFirst);
   const id = (entry) => (entry.version ? `v${entry.version}` : 'upcoming');
   const translationOf = (entry) => english.find((other) => other.version === entry.version);
   const titleOf = (entry) =>
@@ -89,30 +115,41 @@ function renderPatchNotes(entries, english = []) {
           escapeHtml(translationOf(entry)?.title || entry.title || '')
         )
       : bilingual('준비 중', 'In progress');
+  const exhibitNote = `<span class="release-note">${bilingual(
+    '전시 PC에는 나가지 않습니다',
+    'Not shipped to the exhibit PCs'
+  )}</span>`;
   // The side list (a bar on narrow screens) the page keeps in view; see site/app.js.
   const index = shown
-    .map(
-      (entry) =>
-        `<li><a href="#${id(entry)}"${entry.version ? '' : ' class="is-upcoming"'}><span class="toc-version">${
-          entry.version ? `v${entry.version}` : bilingual('다음 버전', 'Next')
-        }</span><span class="toc-title">${titleOf(entry)}</span></a></li>`
-    )
+    .map((entry) => {
+      const classes = [entry.version ? '' : 'is-upcoming', entry.beta ? 'is-beta' : ''].filter(Boolean);
+      return `<li><a href="#${id(entry)}"${classes.length ? ` class="${classes.join(' ')}"` : ''}><span class="toc-version">${
+        entry.version ? `v${entry.version}` : bilingual('다음 버전', 'Next')
+      }</span><span class="toc-title">${titleOf(entry)}</span></a></li>`;
+    })
     .join('\n');
   const notes = shown
     .map((entry) => {
       const upcoming = !entry.version;
+      const beta = Boolean(entry.beta);
       const translation = translationOf(entry);
       const label = upcoming ? bilingual('다음 버전', 'Next version') : `v${entry.version}`;
-      const date = entry.date
-        ? `<time datetime="${entry.date}">${formatDate(entry.date)}</time>`
-        : `<span class="release-note">${bilingual(
-            '아직 전시 PC에 배포되지 않은 변경입니다',
-            'Not on the exhibit PCs yet'
-          )}</span>`;
+      const when = entry.date ? `<time datetime="${entry.date}">${formatDate(entry.date)}</time>` : '';
+      const date = when
+        ? `${when}${beta ? exhibitNote : ''}`
+        : beta
+          ? exhibitNote
+          : `<span class="release-note">${bilingual(
+              '아직 전시 PC에 배포되지 않은 변경입니다',
+              'Not on the exhibit PCs yet'
+            )}</span>`;
       const englishBody = translation?.body
         ? renderMarkdown(translation.body)
         : `<p class="release-note">Notes for this version are in Korean.</p>\n${renderMarkdown(entry.body)}`;
-      return `<article class="release${upcoming ? ' is-upcoming' : ''}" id="${id(entry)}">
+      const classes = ['release', upcoming ? 'is-upcoming' : '', beta ? 'is-beta' : '']
+        .filter(Boolean)
+        .join(' ');
+      return `<article class="${classes}" id="${id(entry)}">
   <header class="release-head">
     <span class="release-version">${label}</span>
     <h2 class="release-title">${titleOf(entry)}</h2>
@@ -146,10 +183,10 @@ function build(outDir) {
   copyDir(path.join(ROOT, 'docs/images/readme'), path.join(outDir, 'images'));
 
   const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const read = (file) =>
-    fs.existsSync(path.join(ROOT, file))
-      ? parseChangelog(fs.readFileSync(path.join(ROOT, file), 'utf8'))
-      : [];
+  const read = (file) => {
+    const full = path.join(ROOT, file);
+    return fs.existsSync(full) ? parseChangelog(fs.readFileSync(full, 'utf8')) : [];
+  };
   const entries = read('CHANGELOG.md');
   const { index, notes } = renderPatchNotes(entries, read('CHANGELOG.en.md'));
   const upcoming = entries.some((entry) => !entry.version && entry.body);
