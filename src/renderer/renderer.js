@@ -68,7 +68,7 @@ const ERRORS = {
 const STATIC_TEXT = [
   {
     selector: '#modeCue',
-    text: { ko: '보고 싶은 모드를 선택해주세요', en: 'Choose a mode to explore' },
+    text: { ko: '모드를 골라보세요', en: 'Choose a mode' },
   },
   {
     selector: '.magnifier-hint',

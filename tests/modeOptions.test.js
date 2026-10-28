@@ -115,7 +115,7 @@ describe('levers', () => {
     expect(COLOR_VALUE_CELL_SIZE).toBe(24);
     expect(getCellSizeFloor({ selectedVersion: 'rgb', rgbChannel: 'N' })).toEqual({
       size: 24,
-      note: { ko: '전체 색은 24px부터', en: 'From 24px' },
+      note: { ko: '24px부터', en: 'From 24px' },
     });
     for (const view of [
       { selectedVersion: 'rgb', rgbChannel: 'R' },

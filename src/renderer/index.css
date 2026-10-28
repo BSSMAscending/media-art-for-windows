@@ -294,7 +294,7 @@ body {
   --space-6: 24px;
   --space-8: 32px;
   --type-control-label: clamp(0.875rem, 1.09375vw, 1.25rem);
-  --type-control: clamp(1rem, 1.25vw, 1.5rem);
+  --type-control: clamp(0.9375rem, 1vw, 1.25rem);
   --type-control-meta: clamp(0.75rem, 0.9375vw, 1.125rem);
   --type-panel-title: clamp(1.125rem, 1.40625vw, 1.75rem);
   --type-panel-body: clamp(1rem, 1.25vw, 1.5rem);
@@ -302,12 +302,17 @@ body {
   --type-panel-eyebrow: clamp(0.75rem, 0.9375vw, 1.125rem);
   --type-panel-mode: clamp(1.0625rem, 1.328125vw, 1.625rem);
   --side-column-inset: clamp(1rem, 2vw, 2.5rem);
-  --side-column-width: clamp(20rem, 35vw, 44rem);
+  /* The 4:3 camera picture fills the screen height; the column takes what is left. */
+  --side-column-width: clamp(
+    24rem,
+    calc(100vw - (100vh - 2 * var(--side-column-inset)) * 4 / 3 - 3 * var(--side-column-inset)),
+    34rem
+  );
   --ui-cluster-gap: clamp(0.5rem, 1vw, 1rem);
   --live-panel-padding: clamp(0.75rem, 1vw, 1.5rem);
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
-  --live-control-height: clamp(4.5rem, 5.5vw, 7rem);
-  --option-control-height: clamp(4rem, 4.6vw, 6rem);
+  --live-control-height: clamp(3.75rem, 3.6vw, 4.75rem);
+  --option-control-height: clamp(3.5rem, 3.4vw, 4.5rem);
   --slider-control-height: clamp(5.5rem, 6.2vw, 8rem);
   --slider-thumb-size: clamp(2.25rem, 2.6vw, 3.25rem);
   --slider-track-height: clamp(0.625rem, 0.7vw, 0.875rem);
@@ -511,16 +516,14 @@ body {
 }
 
 .mode-button-grid--live {
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  grid-template-columns: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
 
-/* Four modes share one row, so labels drop the letter spacing and never break mid-word. */
+/* Four modes in two rows of two; labels drop the letter spacing and never break mid-word. */
 .mode-button-grid--live .mode-button {
   min-height: var(--live-control-height);
-  padding-inline: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   background: rgba(0, 8, 12, 0.8);
   font-size: clamp(0.875rem, 1.1vw, 1.375rem);
   letter-spacing: 0;
@@ -536,10 +539,13 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: var(--space-2);
-  /* Content box: reserve exactly label + gap + one button row, so the control block
-     is the same height whether or not the mode has option buttons. */
+  /* Content box: reserve exactly label + gap + two button rows, so the control block
+     is the same height whether the mode has four, three or no option buttons. */
   box-sizing: content-box;
-  min-height: calc(var(--option-control-height) + var(--type-control-label) * 1.4 + var(--space-2));
+  min-height: calc(
+    var(--option-control-height) * 2 + var(--space-3) + var(--type-control-meta) * 1.4 +
+      var(--space-2)
+  );
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
@@ -547,7 +553,7 @@ body {
 
 .mode-options-label {
   color: var(--text-secondary);
-  font-size: var(--type-control-label);
+  font-size: var(--type-control-meta);
   line-height: 1.4;
   text-align: center;
   word-break: keep-all;
@@ -558,10 +564,17 @@ body {
 }
 
 .mode-option-grid {
+  flex: 1;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
   grid-template-columns: none;
   margin: 0;
+}
+
+/* Four calculations make two rows of two, like the modes; three options share one row. */
+.mode-option-grid:has(> :nth-child(4)) {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .mode-option-grid:empty {
@@ -570,6 +583,7 @@ body {
 
 .mode-option-button {
   min-height: var(--option-control-height);
+  padding-block: var(--space-1);
   background: rgba(0, 8, 12, 0.8);
 }
 
@@ -1487,12 +1501,6 @@ body {
   30%,
   100% {
     box-shadow: 0 0 0 rgba(0, 255, 255, 0);
-  }
-}
-
-@media (max-width: 1100px) {
-  .side-column {
-    width: min(44vw, 30rem);
   }
 }
 
