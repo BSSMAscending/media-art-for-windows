@@ -70,7 +70,7 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 
 베타는 정식 배포와 저장소가 다릅니다. `package.json`은 `1.0.2`로 두고, 베타 번호를 `main`에 커밋하지 않습니다. 커밋하면 정식 배포 검사가 실패하거나, 검사를 통과할 경우 전시 PC가 받는 저장소로 올라갑니다.
 
-베타 번호는 다음 정식 버전의 semver 시험 번호입니다. 지금 줄은 `2.0.0-beta.1`부터 시작하고, 몇 번째에서 끝낼지는 정하지 않습니다. `2.0.0-beta.3`에서 멈춰도 되고 `2.0.0-beta.12`까지 가도 됩니다. 번호는 1~999이고 앞자리 0은 넣지 않습니다. Windows 업데이트(Squirrel.Windows)는 대시 뒤를 한 문자열로 비교하는데 electron-winstaller가 `beta.10`의 점을 지워 `beta10`으로 만들기 때문에, 그대로 두면 `beta10`이 `beta9`보다 앞서 Windows 베타가 10번부터 업데이트되지 않습니다. 그래서 설치 파일 안의 NuGet 버전만 `2.0.0-beta010`처럼 세 자리로 맞추고(`forge.config.js`, `squirrelVersion`), 앱 버전과 태그는 `2.0.0-beta.10`으로 둡니다. 베타 Release의 `.nupkg`와 `RELEASES`에 `beta010`이 적혀 있는 것은 이 때문입니다.
+베타 번호는 다음 정식 버전의 semver 시험 번호입니다. 지금 줄은 `2.0.0-beta.1`부터 시작하고, 몇 번째에서 끝낼지는 정하지 않습니다. `2.0.0-beta.3`에서 멈춰도 되고 `2.0.0-beta.12`까지 가도 됩니다. 번호는 1~999이고 앞자리 0은 넣지 않으며, 이미 올라간 베타보다 커야 합니다. Squirrel은 낮은 번호를 업데이트로 보지 않아서 워크플로가 시작할 때 소스 태그와 베타 저장소의 공개 Release를 보고 같거나 낮은 번호를 막습니다. Windows 업데이트(Squirrel.Windows)는 대시 뒤를 한 문자열로 비교하는데 electron-winstaller가 `beta.10`의 점을 지워 `beta10`으로 만들기 때문에, 그대로 두면 `beta10`이 `beta9`보다 앞서 Windows 베타가 10번부터 업데이트되지 않습니다. 그래서 설치 파일 안의 NuGet 버전만 `2.0.0-beta010`처럼 세 자리로 맞추고(`forge.config.js`, `squirrelVersion`), 앱 버전과 태그는 `2.0.0-beta.10`으로 둡니다. 베타 Release의 `.nupkg`와 `RELEASES`에 `beta010`이 적혀 있는 것은 이 때문입니다.
 
 줄을 마치기로 하면 정식 `2.0.0`을 평소처럼 `main`의 버전을 올려 전시 저장소에 올립니다. 그때 전시 PC가 업데이트됩니다. 그 전의 베타 번호는 전시 저장소로 올리지 않습니다. 정식 `2.0.0`을 베타 저장소에 올리는 일도 없습니다.
 
@@ -78,6 +78,7 @@ Windows 베타 설치본은 베타 저장소만 업데이트 피드로 보므로
 
 Actions의 **Publish beta**(`publish-beta.yml`)를 수동으로 실행하고 버전을 `2.0.0-beta.1`처럼 넣습니다. 워크플로가 그 번호로 Windows와 Mac(Apple Silicon, Intel)을 만들어 공개 저장소 `BSSMAscending/media-art-beta`에만 올립니다. 올리기 전에 `scripts/release-target.js`가 대상 저장소를 검사하고, 대상이 정식 저장소이거나 버전이 `X.Y.Z`이면 업로드 전에 멈춥니다. 정식 배포 워크플로도 반대로, 베타 버전은 `media-art-for-windows-releases`에 올리지 않고 멈춥니다. Windows 베타 설치본만 베타 저장소를 업데이트 피드로 봅니다. 이미 설치된 정식 버전은 `media-art-for-windows-releases`만 보므로 베타를 받지 않습니다.
 
+시작할 때 베타 저장소가 공개가 아니면 빌드 전에 멈춥니다. 비공개 저장소는 업데이트 서버도 받는 사람도 볼 수 없기 때문입니다. 릴리스는 처음에 초안(Draft)으로 만들고, 캐스크와 소스 태그까지 끝난 뒤 마지막 단계에서 공개합니다. 그 전에 실패하면 공개된 것이 없으므로 같은 버전으로 워크플로를 다시 실행하면 파일, 캐스크의 해시, 태그를 처음부터 다시 맞춥니다. 마지막 공개 단계만 실패했다면 초안을 베타 저장소에서 직접 공개합니다. 파일과 캐스크는 이미 맞아 있습니다. 소스 태그가 이미 있으면 그 번호는 쓰인 것으로 보고 다음 번호를 씁니다.
 
 베타 Release에는 Windows 설치 파일과 Mac 압축 파일 두 종류가 함께 있습니다. Mac은 Apple Silicon과 Intel로 나뉩니다. 받는 주소는 `https://github.com/BSSMAscending/media-art-beta/releases/latest`입니다. Mac은 서명하지 않아 앱이 스스로 업데이트하지 않고, 압축을 풀어 처음 열 때 Mac이 막을 수 있습니다. 소개 사이트의 베타 버튼이 이 배포를 가리킵니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
 
@@ -90,7 +91,7 @@ brew install --cask binary-media-art-beta
 
 다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 캐스크의 `postflight_steps`는 설치가 끝난 뒤 그 Mac에서 두 명령을 실행합니다. `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시를 지우고, `/usr/bin/codesign --force --deep -s -`로 그 자리에서 ad-hoc 서명을 합니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 서명되지 않은 앱의 이 처리를 받지 않습니다.
 
-이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`에 릴리스를 만들 수 있어야 합니다. 탭을 같이 갱신하려면 `homebrew-tap`에도 푸시할 수 있어야 합니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
+이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`에 릴리스를 만들 수 있어야 합니다. 탭을 같이 갱신하려면 `homebrew-tap`에도 푸시할 수 있어야 합니다. 탭이 없을 때(404)만 캐스크를 건너뛰고, 탭이 있는데 권한이 없거나 확인이 실패하면 빌드 전에 멈춥니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
 
 ## 변경 기록 쓰기
 
