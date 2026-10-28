@@ -39,11 +39,17 @@ describe('patch notes', () => {
 - 첫 버전
 `;
 
-  it('lists every version newest first with an anchor', () => {
+  it('lists every version newest first, with its title, in the side list', () => {
     const { index, notes } = renderPatchNotes(parseChangelog(changelog));
-    expect(index).toBe(
-      `<a href="#upcoming">${bilingual('다음 버전', 'Next')}</a>\n<a href="#v1.1.0">v1.1.0</a>\n<a href="#v1.0.0">v1.0.0</a>`
+    expect(index.match(/href="#[^"]+"/g)).toEqual([
+      'href="#upcoming"',
+      'href="#v1.1.0"',
+      'href="#v1.0.0"',
+    ]);
+    expect(index).toContain(
+      `<li><a href="#v1.1.0"><span class="toc-version">v1.1.0</span><span class="toc-title">${bilingual('새 모드', '새 모드')}</span></a></li>`
     );
+    expect(index).toContain(`<a href="#upcoming" class="is-upcoming">`);
     expect(notes).toContain('<article class="release" id="v1.1.0">');
     expect(notes).toContain('<span data-l="ko">새 모드</span>');
     expect(notes).toContain('<time datetime="2026-10-28">2026. 10. 28.</time>');

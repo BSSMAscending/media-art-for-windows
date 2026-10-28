@@ -9,7 +9,7 @@ this file is shown in Korean on the site.
 ### New
 
 - The exhibit now has four modes: Media Art, RGB Color, Brightness and Image Math.
-- RGB Color: the camera is shown as pixel cells with their numbers. Pressing `R`, `G` or `B` slides the three lights apart and keeps the one you picked, with its strength (0~255) in every cell. Press it again to return to full color, where large cells show all three numbers.
+- RGB Color: the camera is shown as pixel cells with their numbers. Pressing `R`, `G` or `B` separates the red, green and blue layers of light and keeps the one you picked, with its strength (0~255) in every cell. Press it again to return to full color, where large cells show all three numbers.
 - Brightness: the camera's brightness is cut into 2, 10 or 256 steps, with the step number in every cell.
 - Cell size lever: every mode can use 8~48px cells. It starts at 24px.
 - Threshold lever: in 2 steps, move the 0~255 point that separates 0 from 1.
