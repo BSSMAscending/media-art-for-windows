@@ -15,6 +15,22 @@ function getCoverCrop(sourceWidth, sourceHeight, targetWidth, targetHeight) {
   return { x: 0, y: (sourceHeight - height) / 2, width: sourceWidth, height };
 }
 
+// The mask pixel that grid cell (x, y) samples: the point in the middle of the cell,
+// in the camera's own orientation (not mirrored).
+function getCellMaskIndex(segmentation, crop, sourceWidth, sourceHeight, cols, rows, x, y) {
+  const sourceY = crop.y + ((y + 0.5) / rows) * crop.height;
+  const maskY = Math.min(
+    segmentation.height - 1,
+    Math.floor((sourceY / sourceHeight) * segmentation.height)
+  );
+  const sourceX = crop.x + ((x + 0.5) / cols) * crop.width;
+  const maskX = Math.min(
+    segmentation.width - 1,
+    Math.floor((sourceX / sourceWidth) * segmentation.width)
+  );
+  return maskY * segmentation.width + maskX;
+}
+
 function upsampleCoverMaskToGrid(
   segmentation,
   crop,
@@ -26,18 +42,18 @@ function upsampleCoverMaskToGrid(
 ) {
   const grid = output && output.length === cols * rows ? output : new Uint8Array(cols * rows);
   for (let y = 0; y < rows; y++) {
-    const sourceY = crop.y + ((y + 0.5) / rows) * crop.height;
-    const maskY = Math.min(
-      segmentation.height - 1,
-      Math.floor((sourceY / sourceHeight) * segmentation.height)
-    );
     for (let x = 0; x < cols; x++) {
-      const sourceX = crop.x + ((x + 0.5) / cols) * crop.width;
-      const maskX = Math.min(
-        segmentation.width - 1,
-        Math.floor((sourceX / sourceWidth) * segmentation.width)
+      const index = getCellMaskIndex(
+        segmentation,
+        crop,
+        sourceWidth,
+        sourceHeight,
+        cols,
+        rows,
+        x,
+        y
       );
-      grid[y * cols + x] = segmentation.data[maskY * segmentation.width + maskX];
+      grid[y * cols + x] = segmentation.data[index];
     }
   }
   return grid;
@@ -53,4 +69,4 @@ function mapLandmarksToCover(handLandmarks, crop, sourceWidth, sourceHeight) {
   );
 }
 
-module.exports = { getCoverCrop, upsampleCoverMaskToGrid, mapLandmarksToCover };
+module.exports = { getCoverCrop, getCellMaskIndex, upsampleCoverMaskToGrid, mapLandmarksToCover };

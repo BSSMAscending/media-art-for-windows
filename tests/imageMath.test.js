@@ -1,5 +1,6 @@
 const {
   clampByte,
+  greyOf,
   toGrey,
   addBrightness,
   scaleContrast,
@@ -20,6 +21,12 @@ describe('image math on grey cells', () => {
   it('turns RGBA cells into one brightness number each', () => {
     const pixels = Uint8ClampedArray.from([255, 255, 255, 255, 255, 0, 0, 255, 0, 0, 255, 255]);
     expect([...toGrey(pixels, new Uint8ClampedArray(3))]).toEqual([255, 76, 29]);
+  });
+
+  it("rounds one cell's brightness to a whole number", () => {
+    expect([greyOf(255, 255, 255), greyOf(153, 153, 152), greyOf(255, 0, 0)]).toEqual([
+      255, 153, 76,
+    ]);
   });
 
   it('adds brightness to every cell and stops at 255', () => {

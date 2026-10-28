@@ -5,6 +5,7 @@
 const ZOOM = 3;
 // Lens sits this far above the finger so the finger never hides it.
 const LENS_GAP = 28;
+const CAPTION_GAP = 10;
 
 /** Square of the screen the lens shows, centred on the pressed point. */
 function getSourceRegion(point, lensSize, zoom = ZOOM) {
@@ -22,6 +23,66 @@ function getLensPlacement(point, lensSize, viewport) {
   const top = above >= 0 ? above : Math.min(point.y + LENS_GAP, viewport.height - lensSize);
   const left = Math.max(0, Math.min(viewport.width - lensSize, point.x - half));
   return { left, top: Math.max(0, top) };
+}
+
+/**
+ * Places the calculation caption on the far side of the lens from the finger,
+ * centred on the lens and kept on screen.
+ */
+function getCaptionPlacement(lens, caption, point, viewport) {
+  const lensAbove = lens.top + lens.size <= point.y;
+  const top = lensAbove
+    ? Math.max(0, lens.top - CAPTION_GAP - caption.height)
+    : Math.min(viewport.height - caption.height, lens.top + lens.size + CAPTION_GAP);
+  const centred = lens.left + (lens.size - caption.width) / 2;
+  return { left: Math.max(0, Math.min(viewport.width - caption.width, centred)), top };
+}
+
+/**
+ * Outlines the calculated cell in the lens. For blur and sharpen, `radius` also
+ * outlines the neighbours it averages and `weights` (3×3) labels their weights.
+ * `toLens` maps a screen point to lens pixels and `scale` is lens pixels per
+ * screen pixel; `cell` is the cell's square on screen.
+ */
+function drawLensMarks(ctx, toLens, scale, cell, { radius = 0, weights = null } = {}) {
+  const size = cell.size * scale;
+  const line = Math.max(2, scale);
+  ctx.save();
+  if (radius) {
+    const [x, y] = toLens(cell.left - radius * cell.size, cell.top - radius * cell.size);
+    const span = size * (radius * 2 + 1);
+    ctx.lineWidth = line;
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.95)';
+    ctx.setLineDash([line * 3, line * 2]);
+    ctx.strokeRect(x, y, span, span);
+    ctx.setLineDash([]);
+  }
+  if (weights) {
+    const fontSize = Math.round(size * 0.22);
+    ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    weights.forEach((weight, index) => {
+      const [x, y] = toLens(
+        cell.left + ((index % 3) - 1) * cell.size,
+        cell.top + (Math.floor(index / 3) - 1) * cell.size
+      );
+      const label = `×${weight}`;
+      const width = ctx.measureText(label).width + fontSize * 0.3;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.fillRect(x + size - width - line, y + line, width, fontSize * 1.05);
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText(label, x + size - line - fontSize * 0.15, y + line + fontSize * 0.05);
+    });
+  }
+  const [x, y] = toLens(cell.left, cell.top);
+  ctx.lineWidth = line * 2.5;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+  ctx.strokeRect(x, y, size, size);
+  ctx.lineWidth = line * 1.25;
+  ctx.strokeStyle = '#ffffff';
+  ctx.strokeRect(x, y, size, size);
+  ctx.restore();
 }
 
 /**
@@ -54,7 +115,9 @@ function mapLayer(region, rect, backing, zoom, ratio) {
   };
 }
 
-function createMagnifier({ area, getLayers, getArtworkRect }) {
+// `onPoint` hears every point the lens shows, so the cards can calculate that cell;
+// `decorate(ctx, toLens, scale)` draws over the magnified picture (see drawLensMarks).
+function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate }) {
   const lens = document.createElement('div');
   lens.className = 'magnifier-lens';
   lens.hidden = true;
@@ -67,7 +130,11 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
   const marker = document.createElement('div');
   marker.className = 'magnifier-marker';
   marker.hidden = true;
-  document.body.append(lens, marker);
+  // The pressed cell's calculation, next to the lens where the visitor is looking.
+  const caption = document.createElement('div');
+  caption.className = 'magnifier-caption';
+  caption.hidden = true;
+  document.body.append(lens, marker, caption);
   const ctx = canvas.getContext('2d');
 
   let pointerId = null;
@@ -88,6 +155,15 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
     marker.style.transform = `translate(${region.left}px, ${region.top}px)`;
     marker.style.width = `${region.size}px`;
     marker.style.height = `${region.size}px`;
+    if (caption.hidden) return;
+    const box = caption.getBoundingClientRect();
+    const spot = getCaptionPlacement(
+      { left, top, size },
+      { width: box.width, height: box.height },
+      point,
+      { width: window.innerWidth, height: window.innerHeight }
+    );
+    caption.style.transform = `translate(${spot.left}px, ${spot.top}px)`;
   }
 
   function follow(event) {
@@ -96,6 +172,7 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
     point.x = Math.max(rect.left, Math.min(rect.right, event.clientX));
     point.y = Math.max(rect.top, Math.min(rect.bottom, event.clientY));
     place();
+    onPoint?.(point);
   }
 
   function show(event) {
@@ -109,6 +186,7 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
     }
     lens.hidden = false;
     marker.hidden = false;
+    caption.hidden = !caption.textContent;
     follow(event);
     render();
   }
@@ -118,6 +196,15 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
     pointerId = null;
     lens.hidden = true;
     marker.hidden = true;
+    caption.hidden = true;
+  }
+
+  /** Shows `text` next to the lens while it is open. */
+  function setCaption(text) {
+    if (caption.textContent === text) return;
+    caption.textContent = text;
+    caption.hidden = !text || pointerId === null;
+    if (!caption.hidden) place();
   }
 
   /** Copies the freshly drawn frame into the lens; call right after each frame. */
@@ -140,6 +227,8 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(layer, ...mapped.source, ...mapped.target);
     }
+    const scale = ZOOM * ratio;
+    decorate?.(ctx, (x, y) => [(x - region.left) * scale, (y - region.top) * scale], scale);
   }
 
   area.addEventListener('pointerdown', show);
@@ -152,7 +241,15 @@ function createMagnifier({ area, getLayers, getArtworkRect }) {
   // A long touch would otherwise open the context menu on Windows.
   area.addEventListener('contextmenu', (event) => event.preventDefault());
 
-  return { render, hide: () => hide({ pointerId }) };
+  return { render, setCaption, hide: () => hide({ pointerId }) };
 }
 
-module.exports = { createMagnifier, getSourceRegion, getLensPlacement, mapLayer, ZOOM };
+module.exports = {
+  createMagnifier,
+  drawLensMarks,
+  getSourceRegion,
+  getLensPlacement,
+  getCaptionPlacement,
+  mapLayer,
+  ZOOM,
+};

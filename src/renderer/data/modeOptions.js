@@ -25,7 +25,7 @@ const MODE_SUB_OPTIONS = {
     stateKey: 'rgbChannel',
     label: {
       ko: '빛을 하나 골라보세요 (다시 누르면 전체 색)',
-      en: 'Pick one light (tap again for full color)',
+      en: 'Pick a light (tap again to undo)',
     },
     noneValue: 'N',
     options: [
@@ -47,7 +47,7 @@ const MODE_SUB_OPTIONS = {
     stateKey: 'mathEffect',
     label: {
       ko: '계산을 하나 골라보세요 (다시 누르면 원본)',
-      en: 'Pick a calculation (tap again for the original)',
+      en: 'Pick a calculation (tap again to undo)',
     },
     noneValue: 'none',
     options: [
@@ -105,7 +105,7 @@ function getCellSizeFloor(state) {
     return {
       size: COLOR_VALUE_CELL_SIZE,
       note: {
-        ko: `전체 색은 ${COLOR_VALUE_CELL_SIZE}px부터`,
+        ko: `${COLOR_VALUE_CELL_SIZE}px부터`,
         en: `From ${COLOR_VALUE_CELL_SIZE}px`,
       },
     };
@@ -141,7 +141,7 @@ const MATH_SLIDERS = {
   },
   contrast: {
     stateKey: 'mathContrast',
-    label: { ko: '곱할 수', en: 'Multiply by' },
+    label: { ko: '곱할 수', en: 'Multiply' },
     values: [0, 0.5, 1, 1.5, 2, 2.5, 3],
     format: (value) => `× ${value}`,
     ends: [
@@ -155,7 +155,7 @@ const MATH_SLIDERS = {
     values: [1, 2, 3],
     format: (radius) => {
       const size = `${radius * 2 + 1}×${radius * 2 + 1}`;
-      return { ko: `${size}칸`, en: `${size} cells` };
+      return { ko: `${size}칸`, en: size };
     },
     ends: [
       { ko: '조금', en: 'Less' },

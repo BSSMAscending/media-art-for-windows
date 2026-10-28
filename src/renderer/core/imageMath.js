@@ -8,11 +8,16 @@ function clampByte(value) {
   return Math.max(0, Math.min(255, Math.round(value)));
 }
 
-// One brightness number per cell, the same weights the levels mode uses.
+// A cell's brightness as the whole number 0-255 that the levels and math views show.
+function greyOf(r, g, b) {
+  return clampByte(0.299 * r + 0.587 * g + 0.114 * b);
+}
+
+// One brightness number per cell.
 function toGrey(pixels, output) {
   for (let i = 0; i < output.length; i++) {
     const p = i * 4;
-    output[i] = clampByte(0.299 * pixels[p] + 0.587 * pixels[p + 1] + 0.114 * pixels[p + 2]);
+    output[i] = greyOf(pixels[p], pixels[p + 1], pixels[p + 2]);
   }
   return output;
 }
@@ -38,10 +43,16 @@ function getGaussianWeights(radius) {
   return row.map((a) => row.map((b) => a * b));
 }
 
+// Sum of all the weights: 16 for 3×3, 256 for 5×5, 4,096 for 7×7. Powers of two, so
+// dividing by it is exact and the weighted sum can be read back as average × total.
+function getGaussianTotal(radius) {
+  return GAUSSIAN_ROWS[radius].reduce((sum, weight) => sum + weight, 0) ** 2;
+}
+
 // Weighted average of the cells around (x, y), unrounded; off-grid cells reuse the edge.
 function gaussianAt(input, cols, rows, x, y, radius) {
   const row = GAUSSIAN_ROWS[radius];
-  const total = row.reduce((sum, weight) => sum + weight, 0) ** 2;
+  const total = getGaussianTotal(radius);
   let sum = 0;
   for (let dy = -radius; dy <= radius; dy++) {
     const offset = Math.max(0, Math.min(rows - 1, y + dy)) * cols;
@@ -88,10 +99,13 @@ function applyImageMath(effect, amount, input, output, cols, rows) {
 
 module.exports = {
   clampByte,
+  greyOf,
   toGrey,
   addBrightness,
   scaleContrast,
   getGaussianWeights,
+  getGaussianTotal,
+  gaussianAt,
   gaussianBlur,
   sharpen,
   applyImageMath,

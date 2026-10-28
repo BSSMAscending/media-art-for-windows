@@ -123,7 +123,8 @@ function paintMathCell(cell, value) {
   cell.style.color = value >= 128 ? '#000' : '#fff';
 }
 
-// `weights` (3×3, optional) are shown as small ×n badges on the cells.
+// `weights` (3×3, optional) are shown as small ×n badges on the cells while the
+// example shows a 3×3 calculation (the `shows-weights` class).
 function createMathGrid(values, className, weights) {
   const grid = element('div', `explain-math-grid ${className}`);
   values.forEach((value, index) => {
@@ -136,10 +137,19 @@ function createMathGrid(values, className, weights) {
   return grid;
 }
 
-// Before → calculation → after on a 3×3 example. `updateAmount` refreshes the
-// numbers in place as the lever moves, without restarting the animation.
+function paintMathGrid(grid, values) {
+  grid.querySelectorAll('.explain-math-cell').forEach((cell, index) => {
+    paintMathCell(cell, values[index]);
+  });
+}
+
+// Before → calculation → after on a 3×3 example chosen to show the change clearly.
+// The visitor's own cells are calculated in the magnifier and the card under the
+// controls. `updateAmount` refreshes the numbers in place as the lever moves,
+// without restarting the animation.
 function createMathOp(effect, amount) {
   const root = element('div', `explain-math explain-math--${effect}`);
+  root.dataset.label = t({ ko: '예시', en: 'Example' });
   // Blur and sharpen weigh the neighbours: corner 1, side 2, centre 4 (3×3 Gaussian).
   const weights = ['blur', 'sharpen'].includes(effect) ? getGaussianWeights(1).flat() : null;
   const before = createMathGrid([...MATH_EXAMPLE], 'is-before', weights);
@@ -150,10 +160,85 @@ function createMathOp(effect, amount) {
   const output = new Uint8ClampedArray(9);
   root.updateAmount = (value) => {
     applyImageMath(effect, value, MATH_EXAMPLE, output, 3, 3);
-    after.querySelectorAll('.explain-math-cell').forEach((cell, index) => {
-      paintMathCell(cell, output[index]);
-    });
+    paintMathGrid(after, output);
     operator.textContent = formatMathOperator(effect, value);
+    // A wider blur averages more cells than the 3×3 weights describe.
+    root.classList.toggle(
+      'shows-weights',
+      effect === 'sharpen' || (effect === 'blur' && value === 1)
+    );
+  };
+  root.updateAmount(amount);
+  return root;
+}
+
+const SVG = 'http://www.w3.org/2000/svg';
+
+function svgElement(tag, attributes) {
+  const el = document.createElementNS(SVG, tag);
+  for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
+  return el;
+}
+
+// The calculation written the way a linear function is: x is a cell's value, y its
+// new value.
+function formatFunction(effect, amount) {
+  if (effect === 'brightness') return `y = x ${amount < 0 ? '−' : '+'} ${Math.abs(amount)}`;
+  return `y = ${amount}(x − 128) + 128`;
+}
+
+// 밝기 · 대비 change every cell on its own, so the whole calculation is one graph:
+// the new value y for every value x, drawn with the view's own maths, beside the
+// plain y = x line. The marked cell is the dot (`updateCell`).
+function createMathGraph(effect, amount) {
+  const root = element('div', 'explain-graph');
+  const plot = svgElement('svg', { class: 'explain-graph-plot', viewBox: '-6 -6 267 267' });
+  const flip = (y) => 255 - y;
+  plot.append(
+    svgElement('rect', { class: 'graph-frame', x: 0, y: 0, width: 255, height: 255 }),
+    svgElement('line', { class: 'graph-mid', x1: 128, y1: 0, x2: 128, y2: 255 }),
+    svgElement('line', { class: 'graph-mid', x1: 0, y1: flip(128), x2: 255, y2: flip(128) }),
+    svgElement('line', { class: 'graph-identity', x1: 0, y1: 255, x2: 255, y2: 0 })
+  );
+  const line = svgElement('polyline', { class: 'graph-line' });
+  const guides = svgElement('path', { class: 'graph-guide' });
+  const dot = svgElement('circle', { class: 'graph-dot', r: 13 });
+  plot.append(line, guides, dot);
+
+  const legend = element('div', 'explain-graph-legend');
+  const formula = element('div', 'explain-graph-formula');
+  const cell = element('div', 'explain-graph-cell');
+  legend.append(
+    formula,
+    cell,
+    element('div', 'explain-graph-axes', t({ ko: 'x = 값, y = 새 값', en: 'x = value, y = new' }))
+  );
+  root.append(plot, legend);
+
+  const ramp = Uint8ClampedArray.from({ length: 256 }, (_, x) => x);
+  const output = new Uint8ClampedArray(256);
+  let marked = null;
+
+  function showCell() {
+    dot.style.display = marked ? '' : 'none';
+    guides.style.display = marked ? '' : 'none';
+    cell.textContent = marked ? `● ${marked.value} → ${output[marked.value]}` : '';
+    if (!marked) return;
+    const [x, y] = [marked.value, flip(output[marked.value])];
+    dot.setAttribute('cx', x);
+    dot.setAttribute('cy', y);
+    guides.setAttribute('d', `M ${x} 255 V ${y} H 0`);
+  }
+
+  root.updateAmount = (value) => {
+    applyImageMath(effect, value, ramp, output, 256, 1);
+    line.setAttribute('points', [...output].map((y, x) => `${x},${flip(y)}`).join(' '));
+    formula.textContent = formatFunction(effect, value);
+    showCell();
+  };
+  root.updateCell = (reading) => {
+    marked = reading;
+    showCell();
   };
   root.updateAmount(amount);
   return root;
@@ -165,7 +250,14 @@ function createExplainAnimation(spec) {
   if (spec?.type === 'channel-dimmer') return createChannelDimmer(spec.color);
   if (spec?.type === 'level-steps') return createLevelSteps(spec.levels);
   if (spec?.type === 'math-op') return createMathOp(spec.effect, spec.amount ?? 0);
+  if (spec?.type === 'math-graph') return createMathGraph(spec.effect, spec.amount ?? 0);
   return null;
 }
 
-module.exports = { createExplainAnimation, formatMathOperator, PERSON_BITMAP, MATH_EXAMPLE };
+module.exports = {
+  createExplainAnimation,
+  formatMathOperator,
+  formatFunction,
+  PERSON_BITMAP,
+  MATH_EXAMPLE,
+};

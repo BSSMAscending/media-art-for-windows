@@ -43,236 +43,6 @@ body {
   z-index: 1;
 }
 
-.info-mode {
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #00ffff;
-}
-
-.info-desc {
-  color: #00aaaa;
-  margin-bottom: 0.75rem;
-  line-height: 1.4;
-}
-
-.info-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.info-stats span {
-  background: rgba(0, 255, 255, 0.08);
-  padding: 0.2rem 0.4rem;
-  border: 1px solid #003333;
-  font-size: 0.75rem;
-}
-
-.info-kernel {
-  margin-top: 0.5rem;
-}
-
-.info-kernel pre {
-  background: rgba(0, 255, 255, 0.05);
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  color: #00ffcc;
-  border: 1px solid #003333;
-}
-
-.info-kernel-label {
-  font-size: 0.75rem;
-  color: #006666;
-  margin-top: 0.25rem;
-}
-
-.info-hint {
-  margin-top: 0.75rem;
-  color: #006666;
-  font-size: 0.75rem;
-  text-align: right;
-}
-
-.edu-overlay {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.9);
-  border-top: 1px solid #00ffff;
-  color: #00ffff;
-  font-family: 'Courier New', monospace;
-  padding: 1.5rem 2rem;
-  z-index: 100;
-}
-
-.edu-main {
-  font-size: 1.1rem;
-  line-height: 1.8;
-  margin-bottom: 0.75rem;
-}
-
-.edu-mode-desc {
-  font-size: 0.9rem;
-  color: #00aaaa;
-  margin-bottom: 0.5rem;
-}
-
-.edu-hint {
-  font-size: 0.75rem;
-  color: #006666;
-  text-align: right;
-}
-
-.math-panel-title {
-  font-size: 0.95rem;
-  font-weight: bold;
-  text-align: center;
-  letter-spacing: 0.15rem;
-  margin-bottom: 0.8rem;
-  border-bottom: 1px solid #004444;
-  padding-bottom: 0.5rem;
-}
-
-.math-section {
-  margin-bottom: 0.9rem;
-}
-
-.math-section-title {
-  font-size: 0.7rem;
-  color: #006666;
-  letter-spacing: 0.08rem;
-  margin-bottom: 0.3rem;
-  text-transform: uppercase;
-}
-
-.math-mode-name {
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #00ffff;
-  margin-bottom: 0.2rem;
-}
-
-.math-formula {
-  font-size: 0.8rem;
-  color: #00ffcc;
-  background: rgba(0, 255, 255, 0.05);
-  padding: 0.3rem 0.5rem;
-  border-left: 2px solid #00ffff;
-  margin-bottom: 0.3rem;
-}
-
-.math-desc {
-  font-size: 0.72rem;
-  color: #00aaaa;
-  line-height: 1.4;
-}
-
-.math-pixel-stats {
-  display: flex;
-  gap: 0.6rem;
-  margin-bottom: 0.4rem;
-  font-size: 0.8rem;
-}
-
-.math-pixel-stats b {
-  color: #ffffff;
-}
-
-.math-pixel-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.2rem;
-}
-
-.math-pixel-bar {
-  flex: 1;
-  height: 6px;
-  background: #001a1a;
-  border: 1px solid #003333;
-  overflow: hidden;
-}
-
-.math-pixel-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #003333, #00ffff);
-  transition: width 0.3s ease;
-}
-
-.math-pixel-pct {
-  font-size: 0.7rem;
-  color: #00aaaa;
-  min-width: 2rem;
-  text-align: right;
-}
-
-.math-pixel-label {
-  font-size: 0.68rem;
-  color: #006666;
-  font-style: italic;
-}
-
-.math-stage-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.72rem;
-}
-
-.math-stage-table th {
-  color: #006666;
-  text-align: left;
-  padding: 0.2rem 0.3rem;
-  border-bottom: 1px solid #002222;
-}
-
-.math-stage-table td {
-  padding: 0.2rem 0.3rem;
-  color: #008888;
-  border-bottom: 1px solid #001111;
-}
-
-.math-stage-active td {
-  color: #00ffff;
-  background: rgba(0, 255, 255, 0.08);
-  font-weight: bold;
-}
-
-.math-kernel {
-  background: rgba(0, 255, 255, 0.05);
-  padding: 0.4rem;
-  font-size: 0.75rem;
-  color: #00ffcc;
-  border: 1px solid #003333;
-  margin-bottom: 0.3rem;
-}
-
-.math-kernel-label {
-  font-size: 0.68rem;
-  color: #006666;
-  line-height: 1.3;
-}
-
-.math-stats-row {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  font-size: 0.68rem;
-  color: #004444;
-  border-top: 1px solid #002222;
-  padding-top: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.math-hint {
-  text-align: center;
-  color: #004444;
-  font-size: 0.7rem;
-  margin-top: 0.5rem;
-}
-
 :root {
   --surface-primary: #000000;
   --surface-panel: rgba(0, 5, 13, 0.94);
@@ -294,20 +64,21 @@ body {
   --space-6: 24px;
   --space-8: 32px;
   --type-control-label: clamp(0.875rem, 1.09375vw, 1.25rem);
-  --type-control: clamp(1rem, 1.25vw, 1.5rem);
+  --type-control: clamp(0.9375rem, 1vw, 1.25rem);
   --type-control-meta: clamp(0.75rem, 0.9375vw, 1.125rem);
-  --type-panel-title: clamp(1.125rem, 1.40625vw, 1.75rem);
-  --type-panel-body: clamp(1rem, 1.25vw, 1.5rem);
-  --type-panel-note: clamp(0.8125rem, 1.015625vw, 1.125rem);
-  --type-panel-eyebrow: clamp(0.75rem, 0.9375vw, 1.125rem);
   --type-panel-mode: clamp(1.0625rem, 1.328125vw, 1.625rem);
   --side-column-inset: clamp(1rem, 2vw, 2.5rem);
-  --side-column-width: clamp(20rem, 35vw, 44rem);
+  /* The 4:3 camera picture fills the screen height; the column takes what is left. */
+  --side-column-width: clamp(
+    24rem,
+    calc(100vw - (100vh - 2 * var(--side-column-inset)) * 4 / 3 - 3 * var(--side-column-inset)),
+    34rem
+  );
   --ui-cluster-gap: clamp(0.5rem, 1vw, 1rem);
-  --live-panel-padding: clamp(0.75rem, 1vw, 1.5rem);
+  --card-padding: clamp(0.625rem, 0.75vw, 1.125rem);
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
-  --live-control-height: clamp(4.5rem, 5.5vw, 7rem);
-  --option-control-height: clamp(4rem, 4.6vw, 6rem);
+  --live-control-height: clamp(3.75rem, 3.6vw, 4.75rem);
+  --option-control-height: clamp(3.5rem, 3.4vw, 4.5rem);
   --slider-control-height: clamp(5.5rem, 6.2vw, 8rem);
   --slider-thumb-size: clamp(2.25rem, 2.6vw, 3.25rem);
   --slider-track-height: clamp(0.625rem, 0.7vw, 0.875rem);
@@ -511,16 +282,14 @@ body {
 }
 
 .mode-button-grid--live {
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  grid-template-columns: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
 }
 
-/* Four modes share one row, so labels drop the letter spacing and never break mid-word. */
+/* Four modes in two rows of two; labels drop the letter spacing and never break mid-word. */
 .mode-button-grid--live .mode-button {
   min-height: var(--live-control-height);
-  padding-inline: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   background: rgba(0, 8, 12, 0.8);
   font-size: clamp(0.875rem, 1.1vw, 1.375rem);
   letter-spacing: 0;
@@ -536,10 +305,13 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: var(--space-2);
-  /* Content box: reserve exactly label + gap + one button row, so the control block
-     is the same height whether or not the mode has option buttons. */
+  /* Content box: reserve exactly label + gap + two button rows, so the control block
+     is the same height whether the mode has four, three or no option buttons. */
   box-sizing: content-box;
-  min-height: calc(var(--option-control-height) + var(--type-control-label) * 1.4 + var(--space-2));
+  min-height: calc(
+    var(--option-control-height) * 2 + var(--space-3) + var(--type-control-meta) * 1.4 +
+      var(--space-2)
+  );
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
@@ -547,7 +319,7 @@ body {
 
 .mode-options-label {
   color: var(--text-secondary);
-  font-size: var(--type-control-label);
+  font-size: var(--type-control-meta);
   line-height: 1.4;
   text-align: center;
   word-break: keep-all;
@@ -558,10 +330,17 @@ body {
 }
 
 .mode-option-grid {
+  flex: 1;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
   grid-template-columns: none;
   margin: 0;
+}
+
+/* Four calculations make two rows of two, like the modes; three options share one row. */
+.mode-option-grid:has(> :nth-child(4)) {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .mode-option-grid:empty {
@@ -570,6 +349,7 @@ body {
 
 .mode-option-button {
   min-height: var(--option-control-height);
+  padding-block: var(--space-1);
   background: rgba(0, 8, 12, 0.8);
 }
 
@@ -618,16 +398,18 @@ body {
 
 .mode-slider-label {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--type-control-label);
+  font-size: var(--type-control-meta);
   font-weight: 700;
-  word-break: keep-all;
+  white-space: nowrap;
 }
 
 .mode-slider-value {
   color: var(--accent-primary);
+  font-size: var(--type-control-label);
   font-variant-numeric: tabular-nums;
 }
 
@@ -711,7 +493,9 @@ body {
   pointer-events: none;
 }
 
-/* Equal flex above and below keeps the controls exactly at mid screen height. */
+/* The cards share the height left around the control block. The rule card above
+   holds a picture, so it gets a little more than the cell card below; the controls
+   stay in the middle of the screen height, give or take 3%. */
 .panel-cards {
   display: flex;
   flex: 1 1 0;
@@ -719,124 +503,24 @@ body {
   min-height: 0;
 }
 
-.detail-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.panel-cards--rule {
+  flex-grow: 1.4;
 }
 
+/* Quiet frames, so the picture of the visitor stays the brightest thing on screen. */
 .math-panel,
 .detail-card {
   position: relative;
-  padding: var(--live-panel-padding);
-  border: 1px solid var(--border-default);
-  background: var(--surface-panel);
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.detail-card {
-  flex: 1;
-  gap: var(--space-3);
-  overflow: hidden;
-}
-
-.explain-details,
-.explain-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* How every mode is made: a quiet footer of the detail card. */
-.info-panel {
-  display: flex;
-  flex-direction: column;
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
-}
-
-.math-panel {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  max-height: none;
-  overflow-y: auto;
-  transform: none;
-}
-
-.panel-eyebrow {
-  margin-bottom: var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--type-panel-eyebrow);
-  letter-spacing: 0.14em;
-}
-
-.info-mode {
-  margin-bottom: var(--space-2);
-  color: var(--text-primary);
-  font-size: clamp(0.875rem, 1.0156vw, 1.25rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.info-desc {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: clamp(0.8125rem, 0.8854vw, 1.0625rem);
-  line-height: 1.6;
-  word-break: keep-all;
-}
-
-/* Camera → cells → numbers → picture, lit one step at a time. */
-.info-pipeline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-6);
-  margin-top: var(--space-3);
-  padding: 0;
-  list-style: none;
-}
-
-.info-pipeline li {
-  position: relative;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--card-padding);
   border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: var(--type-control-meta);
-  white-space: nowrap;
-  animation: pipeline-step 4s ease-in-out infinite;
-  animation-delay: calc(var(--step) * 1s);
-}
-
-.info-pipeline li:not(:last-child)::after {
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: var(--space-6);
-  color: var(--text-muted);
-  content: '→';
-  text-align: center;
-  transform: translateY(-50%);
-}
-
-@keyframes pipeline-step {
-  0%,
-  22% {
-    border-color: var(--accent-primary);
-    background: var(--accent-soft);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.35);
-    color: var(--text-primary);
-  }
-  28%,
-  100% {
-    border-color: var(--border-subtle);
-    background: transparent;
-    box-shadow: none;
-    color: var(--text-secondary);
-  }
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: 14px;
+  overflow: hidden;
 }
 
 .explain-content {
@@ -854,11 +538,13 @@ body {
   word-break: keep-all;
 }
 
-.explain-headline {
-  margin-top: var(--space-1);
+/* The view's rule as one calculation, with the lever's value written in. */
+.explain-rule {
+  margin: var(--space-1) 0 0;
   color: var(--text-primary);
   font-size: var(--type-control-label);
   font-weight: 700;
+  line-height: 1.35;
   word-break: keep-all;
 }
 
@@ -869,6 +555,7 @@ body {
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
+  position: relative;
   min-height: 4rem;
   margin-top: var(--space-2);
   border: 1px solid var(--border-subtle);
@@ -877,26 +564,78 @@ body {
   container-type: size;
 }
 
-.explain-body {
-  margin: 0;
+/* One short fact under the picture, such as 256 × 256 × 256. */
+.explain-note {
+  margin-top: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--type-panel-note);
-  line-height: 1.5;
+  font-size: var(--type-control-meta);
   word-break: keep-all;
 }
 
-.explain-terms {
+.cell-card {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-2);
 }
 
-.explain-term {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-default);
-  background: var(--accent-soft);
-  color: var(--text-primary);
+.cell-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
   font-size: var(--type-control-meta);
+}
+
+/* The cell's own colour inside the same outline as the marker on the picture. */
+.cell-card-swatch {
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  border: 2px solid #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.85),
+    0 0 8px rgba(0, 255, 255, 0.8);
+}
+
+.cell-card-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.cell-card-hint {
+  margin-left: auto;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* The marked cell's numbers put into the rule, brightest line of the card. */
+.cell-card-math {
+  color: var(--accent-primary);
+  font-size: var(--type-control-label);
+  font-weight: 700;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.cell-card-math:empty {
+  display: none;
+}
+
+/* The cell the cards calculate with, outlined on the picture. */
+.cell-marker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 32;
+  border: 2px solid #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.85),
+    0 0 14px 3px rgba(0, 255, 255, 0.85);
+  pointer-events: none;
+}
+
+.cell-marker[hidden] {
+  display: none;
 }
 
 .math-metric {
@@ -1364,6 +1103,29 @@ body {
   transform: translateX(-50%);
 }
 
+/* The pressed cell's calculation, on the far side of the lens from the finger. */
+.magnifier-caption {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1001;
+  max-width: 32rem;
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--accent-primary);
+  background: rgba(0, 0, 0, 0.88);
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.45);
+  color: var(--accent-primary);
+  font-size: var(--type-control-label);
+  font-weight: 700;
+  line-height: 1.35;
+  pointer-events: none;
+  word-break: keep-all;
+}
+
+.magnifier-caption[hidden] {
+  display: none;
+}
+
 /* The spot under the finger that the lens shows, for anyone watching. */
 .magnifier-marker {
   z-index: 999;
@@ -1403,8 +1165,19 @@ body {
   font-weight: 700;
 }
 
+/* Marks the 3×3 as an example, apart from the visitor's own marked cell. */
+.explain-math::before {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-2);
+  color: var(--text-muted);
+  content: attr(data-label);
+  font-size: var(--type-control-meta);
+  line-height: 1.2;
+}
+
 /* Gaussian weight of each neighbour, as a small badge in the cell's corner. */
-.explain-math-cell[data-weight]::after {
+.explain-math.shows-weights .explain-math-cell[data-weight]::after {
   position: absolute;
   top: 1px;
   right: 2px;
@@ -1449,6 +1222,97 @@ body {
   content: '→';
 }
 
+/* 밝기 · 대비: the calculation as a function graph beside its formula. */
+.explain-graph {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.explain-graph-plot {
+  flex: none;
+  height: calc(100cqh - var(--space-3));
+  aspect-ratio: 1;
+  overflow: visible;
+}
+
+.graph-frame {
+  fill: rgba(0, 255, 255, 0.04);
+  stroke: rgba(0, 255, 255, 0.35);
+}
+
+.graph-mid {
+  stroke: rgba(0, 255, 255, 0.16);
+}
+
+/* y = x: what "no change" would look like. */
+.graph-identity {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-dasharray: 4 4;
+}
+
+.graph-line {
+  fill: none;
+  stroke: var(--accent-primary);
+  stroke-linejoin: round;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px rgba(0, 255, 255, 0.7));
+}
+
+.graph-guide {
+  fill: none;
+  stroke: #ffffff;
+  stroke-dasharray: 3 3;
+  opacity: 0.75;
+}
+
+.graph-frame,
+.graph-mid,
+.graph-identity,
+.graph-line,
+.graph-guide {
+  vector-effect: non-scaling-stroke;
+}
+
+.graph-frame,
+.graph-mid,
+.graph-identity,
+.graph-guide {
+  stroke-width: 1.5px;
+}
+
+.graph-dot {
+  fill: #ffffff;
+  stroke: #000000;
+  stroke-width: 4;
+}
+
+.explain-graph-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.explain-graph-formula {
+  color: var(--accent-primary);
+  font-size: var(--type-control-label);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.explain-graph-cell {
+  color: var(--text-primary);
+  font-size: var(--type-control-meta);
+  font-weight: 700;
+}
+
+.explain-graph-axes {
+  color: var(--text-muted);
+  font-size: var(--type-control-meta);
+}
+
 @keyframes math-cell-in {
   0% {
     opacity: 0.12;
@@ -1490,15 +1354,24 @@ body {
   }
 }
 
-@media (max-width: 1100px) {
-  .side-column {
-    width: min(44vw, 30rem);
+/* Screens shorter than the 1080p projector: the controls shrink with the height so
+   the cards keep room for their pictures. */
+@media (max-height: 900px) {
+  :root {
+    --live-control-height: max(6.2vh, 3.3rem);
+    --option-control-height: max(6vh, 3.1rem);
+    --slider-control-height: 10vh;
+    --slider-thumb-size: clamp(1.75rem, 4.2vh, 3.25rem);
+  }
+
+  .mode-option-button {
+    padding-block: 2px;
   }
 }
 
-/* Short windows: give the explanation card the room the project note used. */
-@media (max-height: 820px) {
-  .info-panel {
+/* 720p and below: the cell card keeps its calculation and drops the cell count. */
+@media (max-height: 760px) {
+  .cell-card .math-metric {
     display: none;
   }
 }
@@ -1511,10 +1384,6 @@ body {
     bottom: 16px;
     width: auto;
     max-height: 60vh;
-  }
-
-  .info-panel {
-    display: none;
   }
 
   .mode-controls {

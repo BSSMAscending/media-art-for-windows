@@ -14,15 +14,19 @@ this file is shown in Korean on the site.
 - Cell size lever: every mode can use 8~48px cells. It starts at 24px.
 - Threshold lever: in 2 steps, move the 0~255 point that separates 0 from 1.
 - 한국어 / English: a switch in the first row of the controls changes every word to English, keeping the mode and lever values.
-- Magnifier: press and hold the picture and a 3× lens floats above your finger, so even small numbers are readable.
-- Image Math: pick brighten (add), contrast (multiply), blur (Gaussian weighted average) or sharpen (boost the difference) and see how every number changes. A lever sets the strength, and the card shows a one-line formula with a 3×3 example.
-- Each mode has an explanation card with a metaphor and a short animation.
+- Magnifier: press and hold the picture and a 3× lens floats above your finger, so even small numbers are readable. It outlines the pressed cell and writes its calculation beside the lens; for blur and sharpen it also marks the neighbours that are averaged and their weights.
+- Image Math: pick brighten (add), contrast (multiply), blur (Gaussian weighted average) or sharpen (boost the difference) and see how every number changes. A lever sets the strength; brighten and contrast are drawn as linear function graphs (`y = x + 60`), blur and sharpen as a 3×3 example.
+- Rule card: each mode shows its name, its rule as one calculation with the lever's value, and one picture.
+- Marked cell: one cell of the picture is outlined, and the card right under the levers puts its real numbers into the rule (`(140 − 128) × 2 + 128 = 152`). Moving a lever changes the calculation, and pressing the picture moves the mark to that cell.
+- Media Art: the magnifier shows the AI's chance that the pressed cell is a person (63% or more becomes 1), and the marked-cell card shows how much of the screen is 1.
 
 ### Changed
 
 - Media Art: cells with a person are 1 and every other cell is 0, filling the whole screen. An empty room is a screen of zeros.
 - Every touch control now sits at the vertical middle of the screen.
 - Media Art draws into the same fixed screen as the other modes.
+- The side column is narrower so the picture fills the screen height: 1320×984 at 1920×1080. Mode and calculation buttons sit in two rows.
+- Brightness steps are taken from the whole-number 0~255 brightness written on screen.
 - The F-key filter panel is gone.
 
 ### Fixed

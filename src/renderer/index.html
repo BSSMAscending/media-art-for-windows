@@ -18,6 +18,8 @@
     <div id="magnifierArea" class="magnifier-area">
       <span class="magnifier-hint"></span>
     </div>
+    <!-- The cell the card under the controls calculates with. -->
+    <div id="cellMarker" class="cell-marker" hidden></div>
 
     <div id="errorText" class="error-text" style="display: none"></div>
 
@@ -36,7 +38,11 @@
     </aside>
 
     <div id="sideColumn" class="side-column">
-      <div id="panelCards" class="panel-cards" aria-label="미디어 아트 안내 카드"></div>
+      <div
+        id="panelCards"
+        class="panel-cards panel-cards--rule"
+        aria-label="미디어 아트 안내 카드"
+      ></div>
 
       <!-- Every touch control sits in the vertical middle of the screen, easiest to reach. -->
       <div id="modeControls" class="mode-controls" aria-label="미디어 아트 모드 컨트롤">
@@ -69,7 +75,7 @@
       </div>
 
       <div class="panel-cards">
-        <div id="detailCard" class="detail-card" aria-label="원리 더 알아보기"></div>
+        <div id="detailCard" class="detail-card" aria-label="표시한 칸의 계산"></div>
       </div>
     </div>
 

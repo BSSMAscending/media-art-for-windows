@@ -41,10 +41,10 @@ describe('language switch', () => {
 });
 
 // Every { ko, en } pair in the visible data must have both languages; lever
-// `format` functions are sampled, other functions are logic and skipped.
+// `format` and explanation `rule` functions are sampled, other functions are logic.
 function collectPairs(value, path, out) {
   if (typeof value === 'function') {
-    if (path.endsWith('.format')) {
+    if (path.endsWith('.format') || path.endsWith('.rule')) {
       for (const sample of [1, 24, 128]) collectPairs(value(sample), `${path}(${sample})`, out);
     }
   } else if (value && typeof value === 'object') {
