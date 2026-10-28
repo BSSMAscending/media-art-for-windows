@@ -52,39 +52,53 @@ const BETA_HEADING =
 // It is a typo, so it is rejected instead of dropping its notes from the page.
 const VERSION_LIKE_HEADING = /^## \[\d+\.\d+\.\d+/;
 
-// The Unreleased section, every "## [X.Y.Z]" version, and every
-// "## [X.Y.Z-beta.N]". A beta stays in this file; readReleaseNotes still ignores
-// it. Which beta line is current is up to whoever publishes a beta, so the notes
-// of an earlier line survive when the next one starts.
-function parseChangelog(changelog) {
-  return parseEntries(changelog, (line) => {
-    const match = VERSION_HEADING.exec(line);
-    const unreleased = /^## \[Unreleased\]/i.test(line);
-    if (match || unreleased) {
-      return {
-        version: match ? match[1] : null,
-        date: match?.[2] ?? null,
-        title: match?.[3] ?? null,
-        beta: false,
-        lines: [],
-      };
-    }
-    const beta = BETA_HEADING.exec(line);
-    if (!beta) {
-      if (VERSION_LIKE_HEADING.test(line)) {
-        throw new Error(
-          `A changelog heading must look like "## [1.2.3]" or "## [2.0.0-beta.1]" (beta numbers start at 1, no leading zero): ${line}`
-        );
-      }
-      return null;
-    }
+// Reads one heading as an entry: the Unreleased section, a "## [X.Y.Z]" version
+// or a "## [X.Y.Z-beta.N]" beta; null for any other heading. A beta stays in this
+// file; readReleaseNotes still ignores it. Which beta line is current is up to
+// whoever publishes a beta, so the notes of an earlier line survive when the
+// next one starts.
+function readHeading(line) {
+  const match = VERSION_HEADING.exec(line);
+  const unreleased = /^## \[Unreleased\]/i.test(line);
+  if (match || unreleased) {
     return {
-      version: `${beta[1]}-beta.${beta[2]}`,
-      date: beta[3] ?? null,
-      title: beta[4] ?? null,
-      beta: true,
+      version: match ? match[1] : null,
+      date: match?.[2] ?? null,
+      title: match?.[3] ?? null,
+      beta: false,
       lines: [],
     };
+  }
+  const beta = BETA_HEADING.exec(line);
+  if (!beta) {
+    if (VERSION_LIKE_HEADING.test(line)) {
+      throw new Error(
+        `A changelog heading must look like "## [1.2.3]" or "## [2.0.0-beta.1]" (beta numbers start at 1, no leading zero): ${line}`
+      );
+    }
+    return null;
+  }
+  return {
+    version: `${beta[1]}-beta.${beta[2]}`,
+    date: beta[3] ?? null,
+    title: beta[4] ?? null,
+    beta: true,
+    lines: [],
+  };
+}
+
+// Splits the whole file into entries. Each version, and the Unreleased section,
+// may appear once: a second one would render two articles with the same id.
+function parseChangelog(changelog) {
+  const seen = new Set();
+  return parseEntries(changelog, (line) => {
+    const entry = readHeading(line);
+    if (entry) {
+      const name = entry.version ?? 'Unreleased';
+      if (seen.has(name)) throw new Error(`The changelog has more than one "## [${name}]" heading.`);
+      seen.add(name);
+    }
+    return entry;
   });
 }
 

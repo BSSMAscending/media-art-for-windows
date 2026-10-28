@@ -120,6 +120,18 @@ describe('beta notes share the changelog', () => {
     }
   });
 
+  it('rejects a version or the Unreleased section listed twice', () => {
+    expect(() => parseChangelog('## [1.0.1]\n- 하나\n\n## [1.0.1] - 2026-08-27\n- 둘\n')).toThrow(
+      'more than one "## [1.0.1]"'
+    );
+    expect(() =>
+      parseChangelog('## [2.0.0-beta.2]\n- 하나\n\n## [2.0.0-beta.2]\n- 둘\n')
+    ).toThrow('more than one "## [2.0.0-beta.2]"');
+    expect(() => parseChangelog('## [Unreleased]\n- 하나\n\n## [unreleased]\n- 둘\n')).toThrow(
+      'more than one "## [Unreleased]"'
+    );
+  });
+
   it('skips headings that are not versions', () => {
     const notes = '## 참고\n- 버전 아님\n\n## [1.0.1]\n- 정식\n';
     expect(parseChangelog(notes).map((entry) => entry.version)).toEqual(['1.0.1']);
