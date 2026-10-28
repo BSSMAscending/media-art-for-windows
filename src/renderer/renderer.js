@@ -81,7 +81,6 @@ const STATIC_TEXT = [
       en: 'Press and hold to zoom in and work out that cell',
     },
   },
-  { selector: '#restartUpdateButton', text: { ko: '지금 재시작', en: 'Restart now' } },
   { selector: '#laterUpdateButton', text: { ko: '나중에', en: 'Later' } },
   { selector: '#languageToggle', attr: 'aria-label', text: { ko: '언어', en: 'Language' } },
   {
@@ -257,7 +256,10 @@ function setupUpdateNotice() {
   const detail = document.getElementById('updateNoticeDetail');
   const actions = document.getElementById('updateNoticeActions');
 
-  document.getElementById('restartUpdateButton').addEventListener('click', () => {
+  // The button's words depend on the update (restart, update through Homebrew, open the
+  // release page), so render() sets them rather than STATIC_TEXT.
+  const primaryButton = document.getElementById('restartUpdateButton');
+  primaryButton.addEventListener('click', () => {
     ipcRenderer.invoke('restart-and-install-update');
   });
   document.getElementById('laterUpdateButton').addEventListener('click', () => {
@@ -292,6 +294,32 @@ function setupUpdateNotice() {
         ko: '지금 재시작하면 업데이트가 적용됩니다.',
         en: 'Restart now to apply the update.',
       });
+      primaryButton.textContent = t({ ko: '지금 재시작', en: 'Restart now' });
+      actions.style.display = 'flex';
+      return;
+    }
+
+    // A Mac beta: a newer beta exists. `via` is how the button gets it.
+    if (lastUpdate.status === 'available') {
+      const viaBrew = lastUpdate.via === 'brew';
+      title.textContent = t({
+        ko: `새 베타${version} 업데이트가 있습니다`,
+        en: `New beta${version} is available`,
+      });
+      detail.textContent = t(
+        viaBrew
+          ? {
+              ko: '업데이트를 누르면 앱이 닫히고 Homebrew로 새 버전을 설치한 뒤 다시 열립니다.',
+              en: 'Update closes the app, installs the new version with Homebrew and opens it again.',
+            }
+          : {
+              ko: '릴리스 페이지에서 새 Mac 압축 파일을 받아 주세요.',
+              en: 'Download the new Mac zip from the release page.',
+            }
+      );
+      primaryButton.textContent = t(
+        viaBrew ? { ko: '지금 업데이트', en: 'Update now' } : { ko: '페이지 열기', en: 'Open page' }
+      );
       actions.style.display = 'flex';
     }
   }

@@ -7,6 +7,10 @@ name: Publish beta
 # cannot upload to the exhibit repository media-art-for-windows-releases.
 # Exhibit PCs keep updating from that repository alone.
 #
+# The Mac betas are signed with one self-signed certificate kept in the secrets
+# MAC_BETA_SIGNING_P12 and MAC_BETA_SIGNING_PASSWORD (scripts/create-mac-beta-signing-cert.sh),
+# so macOS keeps the camera permission from one beta to the next.
+#
 # The release is created as a draft, the cask and the source tag follow, and the
 # draft goes public last. A run that fails before that leaves nothing public and
 # can be run again with the same version.
@@ -198,6 +202,51 @@ jobs:
           }
           NODE
 
+      # Every Mac beta is signed with the same self-signed certificate, so macOS keeps
+      # the camera permission when a beta updates (an ad-hoc signature changes each
+      # build). It comes from the two secrets scripts/create-mac-beta-signing-cert.sh
+      # tells you to store. codesign finds an untrusted certificate only by its hash,
+      # in an unlocked keychain that is on the search list and allows codesign's key
+      # access. forge.config.js signs with MAC_BETA_SIGN_IDENTITY and _KEYCHAIN.
+      - name: Import the Mac beta signing certificate
+        env:
+          SIGNING_P12: ${{ secrets.MAC_BETA_SIGNING_P12 }}
+          SIGNING_PASSWORD: ${{ secrets.MAC_BETA_SIGNING_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SIGNING_P12" || -z "$SIGNING_PASSWORD" ]]; then
+            echo "::error::MAC_BETA_SIGNING_P12 or MAC_BETA_SIGNING_PASSWORD is empty. Run scripts/create-mac-beta-signing-cert.sh and store the secrets it prints. If a certificate already exists, restore its secrets from the backup instead: a new one makes every tester allow the camera again."
+            exit 1
+          fi
+          p12="$RUNNER_TEMP/mac-beta-signing.p12"
+          keychain="$RUNNER_TEMP/mac-beta-signing.keychain-db"
+          keychain_password=$(/usr/bin/openssl rand -hex 24)
+          echo "::add-mask::$keychain_password"
+          printf '%s' "$SIGNING_P12" | base64 --decode > "$p12"
+          # The certificate's SHA-1 is what codesign is given; this also proves the p12 and its password match.
+          sha1=$(/usr/bin/openssl pkcs12 -in "$p12" -passin env:SIGNING_PASSWORD -clcerts -nokeys | /usr/bin/openssl x509 -noout -fingerprint -sha1 | sed 's/.*=//; s/://g' | tr 'A-F' 'a-f')
+          if [[ ! "$sha1" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Could not read the certificate in MAC_BETA_SIGNING_P12."
+            exit 1
+          fi
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$p12" -k "$keychain" -P "$SIGNING_PASSWORD" -T /usr/bin/codesign > /dev/null
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain" > /dev/null
+          existing=()
+          while IFS= read -r line; do
+            [[ "$line" == *\"* ]] || continue
+            line="${line#*\"}"
+            existing+=("${line%\"*}")
+          done < <(security list-keychains -d user)
+          security list-keychains -d user -s "$keychain" ${existing[@]+"${existing[@]}"}
+          identities=$(security find-identity -p codesigning "$keychain")
+          grep -qi -- "$sha1" <<< "$identities"
+          rm -f "$p12"
+          echo "MAC_BETA_SIGN_IDENTITY=$sha1" >> "$GITHUB_ENV"
+          echo "MAC_BETA_SIGN_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+
       - name: Build Apple Silicon and Intel betas
         run: |
           set -euo pipefail
@@ -215,12 +264,44 @@ jobs:
           npm run make -- --platform=darwin --arch=x64
           copy_zip x64
 
+      # The zips are what testers get, so they are checked, not the packaged apps.
+      # A cdhash requirement means the stable signature did not go on.
+      - name: Check the Mac betas carry the stable signature
+        run: |
+          set -euo pipefail
+          app=$(node -p "require('./scripts/channels').appBundle")
+          expected="certificate leaf = H\"${MAC_BETA_SIGN_IDENTITY}\""
+          for arch in arm64 x64; do
+            dir="$RUNNER_TEMP/verify-$arch"
+            rm -rf "$dir"
+            mkdir -p "$dir"
+            ditto -x -k "$RUNNER_TEMP/mac-beta/media-art-for-windows-darwin-${arch}-${BETA_VERSION}.zip" "$dir"
+            codesign --verify --deep --strict --verbose=2 "$dir/$app"
+            requirement=$(codesign -d -r- "$dir/$app" 2>&1)
+            echo "$arch: $requirement"
+            if [[ "$requirement" == *cdhash* || "$requirement" != *"$expected"* ]]; then
+              echo "::error::The $arch beta's designated requirement is not $expected."
+              exit 1
+            fi
+          done
+
       - name: Upload the Mac betas
         uses: actions/upload-artifact@v4
         with:
           name: mac-beta
           path: ${{ runner.temp }}/mac-beta
           if-no-files-found: error
+
+      # Whether or not the build passed. The runner is thrown away, but the
+      # certificate's private key should not sit in a keychain until then.
+      - name: Delete the signing keychain
+        if: always()
+        run: |
+          keychain="$RUNNER_TEMP/mac-beta-signing.keychain-db"
+          if [[ -f "$keychain" ]]; then
+            security delete-keychain "$keychain" || echo "::warning::Could not delete the signing keychain."
+          fi
+          rm -f "$RUNNER_TEMP/mac-beta-signing.p12"
 
   publish:
     name: publish to the beta repository

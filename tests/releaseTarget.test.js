@@ -153,8 +153,11 @@ describe('beta packaging', () => {
     expect(cask).toContain('postflight_steps do');
     expect(cask).toContain('"/usr/bin/xattr"');
     expect(cask).toContain('"-dr", "com.apple.quarantine", "{{appdir}}/media-art-for-windows.app"');
-    expect(cask).toContain('"/usr/bin/codesign"');
-    expect(cask).toContain('"--force", "--deep", "-s", "-", "{{appdir}}/media-art-for-windows.app"');
+    // CI signs the app with the stable beta certificate. Signing again here would
+    // swap it for an ad-hoc cdhash and macOS would ask for the camera after each update.
+    expect(cask).not.toContain('codesign');
+    expect(cask).not.toContain('ad-hoc');
+    expect(cask).toContain('brew upgrade');
     expect(cask).not.toMatch(/^\s*postflight do\s*$/m);
     expect(cask).not.toContain('Control-click');
     expect(cask).not.toContain(stableRepository);
