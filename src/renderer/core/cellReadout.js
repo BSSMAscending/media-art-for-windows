@@ -1,4 +1,4 @@
-const { clampByte, greyOf, gaussianAt, getGaussianTotal } = require('./imageMath');
+const { greyOf, gaussianAt, getGaussianTotal } = require('./imageMath');
 const { getCellMaskIndex } = require('./coverCrop');
 const { getLevel } = require('../modes/levels');
 const { BODY_SEGMENTATION_CONFIG } = require('../config');
