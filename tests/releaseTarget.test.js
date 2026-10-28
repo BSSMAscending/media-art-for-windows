@@ -1,4 +1,5 @@
 const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
 const path = require('node:path');
 const { convertVersion } = require('electron-winstaller');
 const { betaRepository, homebrewTap, stableRepository, squirrelVersion } = require('../scripts/channels');
@@ -9,7 +10,8 @@ const {
   betaTarget,
 } = require('../scripts/release-target');
 const { renderBetaCask } = require('../scripts/beta-cask');
-const { setUpdateRepository } = require('../scripts/set-update-repository');
+const { DECLARATION, setUpdateRepository } = require('../scripts/set-update-repository');
+const { UPDATE_REPOSITORY } = require('../src/main/updater');
 
 const script = path.join(__dirname, '..', 'scripts', 'release-target.js');
 const ARM = 'a'.repeat(64);
@@ -128,6 +130,18 @@ describe('beta packaging', () => {
     expect(() => setUpdateRepository(updater.replace(stableRepository, betaRepository), betaRepository)).toThrow(
       /stable/
     );
+  });
+
+  it('finds the declaration it rewrites in the real updater.js', () => {
+    const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'main', 'updater.js'), 'utf8');
+    expect(UPDATE_REPOSITORY).toBe(stableRepository);
+    expect(source).toContain(DECLARATION);
+    const beta = setUpdateRepository(source, betaRepository);
+    expect(beta).not.toContain(stableRepository);
+    // The rewritten file still loads and exports the beta feed.
+    const loaded = { exports: {} };
+    new Function('module', 'exports', beta)(loaded, loaded.exports);
+    expect(loaded.exports.UPDATE_REPOSITORY).toBe(betaRepository);
   });
 
   it('writes a Homebrew cask that downloads the beta repository only', () => {
