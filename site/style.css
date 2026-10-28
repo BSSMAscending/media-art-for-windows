@@ -183,7 +183,10 @@ code {
 }
 
 .site-nav a {
-  padding: 6px clamp(8px, 1vw, 12px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
   border-radius: 999px;
   color: var(--text-secondary);
   font-size: 15px;
@@ -195,6 +198,28 @@ code {
 .site-nav a[aria-current='page'] {
   background: var(--accent-soft);
   color: var(--text);
+}
+
+/* GitHub leaves the site, so it carries the usual external-link arrow. */
+.icon-external {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+  opacity: 0.75;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* Language and theme switches at the end of the header. */
@@ -988,24 +1013,6 @@ h3 {
 }
 
 @media (max-width: 860px) {
-  /* Logo and switches on the first row, the menu on its own row below. */
-  .site-header .wrap {
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    padding-top: 8px;
-    padding-bottom: 4px;
-  }
-
-  .site-tools {
-    margin-left: auto;
-  }
-
-  .site-nav {
-    order: 3;
-    width: 100%;
-    margin-left: -12px;
-  }
-
   .steps,
   .panels,
   .install {
@@ -1115,18 +1122,33 @@ h3 {
   }
 }
 
+@media (max-width: 740px) {
+  /* Logo and switches on the first row, the menu on its own row below. */
+  .site-header .wrap {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding-top: 8px;
+    padding-bottom: 4px;
+  }
+
+  .site-tools {
+    margin-left: auto;
+  }
+
+  .site-nav {
+    order: 3;
+    width: 100%;
+    margin-left: -10px;
+  }
+}
+
 @media (max-width: 560px) {
   body {
     font-size: 16px;
   }
 
-  .site-nav {
-    gap: 0;
-    margin-left: -5px;
-  }
-
   .site-nav a {
-    padding: 6px 5px;
+    padding: 6px 10px;
     font-size: 14px;
   }
 
