@@ -52,8 +52,8 @@ function createCellCard(container) {
   const title = element('span', 'cell-card-title');
   const hint = element('span', 'cell-card-hint');
   head.append(swatch, title, hint);
+  // Not a live region: the numbers follow the camera several times a second.
   const math = element('div', 'cell-card-math');
-  math.setAttribute('aria-live', 'polite');
   const metric = element('div', 'math-metric');
   card.append(head, math, metric);
   container.appendChild(card);
