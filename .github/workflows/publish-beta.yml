@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Beta version, for example 1.1.0-beta.1
+        description: Beta on the 2.0.0 line, for example 2.0.0-beta.1
         required: true
         type: string
 

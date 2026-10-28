@@ -12,26 +12,30 @@ describe('release targets stay split', () => {
   });
 
   it('refuses a beta version on the exhibit workflow', () => {
-    expect(() => assertStableTarget(stableRepository, '1.1.0-beta.1')).toThrow(/exhibit/);
-    expect(() => assertStableTarget(betaRepository, '1.0.3')).toThrow(/Refusing/);
+    expect(() => assertStableTarget(stableRepository, '2.0.0-beta.1')).toThrow(/exhibit/);
+    expect(() => assertStableTarget(betaRepository, '2.0.0')).toThrow(/Refusing/);
   });
 
   it('publishes a beta only as a beta tag on the beta repository', () => {
-    expect(assertBetaVersion('1.1.0-beta.1')).toBe('v1.1.0-beta.1');
-    expect(betaPublishArgs('1.1.0-beta.2', ['--title', 'beta'])).toEqual([
+    expect(assertBetaVersion('2.0.0-beta.1')).toBe('v2.0.0-beta.1');
+    expect(assertBetaVersion('2.0.0-beta.10')).toBe('v2.0.0-beta.10');
+    expect(assertBetaVersion('2.0.0-beta.12')).toBe('v2.0.0-beta.12');
+    expect(betaPublishArgs('2.0.0-beta.2', ['--title', 'beta'])).toEqual([
       '--repo',
       betaRepository,
-      'v1.1.0-beta.2',
+      'v2.0.0-beta.2',
       '--title',
       'beta',
     ]);
-    expect(betaPublishArgs('1.1.0-beta.2', [])).not.toContain('--prerelease');
-    expect(betaPublishArgs('1.1.0-beta.2', []).join(' ')).not.toContain(stableRepository);
+    expect(betaPublishArgs('2.0.0-beta.2', [])).not.toContain('--prerelease');
+    expect(betaPublishArgs('2.0.0-beta.2', []).join(' ')).not.toContain(stableRepository);
   });
 
-  it('refuses to send a stable version number through the beta workflow', () => {
-    expect(() => assertBetaVersion('1.0.3')).toThrow(/beta/);
-    expect(() => betaPublishArgs('1.0.3', [])).toThrow(/beta/);
+  it('refuses a stable number or a beta from another line', () => {
+    expect(() => assertBetaVersion('2.0.0')).toThrow(/2\.0\.0-beta\.1/);
+    expect(() => assertBetaVersion('1.1.0-beta.1')).toThrow(/2\.0\.0-beta\.1/);
+    expect(() => assertBetaVersion('2.0.0-beta.01')).toThrow(/2\.0\.0-beta\.1/);
+    expect(() => betaPublishArgs('2.0.0', [])).toThrow(/beta/);
   });
 });
 
@@ -51,7 +55,7 @@ describe('beta packaging', () => {
   });
 
   it('writes a Homebrew cask that downloads the beta repository only', () => {
-    const cask = renderBetaCask({ version: '1.1.0-beta.1', armSha256: ARM, intelSha256: INTEL });
+    const cask = renderBetaCask({ version: '2.0.0-beta.1', armSha256: ARM, intelSha256: INTEL });
     expect(cask).toContain('cask "binary-media-art-beta"');
     expect(cask).toContain(`github.com/${betaRepository}/releases/download/v#{version}/`);
     expect(cask).toContain('media-art-for-windows-darwin-arm64-#{version}.zip');

@@ -116,6 +116,7 @@ describe('patch notes', () => {
     expect(home).toContain('Windows 베타 받기');
     expect(home).toContain('brew tap BSSMAscending/tap');
     expect(home).toContain('Mac 베타 받기');
+    expect(home).toContain('2.0.0-beta.1');
     expect(home).toContain('brew install --cask binary-media-art-beta');
     expect(home).toContain('quarantine');
     expect(home).not.toContain('Control-click');

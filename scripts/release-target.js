@@ -3,7 +3,7 @@
 // Usage:
 //   node scripts/release-target.js stable <owner/repo> <X.Y.Z>
 //   node scripts/release-target.js beta <X.Y.Z-beta.N>
-const { betaRepository, homebrewTap, stableRepository } = require('./channels');
+const { betaRepository, homebrewTap, stableRepository, upcomingRelease } = require('./channels');
 const { VERSION } = require('./beta-cask');
 
 const STABLE_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+$/;
@@ -36,7 +36,7 @@ function assertBetaVersion(version) {
   assertRepositoriesStaySplit();
   if (!VERSION.test(version)) {
     throw new Error(
-      `Refusing to publish "${version}". A beta must look like 1.1.0-beta.1 and is never a stable X.Y.Z.`
+      `Refusing to publish "${version}". A beta must look like ${upcomingRelease}-beta.1 and is never a stable X.Y.Z.`
     );
   }
   return `v${version}`;
