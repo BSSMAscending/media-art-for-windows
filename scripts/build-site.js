@@ -72,7 +72,7 @@ function bilingual(ko, en, tag = 'span') {
 }
 
 /**
- * The version index and one article per entry, newest first, in Korean and English.
+ * The version list and one article per entry, newest first, in Korean and English.
  * `english` comes from CHANGELOG.en.md; a version missing there shows its Korean
  * notes in both. An empty Unreleased section is left out.
  */
@@ -80,10 +80,20 @@ function renderPatchNotes(entries, english = []) {
   const shown = entries.filter((entry) => entry.version || entry.body);
   const id = (entry) => (entry.version ? `v${entry.version}` : 'upcoming');
   const translationOf = (entry) => english.find((other) => other.version === entry.version);
+  const titleOf = (entry) =>
+    entry.version
+      ? bilingual(
+          escapeHtml(entry.title || ''),
+          escapeHtml(translationOf(entry)?.title || entry.title || '')
+        )
+      : bilingual('준비 중', 'In progress');
+  // The side list (a bar on narrow screens) the page keeps in view; see site/app.js.
   const index = shown
     .map(
       (entry) =>
-        `<a href="#${id(entry)}">${entry.version ? `v${entry.version}` : bilingual('다음 버전', 'Next')}</a>`
+        `<li><a href="#${id(entry)}"${entry.version ? '' : ' class="is-upcoming"'}><span class="toc-version">${
+          entry.version ? `v${entry.version}` : bilingual('다음 버전', 'Next')
+        }</span><span class="toc-title">${titleOf(entry)}</span></a></li>`
     )
     .join('\n');
   const notes = shown
@@ -91,12 +101,6 @@ function renderPatchNotes(entries, english = []) {
       const upcoming = !entry.version;
       const translation = translationOf(entry);
       const label = upcoming ? bilingual('다음 버전', 'Next version') : `v${entry.version}`;
-      const title = upcoming
-        ? bilingual('준비 중', 'In progress')
-        : bilingual(
-            escapeHtml(entry.title || ''),
-            escapeHtml(translation?.title || entry.title || '')
-          );
       const date = entry.date
         ? `<time datetime="${entry.date}">${formatDate(entry.date)}</time>`
         : `<span class="release-note">${bilingual(
@@ -109,7 +113,7 @@ function renderPatchNotes(entries, english = []) {
       return `<article class="release${upcoming ? ' is-upcoming' : ''}" id="${id(entry)}">
   <header class="release-head">
     <span class="release-version">${label}</span>
-    <h2 class="release-title">${title}</h2>
+    <h2 class="release-title">${titleOf(entry)}</h2>
     ${date}
   </header>
   <div class="release-body" data-l="ko">

@@ -97,13 +97,21 @@
           What changed in each version, newest first. The latest release is v{{VERSION}}; the
           <a href="{{DOWNLOAD_URL}}">installer</a> is on the public Release page.
         </p>
-        <nav class="release-index" aria-label="Versions">
-          <!-- PATCH_NOTES_INDEX -->
-        </nav>
       </section>
 
-      <div class="timeline">
-        <!-- PATCH_NOTES -->
+      <!-- The version list stays in view: beside the notes, or as a bar on narrow screens. -->
+      <div class="notes-layout">
+        <nav class="notes-toc" id="notesToc" aria-label="Versions">
+          <p class="notes-toc-label">
+            <span data-l="ko">버전</span><span data-l="en">Versions</span>
+          </p>
+          <ol>
+            <!-- PATCH_NOTES_INDEX -->
+          </ol>
+        </nav>
+        <div class="timeline">
+          <!-- PATCH_NOTES -->
+        </div>
       </div>
     </main>
 
