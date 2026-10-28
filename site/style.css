@@ -789,8 +789,7 @@ h3 {
   font-size: 13px;
 }
 
-.notes-toc a.is-upcoming .toc-version,
-.notes-toc a.is-beta .toc-version {
+.notes-toc a.is-pending .toc-version {
   color: var(--highlight);
 }
 
@@ -800,8 +799,7 @@ h3 {
   color: var(--accent);
 }
 
-.notes-toc a.is-upcoming[aria-current='true'],
-.notes-toc a.is-beta[aria-current='true'] {
+.notes-toc a.is-pending[aria-current='true'] {
   border-left-color: var(--highlight);
 }
 
@@ -847,14 +845,12 @@ h3 {
   content: '';
 }
 
-.release.is-upcoming,
-.release.is-beta {
+.release.is-pending {
   border-style: dashed;
   border-color: var(--highlight-border);
 }
 
-.release.is-upcoming::before,
-.release.is-beta::before {
+.release.is-pending::before {
   border-color: var(--highlight);
 }
 
@@ -873,8 +869,7 @@ h3 {
   font-weight: 700;
 }
 
-.is-upcoming .release-version,
-.is-beta .release-version {
+.is-pending .release-version {
   color: var(--highlight);
 }
 
@@ -1173,15 +1168,13 @@ h3 {
     color: var(--accent-ink);
   }
 
-  .notes-toc a.is-upcoming[aria-current='true'],
-  .notes-toc a.is-beta[aria-current='true'] {
+  .notes-toc a.is-pending[aria-current='true'] {
     border-color: var(--highlight);
     background: var(--highlight);
     color: var(--bg);
   }
 
-  .notes-toc a.is-upcoming[aria-current='true'] .toc-version,
-  .notes-toc a.is-beta[aria-current='true'] .toc-version {
+  .notes-toc a.is-pending[aria-current='true'] .toc-version {
     color: inherit;
   }
 

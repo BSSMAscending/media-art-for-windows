@@ -49,7 +49,7 @@ describe('patch notes', () => {
     expect(index).toContain(
       `<li><a href="#v1.1.0"><span class="toc-version">v1.1.0</span><span class="toc-title">${bilingual('새 모드', '새 모드')}</span></a></li>`
     );
-    expect(index).toContain(`<a href="#upcoming" class="is-upcoming">`);
+    expect(index).toContain(`<a href="#upcoming" class="is-pending is-upcoming">`);
     expect(notes).toContain('<article class="release" id="v1.1.0">');
     expect(notes).toContain('<span data-l="ko">새 모드</span>');
     expect(notes).toContain('<time datetime="2026-10-28">2026. 10. 28.</time>');
@@ -87,8 +87,8 @@ describe('patch notes', () => {
       'href="#v2.0.0-beta.2"',
       'href="#v1.0.2"',
     ]);
-    expect(index).toContain('href="#v2.0.0-beta.12" class="is-beta"');
-    expect(notes).toContain('<article class="release is-beta" id="v2.0.0-beta.12">');
+    expect(index).toContain('href="#v2.0.0-beta.12" class="is-pending is-beta"');
+    expect(notes).toContain('<article class="release is-pending is-beta" id="v2.0.0-beta.12">');
     expect(notes).toContain('전시 PC에는 나가지 않습니다');
     expect(notes).toContain('<span data-l="en">Twelfth</span>');
     const at = (id) => notes.indexOf(`id="${id}"`);
@@ -106,7 +106,7 @@ describe('patch notes', () => {
 
   it('marks the Unreleased section as not yet deployed, and hides it when empty', () => {
     const { notes } = renderPatchNotes(parseChangelog(changelog));
-    expect(notes).toContain('<article class="release is-upcoming" id="upcoming">');
+    expect(notes).toContain('<article class="release is-pending is-upcoming" id="upcoming">');
     expect(notes).toContain('아직 전시 PC에 배포되지 않은 변경입니다');
     const empty = renderPatchNotes(parseChangelog(changelog.replace('- 준비 중인 변경', '')));
     expect(empty.index).not.toContain('upcoming');

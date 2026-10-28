@@ -83,10 +83,11 @@ function exhibitNote(entry) {
   return '';
 }
 
-// The classes that mark an entry the exhibit is not running: Unreleased, or a beta.
+// The classes that mark an entry the exhibit is not running: Unreleased, or a
+// beta. `is-pending` carries the shared look (see style.css), the other says which.
 function stateClasses(entry) {
-  if (!entry.version) return ['is-upcoming'];
-  return entry.beta ? ['is-beta'] : [];
+  if (!entry.version) return ['is-pending', 'is-upcoming'];
+  return entry.beta ? ['is-pending', 'is-beta'] : [];
 }
 
 // Newest first; Unreleased on top. A beta sorts below the stable version it
