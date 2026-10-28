@@ -1261,7 +1261,8 @@ h3 {
 
   .steps,
   .panels,
-  .install {
+  .install,
+  .install.channels {
     grid-template-columns: minmax(0, 1fr);
   }
 
