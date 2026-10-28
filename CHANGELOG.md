@@ -1,6 +1,7 @@
 # 변경 기록
 
-버전마다 무엇이 바뀌었는지 적습니다. 각 버전 항목은 그대로 공개 Release 본문이 됩니다.
+버전마다 무엇이 바뀌었는지 적습니다. 각 정식 버전 항목은 그대로 공개 Release 본문이 됩니다.
+`## [2.0.0-beta.1]`처럼 다음 정식의 시험 번호도 이 파일에 적습니다. 그 항목은 전시 Release가 되지 않고, 패치노트에서 정식 버전들 사이에 버전 순서로 보입니다.
 쓰는 법은 [docs/windows-distribution.md](docs/windows-distribution.md#변경-기록-쓰기)에 있습니다.
 
 ## [Unreleased]

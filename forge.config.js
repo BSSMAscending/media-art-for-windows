@@ -1,5 +1,12 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+const { squirrelVersion } = require('./scripts/channels');
+const { version } = require('./package.json');
+
+// A beta's NuGet version is zero-padded (2.0.0-beta.10 becomes 2.0.0-beta010) so
+// Squirrel.Windows orders the betas by number. Stable versions are left as they are.
+// Forge still lists the unpadded nupkg name in its make result; nothing here reads it.
+const nugetVersion = squirrelVersion(version);
 
 module.exports = {
   packagerConfig: {
@@ -20,7 +27,7 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: nugetVersion === version ? {} : { version: nugetVersion },
     },
     {
       name: '@electron-forge/maker-zip',

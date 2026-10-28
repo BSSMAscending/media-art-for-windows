@@ -1,0 +1,87 @@
+// The exhibit updates itself from one repository. A beta must never be published
+// there: update.electronjs.org would offer it to every installed 1.0.2.
+// Usage:
+//   node scripts/release-target.js stable <owner/repo> <X.Y.Z>
+//   node scripts/release-target.js beta <X.Y.Z-beta.N>
+//   <published tags, one per line> | node scripts/release-target.js beta-newer <X.Y.Z-beta.N>
+// `beta` prints key=value lines (the repository and tag to publish to, and the
+// Homebrew tap), the format a workflow appends to $GITHUB_OUTPUT.
+const fs = require('node:fs');
+const {
+  BETA_VERSION,
+  STABLE_VERSION,
+  betaRepository,
+  homebrewTap,
+  stableRepository,
+  upcomingRelease,
+} = require('./channels');
+
+function assertRepositoriesStaySplit() {
+  const names = [stableRepository, betaRepository, homebrewTap];
+  if (new Set(names).size !== names.length) {
+    throw new Error(
+      'Refusing to publish: the exhibit repository, the beta repository and the Homebrew tap must be three different repositories.'
+    );
+  }
+  if (betaRepository.includes('media-art-for-windows-releases') || homebrewTap.includes('media-art-for-windows-releases')) {
+    throw new Error('Refusing to publish a beta into the exhibit release repository.');
+  }
+}
+
+function assertStableTarget(repository, version) {
+  assertRepositoriesStaySplit();
+  if (repository !== stableRepository) {
+    throw new Error(`Refusing to publish a stable release to ${repository}.`);
+  }
+  if (!STABLE_VERSION.test(version)) {
+    throw new Error(
+      `Refusing to publish "${version}" to the exhibit. Stable releases are X.Y.Z only, so a beta cannot ride this workflow.`
+    );
+  }
+}
+
+function assertBetaVersion(version) {
+  assertRepositoriesStaySplit();
+  if (!BETA_VERSION.test(version)) {
+    throw new Error(
+      `Refusing to publish "${version}". A beta must look like ${upcomingRelease}-beta.1 (N from 1 to 999) and is never a stable X.Y.Z.`
+    );
+  }
+  return `v${version}`;
+}
+
+// Squirrel only offers an update that sorts higher, so a new beta has to be
+// numbered above every beta already published, not just differ from them.
+function assertNewerBeta(version, publishedTags) {
+  const tag = assertBetaVersion(version);
+  const number = (name) => Number(BETA_VERSION.exec(name.replace(/^v/, ''))?.[1] ?? 0);
+  const highest = Math.max(0, ...publishedTags.map(number));
+  if (number(tag) <= highest) {
+    throw new Error(
+      `Refusing to publish ${tag}: v${upcomingRelease}-beta.${highest} is already published. Number the new beta above it, or Windows betas will not see it as an update.`
+    );
+  }
+}
+
+// Where a beta goes: only ever the beta repository, under the beta's own tag,
+// plus the tap that carries its Mac cask.
+function betaTarget(version) {
+  return { repository: betaRepository, tag: assertBetaVersion(version), tap: homebrewTap };
+}
+
+if (require.main === module) {
+  const [channel, first, second] = process.argv.slice(2);
+  if (channel === 'stable') assertStableTarget(first, second);
+  else if (channel === 'beta-newer') {
+    const published = fs.readFileSync(0, 'utf8').split('\n').map((line) => line.trim());
+    assertNewerBeta(first, published.filter(Boolean));
+  } else if (channel === 'beta') {
+    const { repository, tag, tap } = betaTarget(first);
+    process.stdout.write(`repository=${repository}\ntag=${tag}\ntap=${tap}\n`);
+  } else {
+    console.error('Usage: node scripts/release-target.js <stable|beta|beta-newer> ...');
+    process.exit(1);
+  }
+}
+
+module.exports = { assertStableTarget, assertBetaVersion, assertNewerBeta, betaTarget };

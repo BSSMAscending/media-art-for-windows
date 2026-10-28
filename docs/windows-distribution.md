@@ -66,6 +66,33 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 
 `v*` 태그는 손으로 푸시하지 않습니다. 워크플로는 태그가 있는 버전을 이미 배포된 것으로 보므로, 배포 전에 태그를 먼저 붙이면 그 버전은 배포되지 않습니다.
 
+## 베타
+
+베타는 정식 배포와 저장소가 다릅니다. `package.json`은 `1.0.2`로 두고, 베타 번호를 `main`에 커밋하지 않습니다. 커밋하면 정식 배포 검사가 실패하거나, 검사를 통과할 경우 전시 PC가 받는 저장소로 올라갑니다.
+
+베타 번호는 다음 정식 버전의 semver 시험 번호입니다. 지금 줄은 `2.0.0-beta.1`부터 시작하고, 몇 번째에서 끝낼지는 정하지 않습니다. `2.0.0-beta.3`에서 멈춰도 되고 `2.0.0-beta.12`까지 가도 됩니다. 번호는 1~999이고 앞자리 0은 넣지 않으며, 이미 올라간 베타보다 커야 합니다. Squirrel은 낮은 번호를 업데이트로 보지 않아서 워크플로가 시작할 때 소스 태그와 베타 저장소의 공개 Release를 보고 같거나 낮은 번호를 막습니다. Windows 업데이트(Squirrel.Windows)는 대시 뒤를 한 문자열로 비교하는데 electron-winstaller가 `beta.10`의 점을 지워 `beta10`으로 만들기 때문에, 그대로 두면 `beta10`이 `beta9`보다 앞서 Windows 베타가 10번부터 업데이트되지 않습니다. 그래서 설치 파일 안의 NuGet 버전만 `2.0.0-beta010`처럼 세 자리로 맞추고(`forge.config.js`, `squirrelVersion`), 앱 버전과 태그는 `2.0.0-beta.10`으로 둡니다. 베타 Release의 `.nupkg`와 `RELEASES`에 `beta010`이 적혀 있는 것은 이 때문입니다.
+
+줄을 마치기로 하면 정식 `2.0.0`을 평소처럼 `main`의 버전을 올려 전시 저장소에 올립니다. 그때 전시 PC가 업데이트됩니다. 그 전의 베타 번호는 전시 저장소로 올리지 않습니다. 정식 `2.0.0`을 베타 저장소에 올리는 일도 없습니다.
+
+Windows 베타 설치본은 베타 저장소만 업데이트 피드로 보므로 줄이 끝나도 정식 `2.0.0`으로 넘어가지 않고, 베타 저장소에 새 Release가 올라올 때까지 마지막 베타에 머뭅니다. 베타를 쓰던 사람은 베타를 지우고 소개 사이트의 정식 설치 파일로 `2.0.0`을 새로 설치합니다. 그 설치본부터 전시 저장소를 따라 업데이트합니다. 다음 줄(예: `2.1.0-beta.1`)을 시작하려면 `scripts/channels.js`의 `upcomingRelease`를 바꿉니다. 그러면 베타 설치본은 그 줄의 베타를 이어서 받습니다.
+
+Actions의 **Publish beta**(`publish-beta.yml`)를 수동으로 실행하고 버전을 `2.0.0-beta.1`처럼 넣습니다. 워크플로가 그 번호로 Windows와 Mac(Apple Silicon, Intel)을 만들어 공개 저장소 `BSSMAscending/media-art-beta`에만 올립니다. 올리기 전에 `scripts/release-target.js`가 대상 저장소를 검사하고, 대상이 정식 저장소이거나 버전이 `X.Y.Z`이면 업로드 전에 멈춥니다. 정식 배포 워크플로도 반대로, 베타 버전은 `media-art-for-windows-releases`에 올리지 않고 멈춥니다. Windows 베타 설치본만 베타 저장소를 업데이트 피드로 봅니다. 이미 설치된 정식 버전은 `media-art-for-windows-releases`만 보므로 베타를 받지 않습니다.
+
+시작할 때 베타 저장소가 공개가 아니면 빌드 전에 멈춥니다. 비공개 저장소는 업데이트 서버도 받는 사람도 볼 수 없기 때문입니다. 릴리스는 처음에 초안(Draft)으로 만들고, 캐스크와 소스 태그까지 끝난 뒤 마지막 단계에서 공개합니다. 그 전에 실패하면 공개된 것이 없으므로 같은 버전으로 워크플로를 다시 실행하면 파일, 캐스크의 해시, 태그를 처음부터 다시 맞춥니다. 마지막 공개 단계만 실패했다면 초안을 베타 저장소에서 직접 공개합니다. 파일과 캐스크는 이미 맞아 있습니다. 소스 태그가 이미 있으면 그 번호는 쓰인 것으로 보고 다음 번호를 씁니다.
+
+베타 Release에는 Windows 설치 파일과 Mac 압축 파일 두 종류가 함께 있습니다. Mac은 Apple Silicon과 Intel로 나뉩니다. 받는 주소는 `https://github.com/BSSMAscending/media-art-beta/releases/latest`입니다. Mac은 서명하지 않아 앱이 스스로 업데이트하지 않고, 압축을 풀어 처음 열 때 Mac이 막을 수 있습니다. 소개 사이트의 베타 버튼이 이 배포를 가리킵니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
+
+Homebrew는 같은 Mac 파일을 더 쉽게 받는 선택입니다. 탭 `BSSMAscending/homebrew-tap`이 있으면 워크플로가 `binary-media-art-beta` 캐스크도 그 버전으로 바꿉니다. 탭이 없어도 베타 Release는 올라갑니다. 받는 명령은 다음과 같습니다.
+
+```bash
+brew tap BSSMAscending/tap
+brew install --cask binary-media-art-beta
+```
+
+다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 캐스크의 `postflight_steps`는 설치가 끝난 뒤 그 Mac에서 두 명령을 실행합니다. `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시를 지우고, `/usr/bin/codesign --force --deep -s -`로 그 자리에서 ad-hoc 서명을 합니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 서명되지 않은 앱의 이 처리를 받지 않습니다.
+
+이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`에 릴리스를 만들 수 있어야 합니다. 탭을 같이 갱신하려면 `homebrew-tap`에도 푸시할 수 있어야 합니다. 탭이 없을 때(404)만 캐스크를 건너뛰고, 탭이 있는데 권한이 없거나 확인이 실패하면 빌드 전에 멈춥니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
+
 ## 변경 기록 쓰기
 
 [`CHANGELOG.md`](../CHANGELOG.md)는 버전마다 바뀐 점을 최신 버전부터 적는 파일입니다. [Keep a Changelog](https://keepachangelog.com/) 형식을 따릅니다.
@@ -93,6 +120,7 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 - **이미 배포한 항목**: 고쳐도 이미 만들어진 Release 본문은 바뀌지 않습니다. 필요하면 Release 페이지에서 직접 고칩니다.
 - **영문 패치노트 (선택)**: [`CHANGELOG.en.md`](../CHANGELOG.en.md)에 같은 형식으로 영어 항목을 적으면 사이트를 영어로 볼 때 그 내용이 나옵니다. 영어 항목이 없는 버전은 한국어 내용이 그대로 보입니다. Release 본문과 배포 검사는 `CHANGELOG.md`만 씁니다.
 - **패치노트 페이지**: [소개 사이트의 패치노트](https://bssmascending.github.io/media-art-for-windows/patch-notes.html)는 이 파일로 만들어지고, `main`에 병합할 때마다 다시 올라갑니다. `## [Unreleased]`에 적은 내용은 "다음 버전 · 준비 중"으로 보입니다.
+- **베타 패치노트**: 베타도 이 파일에 정식 항목과 같이 적습니다. 제목은 `## [2.0.0-beta.1] - 날짜 - 제목`이고, 번호는 1~999까지 필요한 만큼 이어집니다. 배포 검사와 같은 규칙(`scripts/channels.js`)으로 읽습니다. 몇 번째에서 끝낼지는 정해 두지 않습니다. 패치노트는 버전 순서로 보여 줍니다. 정식 `2.0.0`이 있으면 그 아래, 그 전 정식 위에 베타가 오고, 정식 `2.0.0`이 아직 없으면 베타가 그 전 정식 바로 위에 옵니다. `beta.10`은 `beta.2`보다 위입니다. 이 항목은 전시 Release 본문이 되지 않습니다. 영어는 [`CHANGELOG.en.md`](../CHANGELOG.en.md)에 같은 제목으로 적습니다. 어느 줄(`2.0.0`, `2.1.0`…)의 베타든 이전 줄의 항목이 그대로 남습니다. `beta1`·`Beta.1`·`beta.01`·`beta.1000`처럼 버전인 듯하지만 형식이 틀린 제목과 같은 버전을 두 번 적은 제목은 사이트 빌드와 `npm test`가 오류로 알려 줍니다.
 
 `npm test`도 현재 `package.json` 버전의 항목이 있는지 확인합니다. 버전만 올리고 커밋하려 하면 pre-commit에서 바로 알려줍니다.
 

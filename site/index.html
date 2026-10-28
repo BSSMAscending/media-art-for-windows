@@ -124,6 +124,9 @@
             <a class="button" href="patch-notes.html"
               ><span data-l="ko">패치노트 보기</span><span data-l="en">Patch notes</span></a
             >
+            <a class="button" href="#beta"
+              ><span data-l="ko">베타 받기</span><span data-l="en">Beta</span></a
+            >
           </div>
           <p class="meta">
             <span data-l="ko">최신 배포</span><span data-l="en">Latest release</span> v{{VERSION}} ·
@@ -580,6 +583,72 @@
                 See the <a href="patch-notes.html">patch notes</a> for each version, and the source
                 on <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="beta">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 data-l="ko">베타</h2>
+            <h2 data-l="en">Beta</h2>
+            <p data-l="ko">
+              전시 PC에 설치된 정식 버전과는 다른 시험 빌드입니다. 베타 파일은 정식 배포 저장소에
+              올라가지 않으므로, 여기서 받아도 전시 중인 컴퓨터는 업데이트되지 않습니다.
+              이번 줄은 2.0.0-beta.1부터 필요한 만큼 이어지고, 정식으로 낼 때 2.0.0이 됩니다.
+              베타 설치본은 정식 2.0.0이 나와도 정식으로 바뀌지 않고 베타만 받습니다. 정식을
+              쓰려면 베타를 지우고 <a href="#install">설치와 업데이트</a>의 정식 설치 파일을 새로
+              설치하세요.
+            </p>
+            <p data-l="en">
+              A test build, separate from the release installed on the exhibit PCs. Beta files are
+              not published to the exhibit's release repository, so installing one here does not
+              update those computers. This line starts at 2.0.0-beta.1 and continues for as
+              many betas as it needs. The stable release is 2.0.0. A beta install does not
+              switch to it: it keeps receiving betas only. To move to the stable release,
+              uninstall the beta and run the stable installer from
+              <a href="#install">Install and updates</a>.
+            </p>
+          </div>
+          <div class="install channels">
+            <div class="panel">
+              <h3>Windows</h3>
+              <p data-l="ko">
+                시험용 설치 파일입니다. 전시 중인 PC에는 넣지 않습니다. 이 설치본만 다음 베타를
+                스스로 받습니다.
+              </p>
+              <p data-l="en">
+                A test installer. Do not put it on a PC that is running the exhibit. Only this
+                install fetches the next beta.
+              </p>
+              <p>
+                <a class="button" href="{{BETA_URL}}"
+                  ><span data-l="ko">Windows 베타 받기</span
+                  ><span data-l="en">Download the Windows beta</span></a
+                >
+              </p>
+            </div>
+            <div class="panel">
+              <h3>Mac</h3>
+              <p data-l="ko">
+                같은 베타 배포의 Mac 압축 파일입니다. Apple Silicon과 Intel이 나뉘어 있습니다.
+                서명하지 않아 처음 열 때 Mac이 막을 수 있습니다. Homebrew로 받으면 그 확인을
+                설치할 때 대신 합니다.
+              </p>
+              <p data-l="en">
+                The Mac zip is on the same beta release: one for Apple Silicon, one for Intel. It
+                is unsigned, so the first open may be blocked. Homebrew is the easier install and
+                clears quarantine.
+              </p>
+              <p>
+                <a class="button" href="{{BETA_URL}}"
+                  ><span data-l="ko">Mac 베타 받기</span
+                  ><span data-l="en">Download the Mac beta</span></a
+                >
+              </p>
+              <pre class="command"><code>brew tap BSSMAscending/tap
+brew install --cask binary-media-art-beta</code></pre>
             </div>
           </div>
         </div>

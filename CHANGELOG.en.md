@@ -2,7 +2,8 @@
 
 English patch notes for the project site. CHANGELOG.md (Korean) is the source of
 the Release notes; each version here mirrors its entry, and a version missing from
-this file is shown in Korean on the site.
+this file is shown in Korean on the site. Beta headings such as `2.0.0-beta.1`
+belong here too, under the same heading. They are not exhibit Release notes.
 
 ## [Unreleased]
 
