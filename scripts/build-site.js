@@ -74,26 +74,14 @@ function bilingual(ko, en, tag = 'span') {
   return `<${tag} data-l="ko">${ko}</${tag}><${tag} data-l="en">${en}</${tag}>`;
 }
 
-// Stable 2.0.0 sorts ahead of 2.0.0-beta.12, which sorts ahead of 1.0.2.
-// A missing stable release leaves its betas directly above the previous one.
-function versionKey(version) {
-  const match = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/.exec(version);
-  if (!match) return [0, 0, 0, 0];
-  return [
-    Number(match[1]),
-    Number(match[2]),
-    Number(match[3]),
-    match[4] === undefined ? Infinity : Number(match[4]),
-  ];
-}
-
+// Newest first; Unreleased on top. A beta sorts below the stable version it
+// precedes and above the previous release, so a missing stable release leaves
+// its betas directly above the one before.
 function newestFirst(a, b) {
-  if (!a.version) return b.version ? -1 : 0;
-  if (!b.version) return 1;
-  const ka = versionKey(a.version);
-  const kb = versionKey(b.version);
-  for (let i = 0; i < ka.length; i += 1) {
-    if (ka[i] !== kb[i]) return kb[i] - ka[i];
+  if (!a.sortKey) return b.sortKey ? -1 : 0;
+  if (!b.sortKey) return 1;
+  for (let i = 0; i < a.sortKey.length; i += 1) {
+    if (a.sortKey[i] !== b.sortKey[i]) return b.sortKey[i] < a.sortKey[i] ? -1 : 1;
   }
   return 0;
 }

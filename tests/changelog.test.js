@@ -158,6 +158,13 @@ describe('beta notes share the changelog', () => {
       '2.0.0-beta.1',
     ]);
     expect(entries.map((entry) => entry.beta)).toEqual([true, false, true, true]);
+    expect(entries.map((entry) => entry.sortKey)).toEqual([
+      [2, 1, 0, 1],
+      [2, 0, 0, Infinity],
+      [2, 0, 0, 2],
+      [2, 0, 0, 1],
+    ]);
     expect(entries[3].body).toBe('- 지난 줄 첫째');
+    expect(parseChangelog('## [Unreleased]\n- 준비\n')[0].sortKey).toBeNull();
   });
 });

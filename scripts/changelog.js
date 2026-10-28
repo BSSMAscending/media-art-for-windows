@@ -52,6 +52,13 @@ const BETA_HEADING =
 // It is a typo, so it is rejected instead of dropping its notes from the page.
 const VERSION_LIKE_HEADING = /^## \[\d+\.\d+\.\d+/;
 
+// [major, minor, patch, beta number] to compare entries by. A stable version has
+// no beta number and ranks above every beta of its line: 2.0.0 comes after
+// 2.0.0-beta.12, which comes after 2.0.0-beta.2.
+function sortKey(version, beta = Infinity) {
+  return [...version.split('.').map(Number), beta];
+}
+
 // Reads one heading as an entry: the Unreleased section, a "## [X.Y.Z]" version
 // or a "## [X.Y.Z-beta.N]" beta; null for any other heading. A beta stays in this
 // file; readReleaseNotes still ignores it. Which beta line is current is up to
@@ -66,6 +73,7 @@ function readHeading(line) {
       date: match?.[2] ?? null,
       title: match?.[3] ?? null,
       beta: false,
+      sortKey: match ? sortKey(match[1]) : null,
       lines: [],
     };
   }
@@ -83,6 +91,7 @@ function readHeading(line) {
     date: beta[3] ?? null,
     title: beta[4] ?? null,
     beta: true,
+    sortKey: sortKey(beta[1], Number(beta[2])),
     lines: [],
   };
 }
