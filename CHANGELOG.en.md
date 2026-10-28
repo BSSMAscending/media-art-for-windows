@@ -14,7 +14,7 @@ this file is shown in Korean on the site.
 - Cell size lever: every mode can use 8~48px cells. It starts at 24px.
 - Threshold lever: in 2 steps, move the 0~255 point that separates 0 from 1.
 - 한국어 / English: a switch in the first row of the controls changes every word to English, keeping the mode and lever values.
-- Magnifier: press and hold the picture and a 3× lens floats above your finger, so even small numbers are readable. It outlines the pressed cell and writes its calculation beside the lens; for blur and sharpen it also marks the neighbours that are averaged and their weights.
+- Magnifier: press and hold the picture and a 3× lens floats above your finger, so even small numbers are readable. It stays for 2 seconds after you let go, so a short tap on the radar sensor is enough. It outlines the pressed cell and writes its calculation beside the lens; for blur and sharpen it also marks the neighbours that are averaged and their weights.
 - Image Math: pick brighten (add), contrast (multiply), blur (Gaussian weighted average) or sharpen (boost the difference) and see how every number changes. A lever sets the strength; brighten and contrast are drawn as linear function graphs (`y = x + 60`), blur and sharpen as a 3×3 example.
 - Rule card: each mode shows its name, its rule as one calculation with the lever's value, and one picture.
 - Marked cell: one cell of the picture is outlined, and the card right under the levers puts its real numbers into the rule (`(140 − 128) × 2 + 128 = 152`). Moving a lever changes the calculation, and pressing the picture moves the mark to that cell.
