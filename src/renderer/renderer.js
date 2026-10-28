@@ -7,7 +7,9 @@ const { createCellCard } = require('./ui/cellCard');
 const { createCellPicker } = require('./ui/cellPicker');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
-const { createMagnifier } = require('./ui/magnifier');
+const { createMagnifier, drawLensMarks } = require('./ui/magnifier');
+const { formatCellMath } = require('./core/cellReadout');
+const { getGaussianWeights } = require('./core/imageMath');
 const { t, getLanguage, setLanguage, onLanguageChange } = require('./i18n');
 const {
   MODE_OPTIONS,
@@ -175,6 +177,15 @@ function getLeverValue() {
   return spec ? state[spec.stateKey] : undefined;
 }
 
+// Blur and sharpen average the pressed cell's neighbours; the lens outlines them and,
+// for 3×3, writes each one's weight.
+function getLensNeighbours() {
+  const { effect, amount } = getMathSettings(state);
+  if (state.selectedVersion !== 'math' || !['blur', 'sharpen'].includes(effect)) return {};
+  const radius = effect === 'blur' ? amount : 1;
+  return { radius, weights: radius === 1 ? getGaussianWeights(1).flat() : null };
+}
+
 function renderModeOptions(onSelect) {
   const container = document.getElementById('modeOptions');
   const label = document.getElementById('modeOptionsLabel');
@@ -305,8 +316,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cellCard = createCellCard(document.getElementById('detailCard'));
   const cellPicker = createCellPicker({
     marker: document.getElementById('cellMarker'),
-    getViewKey: () => `${getModeOption()}:${getLeverValue()}`,
-    onReading: (reading, frame) => cellCard.update(reading, frame),
+    getViewKey: () => `${getLanguage()}:${getModeOption()}:${getLeverValue()}`,
+    onReading: (reading, frame) => {
+      cellCard.update(reading, frame);
+      state.magnifier?.setCaption(reading ? t(formatCellMath(reading)) : '');
+    },
   });
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
@@ -347,6 +361,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       [document.querySelector('#visualStage .channel-overlay'), canvasEl].filter(Boolean),
     getArtworkRect: () => magnifierArea.getBoundingClientRect(),
     onPoint: (point) => cellPicker.pick(point),
+    decorate: (ctx, toLens, scale) => {
+      const cell = cellPicker.getCellRect();
+      if (cell) drawLensMarks(ctx, toLens, scale, cell, getLensNeighbours());
+    },
   });
   layoutMagnifierArea(canvasEl);
 

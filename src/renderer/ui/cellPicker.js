@@ -48,7 +48,15 @@ function createCellPicker({ marker, getViewKey, onReading }) {
     if (grid?.cols) spot = getGridSpot(grid, point);
   }
 
-  return { update, pick };
+  /** The marked cell's square on screen, or null before the first frame. */
+  function getCellRect() {
+    if (!grid?.cols) return null;
+    const cell = getSpotCell(grid, spot);
+    const { x, y, cellSize } = grid;
+    return { left: x + cell.x * cellSize, top: y + cell.y * cellSize, size: cellSize };
+  }
+
+  return { update, pick, getCellRect };
 }
 
 module.exports = { createCellPicker };

@@ -1,6 +1,7 @@
 const {
   getSourceRegion,
   getLensPlacement,
+  getCaptionPlacement,
   mapLayer,
   ZOOM,
 } = require('../src/renderer/ui/magnifier');
@@ -41,5 +42,31 @@ describe('magnifier geometry', () => {
     expect(
       mapLayer(region, { left: 0, top: 0, width: 0, height: 0 }, { width: 1, height: 1 }, 3, 1)
     ).toBeNull();
+  });
+});
+
+describe('calculation caption', () => {
+  const viewport = { width: 1920, height: 1080 };
+  const caption = { width: 400, height: 40 };
+
+  it('sits above a lens that floats above the finger, centred on it', () => {
+    const lens = { left: 450, top: 372, size: 300 };
+    expect(getCaptionPlacement(lens, caption, { x: 600, y: 700 }, viewport)).toEqual({
+      left: 400,
+      top: 322,
+    });
+  });
+
+  it('sits below a lens that had to drop below the finger', () => {
+    const lens = { left: 450, top: 228, size: 300 };
+    expect(getCaptionPlacement(lens, caption, { x: 600, y: 200 }, viewport).top).toBe(538);
+  });
+
+  it('stays on screen at the edges', () => {
+    const lens = { left: 0, top: 20, size: 300 };
+    expect(getCaptionPlacement(lens, caption, { x: 20, y: 400 }, viewport)).toEqual({
+      left: 0,
+      top: 0,
+    });
   });
 });
