@@ -118,13 +118,27 @@
             <span data-l="ko">최신 배포</span><span data-l="en">Latest release</span> v{{VERSION}} ·
             {{UPCOMING_NOTE}}
           </p>
-          <figure class="shot">
+          <!-- 3D opening (hero.js); the screenshot shows if WebGL or the module is unavailable. -->
+          <figure class="stage" id="heroStage">
+            <canvas aria-hidden="true"></canvas>
             <img
+              class="stage-fallback"
               src="images/hero.webp"
               alt="색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면"
               data-alt-ko="색 RGB 모드에서 빨강·초록·파랑 빛 세 장이 벌어지는 전시 화면"
               data-alt-en="The RGB Color mode sliding the red, green and blue lights apart"
             />
+            <figcaption class="stage-caption" aria-live="polite">
+              <span class="stage-step" data-l="ko"></span>
+              <span class="stage-step" data-l="en"></span>
+              <span class="stage-sample"></span>
+            </figcaption>
+            <ol class="stage-dots" aria-hidden="true">
+              <li></li>
+              <li></li>
+              <li></li>
+              <li></li>
+            </ol>
           </figure>
         </div>
       </section>
@@ -545,5 +559,6 @@
       </div>
     </footer>
     <script src="app.js"></script>
+    <script type="module" src="hero.js"></script>
   </body>
 </html>
