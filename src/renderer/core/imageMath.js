@@ -43,10 +43,16 @@ function getGaussianWeights(radius) {
   return row.map((a) => row.map((b) => a * b));
 }
 
+// Sum of all the weights: 16 for 3×3, 256 for 5×5, 4,096 for 7×7. Powers of two, so
+// dividing by it is exact and the weighted sum can be read back as average × total.
+function getGaussianTotal(radius) {
+  return GAUSSIAN_ROWS[radius].reduce((sum, weight) => sum + weight, 0) ** 2;
+}
+
 // Weighted average of the cells around (x, y), unrounded; off-grid cells reuse the edge.
 function gaussianAt(input, cols, rows, x, y, radius) {
   const row = GAUSSIAN_ROWS[radius];
-  const total = row.reduce((sum, weight) => sum + weight, 0) ** 2;
+  const total = getGaussianTotal(radius);
   let sum = 0;
   for (let dy = -radius; dy <= radius; dy++) {
     const offset = Math.max(0, Math.min(rows - 1, y + dy)) * cols;
@@ -98,6 +104,8 @@ module.exports = {
   addBrightness,
   scaleContrast,
   getGaussianWeights,
+  getGaussianTotal,
+  gaussianAt,
   gaussianBlur,
   sharpen,
   applyImageMath,

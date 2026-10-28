@@ -7,7 +7,13 @@ const {
 } = require('../config');
 const { smoothHandLandmarks } = require('./handRefinement');
 
-async function extractPersonMask(segmenter, videoEl, reusableBuffer) {
+function reuse(buffer, length) {
+  return buffer && buffer.length === length ? buffer : new Uint8Array(length);
+}
+
+// The mask's alpha is the model's probability (0-255) that a pixel shows a person;
+// it is kept next to the 0/1 decision so a pressed cell can show both.
+async function extractPersonMask(segmenter, videoEl, model) {
   const people = await segmenter.segmentPeople(videoEl, {
     flipHorizontal: false,
   });
@@ -20,16 +26,15 @@ async function extractPersonMask(segmenter, videoEl, reusableBuffer) {
   const imageData = await mask.toImageData();
   const { width, height, data } = imageData;
 
-  const binary =
-    reusableBuffer && reusableBuffer.length === width * height
-      ? reusableBuffer
-      : new Uint8Array(width * height);
+  const binary = reuse(model.personMaskBuffer, width * height);
+  const probability = reuse(model.personProbabilityBuffer, width * height);
   for (let i = 0; i < width * height; i++) {
     const alphaProbability = data[i * 4 + 3];
+    probability[i] = alphaProbability;
     binary[i] = alphaProbability >= BODY_SEGMENTATION_CONFIG.personAlphaThreshold ? 1 : 0;
   }
 
-  return { data: binary, width, height };
+  return { data: binary, probability, width, height };
 }
 
 async function loadModel(onProgress) {
@@ -81,12 +86,13 @@ async function loadModel(onProgress) {
 async function runSegmentation(model, videoEl) {
   const timestamp = performance.now();
 
-  const segmentation = await extractPersonMask(model.segmenter, videoEl, model.personMaskBuffer);
+  const segmentation = await extractPersonMask(model.segmenter, videoEl, model);
   if (!segmentation) {
     return { data: new Uint8Array(0), width: 0, height: 0, handLandmarks: [] };
   }
 
   model.personMaskBuffer = segmentation.data;
+  model.personProbabilityBuffer = segmentation.probability;
   const handResult = model.handLandmarker.detectForVideo(videoEl, timestamp);
   const smoothedHands = smoothHandLandmarks(
     model.previousHands,
@@ -99,6 +105,7 @@ async function runSegmentation(model, videoEl) {
 
   return {
     data: segmentation.data,
+    probability: segmentation.probability,
     width: segmentation.width,
     height: segmentation.height,
     handLandmarks: smoothedHands,

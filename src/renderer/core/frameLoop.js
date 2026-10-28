@@ -78,6 +78,9 @@ function createFrameLoop({
   const updateChannelTransition = createChannelTransition();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const artworkGrid = {};
+  // What the last frame drew and with which settings, so single cells can be read
+  // back with the same numbers (cellReadout.js). Handed to `onDrawn`.
+  const frame = { mode: null, grid: artworkGrid, pixels: null, grey: null, person: null };
   let channelOverlay = null;
   const renderInterval = 1000 / RENDERING_CONFIG.targetFps;
   const segmentationInterval = 1000 / RENDERING_CONFIG.segmentationFps;
@@ -170,9 +173,10 @@ function createFrameLoop({
 
     try {
       if (!fullFrame) channelOverlay?.hide();
+      frame.mode = mode;
       const stats = fullFrame ? drawFullFrame(mode, grid, layers) : drawSilhouetteFrame(mode, grid);
       // Read the canvases now, before the browser presents and clears the WebGL frame.
-      onDrawn?.();
+      onDrawn?.(frame);
       if (stats) {
         const fps = Math.round(1000 / (now - lastFrameTime));
         lastFrameTime = now;
@@ -217,15 +221,27 @@ function createFrameLoop({
     const crop = getCoverCrop(videoEl.videoWidth, videoEl.videoHeight, grid.cols, grid.rows);
     resizeSampling(grid.cols, grid.rows);
     const pixels = samplePixels(crop, grid.cols, grid.rows);
+    frame.pixels = pixels;
+    frame.grey = null;
     if (mode === 'rgb') {
-      renderRgb(ctx, overlay, grid, pixels, getRgbChannel ? getRgbChannel() : 'N', layers);
+      frame.channel = getRgbChannel ? getRgbChannel() : 'N';
+      renderRgb(ctx, overlay, grid, pixels, frame.channel, layers);
     } else if (mode === 'levels') {
-      renderLevels(ctx, grid, pixels, getLevels(), buffers.levelPixels, getThreshold?.());
+      frame.levels = getLevels();
+      frame.threshold = getThreshold?.();
+      renderLevels(ctx, grid, pixels, frame.levels, buffers.levelPixels, frame.threshold);
       overlay.renderFlat(grid, buffers.levelPixels);
     } else if (mode === 'math') {
-      const { effect, amount } = getMathSettings();
-      toGrey(pixels, buffers.mathInput);
-      applyImageMath(effect, amount, buffers.mathInput, buffers.mathOutput, grid.cols, grid.rows);
+      const { effect, amount } = (frame.math = getMathSettings());
+      frame.grey = toGrey(pixels, buffers.mathInput);
+      frame.output = applyImageMath(
+        effect,
+        amount,
+        buffers.mathInput,
+        buffers.mathOutput,
+        grid.cols,
+        grid.rows
+      );
       renderMath(ctx, grid, buffers.mathOutput, buffers.levelPixels);
       overlay.renderFlat(grid, buffers.levelPixels);
     }
@@ -245,8 +261,9 @@ function createFrameLoop({
     ctx.strokeRect(grid.x - 0.5, grid.y - 0.5, width + 1, height + 1);
   }
 
-  // Finds the person on the grid: the AI mask upsampled to cells, cleaned up, with
-  // hands reinforced, plus the sampled pixels. Null while nobody is in view.
+  // Finds the person on the grid: the AI mask upsampled to cells (`raw`), cleaned up,
+  // with hands reinforced (`mask`), plus the sampled pixels. Null before the first
+  // segmentation; `found` is false while nobody is in view.
   function findPerson(cols, rows) {
     if (!lastSegmentation || !lastSegmentation.width || !lastSegmentation.height) {
       return null;
@@ -263,7 +280,7 @@ function createFrameLoop({
       width: lastSegmentation.width,
       height: lastSegmentation.height,
     };
-    let gridData = upsampleCoverMaskToGrid(
+    const raw = upsampleCoverMaskToGrid(
       segmentation,
       crop,
       sourceWidth,
@@ -272,8 +289,8 @@ function createFrameLoop({
       rows,
       buffers.gridRaw
     );
-    gridData = removeSmallRegions(
-      gridData,
+    const gridData = removeSmallRegions(
+      raw,
       cols,
       rows,
       0.008,
@@ -291,8 +308,16 @@ function createFrameLoop({
       );
     }
 
-    if (!hasActivePixels(gridData)) return null;
-    return { pixels, mask: { data: gridData, width: cols, height: rows } };
+    return {
+      pixels,
+      mask: { data: gridData, width: cols, height: rows },
+      raw,
+      segmentation: lastSegmentation,
+      crop,
+      sourceWidth,
+      sourceHeight,
+      found: hasActivePixels(gridData),
+    };
   }
 
   function drawSilhouetteFrame(mode, grid) {
@@ -300,7 +325,9 @@ function createFrameLoop({
     resizeSampling(cols, rows);
     drawArtworkBackdrop(grid);
 
-    const person = findPerson(cols, rows);
+    const found = findPerson(cols, rows);
+    frame.person = found && { ...found, mask: found.mask.data };
+    const person = found?.found ? found : null;
     // 미디어 아트 always fills the screen with bits; the legacy modes draw only the person.
     if (!person && mode !== 'original') return null;
 

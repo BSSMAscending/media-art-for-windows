@@ -1,5 +1,6 @@
 const {
   getCoverCrop,
+  getCellMaskIndex,
   mapLandmarksToCover,
   upsampleCoverMaskToGrid,
 } = require('../src/renderer/core/coverCrop');
@@ -44,5 +45,20 @@ describe('cover crop', () => {
     const grid = upsampleCoverMaskToGrid(segmentation, crop, 4, 1, 4, 1);
 
     expect(grid[getMirroredMaskIndex(3, 0, 4, 1, { data: grid, width: 4, height: 1 })]).toBe(1);
+  });
+});
+
+describe('cell to mask pixel', () => {
+  it('picks the same mask pixel the upsampled grid used for every cell', () => {
+    const data = Uint8Array.from({ length: 8 * 6 }, (_, i) => i % 7 === 0);
+    const segmentation = { width: 8, height: 6, data };
+    const crop = getCoverCrop(640, 480, 10, 5);
+    const grid = upsampleCoverMaskToGrid(segmentation, crop, 640, 480, 10, 5);
+    for (let y = 0; y < 5; y++) {
+      for (let x = 0; x < 10; x++) {
+        const index = getCellMaskIndex(segmentation, crop, 640, 480, 10, 5, x, y);
+        expect(data[index]).toBe(grid[y * 10 + x]);
+      }
+    }
   });
 });
