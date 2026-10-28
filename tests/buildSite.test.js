@@ -161,8 +161,13 @@ describe('patch notes', () => {
     const notesPage = fs.readFileSync(path.join(out, 'patch-notes.html'), 'utf8');
     expect(notesPage).toContain('id="v0.1.0"');
     expect(notesPage).toContain('id="v1.0.2"');
-    expect(notesPage).not.toContain('id="v2.0.0-beta');
-    expect(notesPage).not.toContain('id="beta-notes"');
+    // Whatever CHANGELOG.md holds (betas included), each version is listed once
+    // in the side list and has its own article.
+    const listed = [...notesPage.matchAll(/<a href="#([^"]+)"[^>]*><span class="toc-version"/g)];
+    const articles = [...notesPage.matchAll(/<article class="release[^"]*" id="([^"]+)"/g)];
+    expect(articles.length).toBeGreaterThan(0);
+    expect(new Set(articles.map(([, id]) => id)).size).toBe(articles.length);
+    expect(listed.map(([, id]) => id)).toEqual(articles.map(([, id]) => id));
     // The 3D opening loads its pictures by path; they must ship with the site.
     const hero = fs.readFileSync(path.join(out, 'hero.js'), 'utf8');
     const assets = [...hero.matchAll(/'(assets\/[^']+)'/g)].map(([, file]) => file);
