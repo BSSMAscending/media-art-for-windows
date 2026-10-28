@@ -78,11 +78,16 @@ describe('patch notes', () => {
     const out = fs.mkdtempSync(path.join(os.tmpdir(), 'site-'));
     build(out);
     const pages = fs.readdirSync(out).filter((name) => name.endsWith('.html'));
-    expect(pages).toEqual(expect.arrayContaining(['index.html', 'patch-notes.html']));
+    expect(pages).toEqual(
+      expect.arrayContaining(['index.html', 'patch-notes.html', 'credits.html'])
+    );
     for (const page of pages) {
       const html = fs.readFileSync(path.join(out, page), 'utf8');
       expect(html).not.toMatch(/\{\{|PATCH_NOTES/);
-      for (const [, src] of html.matchAll(/src="(images\/[^"]+)"/g)) {
+      // Every page links every other page from its menu.
+      for (const other of pages)
+        expect(html).toContain(`href="${other === 'index.html' ? './' : other}`);
+      for (const [, src] of html.matchAll(/src="((?:images|assets)\/[^"]+)"/g)) {
         expect(fs.existsSync(path.join(out, src))).toBe(true);
       }
     }

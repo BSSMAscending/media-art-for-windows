@@ -3,7 +3,7 @@
 카메라에 비친 내 모습이 컴퓨터 안에서 **숫자**가 되는 과정을 보여주는 미디어 아트 전시물입니다.
 터치 화면 앞에 서서 모드를 고르면 같은 장면이 **0과 1**, **빛의 삼원색**, **밝기 계단**, **계산된 숫자**로 바뀝니다.
 
-**[소개 사이트](https://bssmascending.github.io/media-art-for-windows/)** · **[패치노트](https://bssmascending.github.io/media-art-for-windows/patch-notes.html)** · **[설치 파일](https://github.com/BSSMAscending/media-art-for-windows-releases/releases/latest)**
+**[소개 사이트](https://bssmascending.github.io/media-art-for-windows/)** · **[패치노트](https://bssmascending.github.io/media-art-for-windows/patch-notes.html)** · **[기여자](https://bssmascending.github.io/media-art-for-windows/credits.html)** · **[설치 파일](https://github.com/BSSMAscending/media-art-for-windows-releases/releases/latest)**
 
 ![색 RGB 모드에서 빨강·초록·파랑 빛이 층층이 나뉘는 전시 화면](docs/images/readme/hero.webp)
 

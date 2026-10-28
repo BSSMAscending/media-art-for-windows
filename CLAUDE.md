@@ -43,11 +43,12 @@ This is an Electron application called "Binary Media Art" that creates real-time
 
 ### Project Site
 
-- `site/` holds the GitHub Pages site (`index.html`, `patch-notes.html`, `style.css`). `scripts/build-site.js` (`npm run site`) copies it to `_site/` with `docs/images/readme/*` as `images/` and renders `CHANGELOG.md` into the patch notes page; `.github/workflows/pages.yml` deploys it on main pushes that touch those files
+- `site/` holds the GitHub Pages site (`index.html`, `patch-notes.html`, `credits.html`, `style.css`). `scripts/build-site.js` (`npm run site`) copies it to `_site/` with `docs/images/readme/*` as `images/` and renders `CHANGELOG.md` into the patch notes page; `.github/workflows/pages.yml` deploys it on main pushes that touch those files
 - Pages are plain HTML with `{{VERSION}}`, `{{DOWNLOAD_URL}}`, `{{UPCOMING_NOTE}}` and `<!-- PATCH_NOTES -->` placeholders filled at build time; keep them dependency-free
 - Both languages live in the markup as `data-l="ko"` / `data-l="en"` siblings (images use `data-alt-ko` / `data-alt-en`); `site/app.js` and the `<head>` snippet pick the language (`?lang=`, saved choice, then browser language) and the theme (saved choice, then the system's). Light theme tokens are in `site/style.css`
 - English patch notes come from `CHANGELOG.en.md` (optional per version; missing versions show the Korean notes)
 - The patch notes page keeps the version list in view: a sticky side list beside the notes, or a sideways bar under the header on narrow screens. `site/app.js` measures the sticky header (`--header-h`) and bar (`--toc-h`) so anchors land below them, and marks the version being read with `aria-current`
+- `credits.html` lists the BSSM Ascending team (GitHub avatars) and the partners with their logos (`site/assets/credits/`). Logos keep their own colors on a light plate (`--logo-plate`) in both themes. Below 860px the header menu moves to its own row
 - The home page opens with a 3D animation (`site/hero.js`, Three.js 0.160.0 from jsDelivr as an ES module): the drawn scene as 64×48 blocks (`site/assets/scene-64x48.png`, `person-64x48.png`) going photo → brightness as height → R/G/B layers fanned like the app → person as 1. Captions follow one sample cell in both languages; it pauses off screen, shows a still frame for reduced motion, and keeps the hero screenshot if WebGL or the module fails. `window.__heroSeek(seconds)` jumps to a moment for screenshots
 - `forge.config.js` keeps `docs/`, `site/`, `tests/`, `scripts/`, dot folders and root Markdown out of the installer
 
