@@ -1,0 +1,292 @@
+<!doctype html>
+<html
+  lang="ko"
+  data-lang="ko"
+  data-title-ko="기여자 · Binary Media Art"
+  data-title-en="Credits · Binary Media Art"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>기여자 · Binary Media Art</title>
+    <meta
+      name="description"
+      content="Binary Media Art를 만들고 도운 사람들 · The people who made and helped Binary Media Art"
+    />
+    <script>
+      // Saved or browser language and theme, applied before the page paints.
+      (function () {
+        var root = document.documentElement;
+        var get = function (key) {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            return null;
+          }
+        };
+        var query = new URLSearchParams(location.search).get('lang');
+        var saved = get('lang');
+        var lang =
+          query === 'ko' || query === 'en'
+            ? query
+            : saved === 'ko' || saved === 'en'
+              ? saved
+              : /^ko\b/i.test(navigator.language || '')
+                ? 'ko'
+                : 'en';
+        root.dataset.lang = lang;
+        root.lang = lang;
+        var theme = get('theme');
+        if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+      })();
+    </script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="./" aria-label="Binary Media Art">
+          <span class="brand-mark" aria-hidden="true"
+            ><span></span><span></span><span></span><span></span><span></span><span></span
+            ><span></span><span></span><span></span
+          ></span>
+          <span class="brand-name">Binary Media Art</span>
+        </a>
+        <nav class="site-nav" aria-label="Menu">
+          <a href="./#how"><span data-l="ko">원리</span><span data-l="en">How</span></a>
+          <a href="./#modes"><span data-l="ko">모드</span><span data-l="en">Modes</span></a>
+          <a href="./#play"><span data-l="ko">체험</span><span data-l="en">Try it</span></a>
+          <a href="./#install"><span data-l="ko">설치</span><span data-l="en">Install</span></a>
+          <a href="patch-notes.html"
+            ><span data-l="ko">패치노트</span><span data-l="en">Patch notes</span></a
+          >
+          <a href="credits.html" aria-current="page"
+            ><span data-l="ko">기여자</span><span data-l="en">Credits</span></a
+          >
+          <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>
+        </nav>
+        <div class="site-tools">
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-set-lang="ko" lang="ko">KO</button>
+            <button type="button" data-set-lang="en" lang="en">EN</button>
+          </div>
+          <button class="theme-toggle" id="themeToggle" type="button">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path
+                  d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"
+                />
+              </g>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="notes-hero">
+        <p class="eyebrow">CREDITS</p>
+        <h1 data-l="ko">기여자</h1>
+        <h1 data-l="en">Credits</h1>
+        <p class="lead" data-l="ko">
+          부산소프트웨어마이스터고등학교와 부산수학문화관의 산학협력, 그리고 지아이웍스 전문가의
+          피드백을 통해 제작된 프로젝트입니다.
+        </p>
+        <p class="lead" data-l="en">
+          Binary Media Art was made through a partnership between Busan Software Meister High School
+          and the Busan Mathematics Culture Museum, with feedback from experts at GIWORKS.
+        </p>
+      </section>
+
+      <section class="credits-group">
+        <h2 data-l="ko">만든 사람들</h2>
+        <h2 data-l="en">Made by</h2>
+        <p class="credits-note" data-l="ko">
+          부산소프트웨어마이스터고등학교 학생 팀
+          <a href="https://github.com/BSSMAscending">BSSM Ascending</a>
+        </p>
+        <p class="credits-note" data-l="en">
+          <a href="https://github.com/BSSMAscending">BSSM Ascending</a>, a student team at Busan
+          Software Meister High School
+        </p>
+        <ul class="people">
+          <li>
+            <a class="person" href="https://github.com/showtender1">
+              <img
+                class="person-avatar"
+                src="https://avatars.githubusercontent.com/u/109408296?s=160&amp;v=4"
+                alt=""
+                width="64"
+                height="64"
+                loading="lazy"
+              />
+              <span class="person-name"
+                ><span data-l="ko">김민석</span><span data-l="en">Minseok Kim</span></span
+              >
+              <span class="person-handle">@showtender1</span>
+            </a>
+          </li>
+          <li>
+            <a class="person" href="https://github.com/Stephan1226">
+              <img
+                class="person-avatar"
+                src="https://avatars.githubusercontent.com/u/154233014?s=160&amp;v=4"
+                alt=""
+                width="64"
+                height="64"
+                loading="lazy"
+              />
+              <span class="person-name"
+                ><span data-l="ko">김현호</span><span data-l="en">Hyunho Kim</span></span
+              >
+              <span class="person-handle">@Stephan1226</span>
+            </a>
+          </li>
+          <li>
+            <a class="person" href="https://github.com/bangminjun">
+              <img
+                class="person-avatar"
+                src="https://avatars.githubusercontent.com/u/184931994?s=160&amp;v=4"
+                alt=""
+                width="64"
+                height="64"
+                loading="lazy"
+              />
+              <span class="person-name"
+                ><span data-l="ko">방민준</span><span data-l="en">Minjun Bang</span></span
+              >
+              <span class="person-handle">@bangminjun</span>
+            </a>
+          </li>
+          <li>
+            <a class="person" href="https://github.com/baesungmin123">
+              <img
+                class="person-avatar"
+                src="https://avatars.githubusercontent.com/u/159688166?s=160&amp;v=4"
+                alt=""
+                width="64"
+                height="64"
+                loading="lazy"
+              />
+              <span class="person-name"
+                ><span data-l="ko">배성민</span><span data-l="en">Seongmin Bae</span></span
+              >
+              <span class="person-handle">@baesungmin123</span>
+            </a>
+          </li>
+          <li>
+            <a class="person" href="https://github.com/stontLSH">
+              <img
+                class="person-avatar"
+                src="https://avatars.githubusercontent.com/u/167179840?s=160&amp;v=4"
+                alt=""
+                width="64"
+                height="64"
+                loading="lazy"
+              />
+              <span class="person-name"
+                ><span data-l="ko">이수환</span><span data-l="en">Suhwan Lee</span></span
+              >
+              <span class="person-handle">@stontLSH</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="credits-group">
+        <h2 data-l="ko">함께한 분들</h2>
+        <h2 data-l="en">With help from</h2>
+        <ul class="partners">
+          <li class="partner">
+            <a class="partner-logo" href="https://www.giworks.co.kr">
+              <img
+                src="assets/credits/giworks.png"
+                width="169"
+                height="63"
+                alt="지아이웍스"
+                data-alt-ko="지아이웍스"
+                data-alt-en="GIWORKS"
+              />
+            </a>
+            <p class="partner-role"><span data-l="ko">감수</span><span data-l="en">Review</span></p>
+            <p class="partner-name">
+              <span data-l="ko">김태균 프로님</span><span data-l="en">Taegyun Kim</span>
+            </p>
+            <p class="partner-org">
+              <span data-l="ko">지아이웍스</span><span data-l="en">GIWORKS</span>
+            </p>
+          </li>
+          <li class="partner">
+            <a class="partner-logo" href="https://home.pen.go.kr/bmcm/main.do">
+              <img
+                src="assets/credits/bmcm.png"
+                width="210"
+                height="34"
+                alt="부산수학문화관"
+                data-alt-ko="부산수학문화관"
+                data-alt-en="Busan Mathematics Culture Museum"
+              />
+            </a>
+            <p class="partner-role">
+              <span data-l="ko">프로젝트 운영</span><span data-l="en">Project coordination</span>
+            </p>
+            <p class="partner-name">
+              <span data-l="ko">변혜영 담당자님</span><span data-l="en">Hyeyoung Byun</span>
+            </p>
+            <p class="partner-org">
+              <span data-l="ko">부산수학문화관</span
+              ><span data-l="en">Busan Mathematics Culture Museum</span>
+            </p>
+          </li>
+          <li class="partner">
+            <a class="partner-logo" href="https://school.busanedu.net/bssm-h/main.do">
+              <img
+                src="assets/credits/bssm.png"
+                width="263"
+                height="35"
+                alt="부산소프트웨어마이스터고등학교"
+                data-alt-ko="부산소프트웨어마이스터고등학교"
+                data-alt-en="Busan Software Meister High School"
+              />
+            </a>
+            <p class="partner-role">
+              <span data-l="ko">지도 교사</span><span data-l="en">Supervising teacher</span>
+            </p>
+            <p class="partner-name">
+              <span data-l="ko">이세준 선생님</span><span data-l="en">Sejun Lee</span>
+            </p>
+            <p class="partner-org">
+              <span data-l="ko">부산소프트웨어마이스터고등학교</span
+              ><span data-l="en">Busan Software Meister High School</span>
+            </p>
+          </li>
+        </ul>
+        <p class="credits-thanks" data-l="ko">
+          그 외 여러 수학 교육 전문가분들의 피드백을 통해 발전한 프로젝트입니다.
+        </p>
+        <p class="credits-thanks" data-l="en">
+          The project also grew through feedback from many mathematics education experts.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>Binary Media Art · BSSM Ascending</span>
+        <span data-l="ko"
+          >소스 코드는 <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>에
+          있습니다.</span
+        >
+        <span data-l="en"
+          >The source is on
+          <a href="https://github.com/BSSMAscending/media-art-for-windows">GitHub</a>.</span
+        >
+      </div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>
