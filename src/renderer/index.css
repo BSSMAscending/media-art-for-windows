@@ -455,14 +455,59 @@ body {
   opacity: 0.8;
 }
 
-.mode-cue {
+/* The cue and the 한국어 / English switch share the block's first row. */
+.mode-cue-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: 0 0 var(--space-3);
+}
+
+.mode-cue {
+  flex: 1;
+  min-width: 0;
   color: var(--text-secondary);
   font-size: var(--type-control-label);
   letter-spacing: 0.08em;
   line-height: 1.4;
-  text-align: center;
   word-break: keep-all;
+}
+
+.language-toggle {
+  display: flex;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: rgba(0, 8, 12, 0.8);
+}
+
+.language-toggle button {
+  min-width: 4.5em;
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--type-control-meta);
+  font-weight: 700;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.language-toggle button.is-selected {
+  background: var(--control-selected-background);
+  color: var(--control-selected-text);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+}
+
+.language-toggle button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .mode-button-grid--live {

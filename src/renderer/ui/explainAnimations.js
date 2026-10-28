@@ -1,4 +1,5 @@
 const { applyImageMath, getGaussianWeights } = require('../core/imageMath');
+const { t } = require('../i18n');
 
 // Small looping illustrations for the mode explanation card. Each builder returns
 // a DOM element animated purely by CSS; its un-animated styles are the meaningful
@@ -72,12 +73,18 @@ function createLevelSteps(levels) {
   root.style.setProperty('--levels', levels);
   root.style.setProperty('--mid-step', Math.floor(levels / 2));
 
-  root.appendChild(element('div', 'explain-levels-label', '진짜 밝기'));
+  root.appendChild(
+    element('div', 'explain-levels-label', t({ ko: '진짜 밝기', en: 'Real brightness' }))
+  );
   const smooth = element('div', 'explain-levels-bar explain-levels-bar--smooth');
   smooth.appendChild(element('span', 'explain-levels-marker'));
   root.appendChild(smooth);
 
-  root.appendChild(element('div', 'explain-levels-label', `컴퓨터가 고른 색 · ${levels}단계`));
+  const stepsLabel = {
+    ko: `컴퓨터가 고른 색 · ${levels}단계`,
+    en: `Computer's colors · ${levels} steps`,
+  };
+  root.appendChild(element('div', 'explain-levels-label', t(stepsLabel)));
   const steps = element('div', 'explain-levels-bar');
   const showDigits = levels <= 10;
   for (let level = 0; level < levels; level++) {
@@ -104,9 +111,10 @@ const MATH_EXAMPLE = Uint8ClampedArray.from([60, 90, 120, 80, 140, 200, 100, 170
 function formatMathOperator(effect, amount) {
   if (effect === 'brightness') return amount < 0 ? `− ${-amount}` : `+ ${amount}`;
   if (effect === 'contrast') return `× ${amount}`;
-  if (effect === 'blur') return `${amount * 2 + 1}×${amount * 2 + 1} 무게 평균`;
-  if (effect === 'sharpen') return `차이 × ${amount}`;
-  return '그대로';
+  const size = `${amount * 2 + 1}×${amount * 2 + 1}`;
+  if (effect === 'blur') return t({ ko: `${size} 무게 평균`, en: `${size} weighted avg` });
+  if (effect === 'sharpen') return t({ ko: `차이 × ${amount}`, en: `diff × ${amount}` });
+  return t({ ko: '그대로', en: 'unchanged' });
 }
 
 function paintMathCell(cell, value) {
