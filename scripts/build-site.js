@@ -74,6 +74,21 @@ function bilingual(ko, en, tag = 'span') {
   return `<${tag} data-l="ko">${ko}</${tag}><${tag} data-l="en">${en}</${tag}>`;
 }
 
+// The note that tells a visitor why an entry is not on the exhibit PCs: a beta
+// never ships there, and an undated change is not there yet.
+function exhibitNote(entry) {
+  const note = (ko, en) => `<span class="release-note">${bilingual(ko, en)}</span>`;
+  if (entry.beta) return note('전시 PC에는 나가지 않습니다', 'Not shipped to the exhibit PCs');
+  if (!entry.date) return note('아직 전시 PC에 배포되지 않은 변경입니다', 'Not on the exhibit PCs yet');
+  return '';
+}
+
+// The classes that mark an entry the exhibit is not running: Unreleased, or a beta.
+function stateClasses(entry) {
+  if (!entry.version) return ['is-upcoming'];
+  return entry.beta ? ['is-beta'] : [];
+}
+
 // Newest first; Unreleased on top. A beta sorts below the stable version it
 // precedes and above the previous release, so a missing stable release leaves
 // its betas directly above the one before.
@@ -103,15 +118,11 @@ function renderPatchNotes(entries, english = []) {
           escapeHtml(translationOf(entry)?.title || entry.title || '')
         )
       : bilingual('준비 중', 'In progress');
-  const exhibitNote = `<span class="release-note">${bilingual(
-    '전시 PC에는 나가지 않습니다',
-    'Not shipped to the exhibit PCs'
-  )}</span>`;
   // The side list (a bar on narrow screens) the page keeps in view; see site/app.js.
   const index = shown
     .map((entry) => {
-      const classes = [entry.version ? '' : 'is-upcoming', entry.beta ? 'is-beta' : ''].filter(Boolean);
-      return `<li><a href="#${id(entry)}"${classes.length ? ` class="${classes.join(' ')}"` : ''}><span class="toc-version">${
+      const classes = stateClasses(entry).join(' ');
+      return `<li><a href="#${id(entry)}"${classes ? ` class="${classes}"` : ''}><span class="toc-version">${
         entry.version ? `v${entry.version}` : bilingual('다음 버전', 'Next')
       }</span><span class="toc-title">${titleOf(entry)}</span></a></li>`;
     })
@@ -119,29 +130,17 @@ function renderPatchNotes(entries, english = []) {
   const notes = shown
     .map((entry) => {
       const upcoming = !entry.version;
-      const beta = Boolean(entry.beta);
       const translation = translationOf(entry);
       const label = upcoming ? bilingual('다음 버전', 'Next version') : `v${entry.version}`;
       const when = entry.date ? `<time datetime="${entry.date}">${formatDate(entry.date)}</time>` : '';
-      const date = when
-        ? `${when}${beta ? exhibitNote : ''}`
-        : beta
-          ? exhibitNote
-          : `<span class="release-note">${bilingual(
-              '아직 전시 PC에 배포되지 않은 변경입니다',
-              'Not on the exhibit PCs yet'
-            )}</span>`;
       const englishBody = translation?.body
         ? renderMarkdown(translation.body)
         : `<p class="release-note">Notes for this version are in Korean.</p>\n${renderMarkdown(entry.body)}`;
-      const classes = ['release', upcoming ? 'is-upcoming' : '', beta ? 'is-beta' : '']
-        .filter(Boolean)
-        .join(' ');
-      return `<article class="${classes}" id="${id(entry)}">
+      return `<article class="${['release', ...stateClasses(entry)].join(' ')}" id="${id(entry)}">
   <header class="release-head">
     <span class="release-version">${label}</span>
     <h2 class="release-title">${titleOf(entry)}</h2>
-    ${date}
+    ${when}${exhibitNote(entry)}
   </header>
   <div class="release-body" data-l="ko">
 ${renderMarkdown(entry.body)}
