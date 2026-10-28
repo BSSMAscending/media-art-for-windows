@@ -1,7 +1,7 @@
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 const { convertVersion } = require('electron-winstaller');
-const { betaRepository, stableRepository, squirrelVersion } = require('../scripts/channels');
+const { betaRepository, homebrewTap, stableRepository, squirrelVersion } = require('../scripts/channels');
 const { assertBetaVersion, assertStableTarget, betaTarget } = require('../scripts/release-target');
 const { renderBetaCask } = require('../scripts/beta-cask');
 const { setUpdateRepository } = require('../scripts/set-update-repository');
@@ -25,13 +25,17 @@ describe('release targets stay split', () => {
     expect(assertBetaVersion('2.0.0-beta.10')).toBe('v2.0.0-beta.10');
     expect(assertBetaVersion('2.0.0-beta.12')).toBe('v2.0.0-beta.12');
     expect(assertBetaVersion('2.0.0-beta.999')).toBe('v2.0.0-beta.999');
-    expect(betaTarget('2.0.0-beta.2')).toEqual({ repository: betaRepository, tag: 'v2.0.0-beta.2' });
+    expect(betaTarget('2.0.0-beta.2')).toEqual({
+      repository: betaRepository,
+      tag: 'v2.0.0-beta.2',
+      tap: homebrewTap,
+    });
     expect(JSON.stringify(betaTarget('2.0.0-beta.2'))).not.toContain(stableRepository);
   });
 
-  it('prints the repository and tag for a workflow to read', () => {
+  it('prints the repository, tag and tap for a workflow to read', () => {
     const output = execFileSync(process.execPath, [script, 'beta', '2.0.0-beta.2'], { encoding: 'utf8' });
-    expect(output).toBe(`repository=${betaRepository}\ntag=v2.0.0-beta.2\n`);
+    expect(output).toBe(`repository=${betaRepository}\ntag=v2.0.0-beta.2\ntap=${homebrewTap}\n`);
     expect(() => execFileSync(process.execPath, [script, 'beta', '2.0.0'], { stdio: 'pipe' })).toThrow();
     expect(() =>
       execFileSync(process.execPath, [script, 'stable', stableRepository, '2.0.0-beta.2'], { stdio: 'pipe' })

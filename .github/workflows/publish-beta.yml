@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+    outputs:
+      tap: ${{ steps.tap.outputs.state }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -61,20 +63,36 @@ jobs:
             exit 1
           fi
 
-      - name: Check the Homebrew tap and the beta tag
+      # A missing tap is fine. Any other failure (no access, a server error) is not,
+      # so it cannot pass for "absent" and skip the cask silently.
+      - name: Check the Homebrew tap
+        id: tap
+        env:
+          TAP: ${{ steps.target.outputs.tap }}
+        run: |
+          set -euo pipefail
+          if ! can_push=$(gh api "repos/$TAP" --jq .permissions.push 2>&1); then
+            if [[ "$can_push" == *"HTTP 404"* ]]; then
+              echo "::warning::Homebrew tap $TAP does not exist. The Mac and Windows files still publish."
+              echo "state=absent" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Could not read Homebrew tap $TAP: $can_push"
+            exit 1
+          fi
+          if [[ "$can_push" != "true" ]]; then
+            echo "::error::RELEASES_REPOSITORY_TOKEN cannot push to $TAP. Fix its access before publishing."
+            exit 1
+          fi
+          echo "state=present" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse a beta number that is already tagged
         run: |
           set -euo pipefail
           node <<'NODE'
           const { execFileSync } = require('node:child_process');
-          const { homebrewTap } = require('./scripts/channels');
           const { assertBetaVersion } = require('./scripts/release-target');
           const tag = assertBetaVersion(process.env.BETA_VERSION);
-          try {
-            execFileSync('gh', ['repo', 'view', homebrewTap, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
-          } catch (error) {
-            if (error.status === undefined) throw error;
-            console.warn(`Homebrew tap ${homebrewTap} is absent. The Mac and Windows files still publish.`);
-          }
           try {
             execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
             throw new Error(`${tag} is already published. Pick the next beta number.`);
@@ -246,17 +264,15 @@ jobs:
           test "${#files[@]}" -gt 0
           gh release upload "$tag" "${files[@]}" --repo "$repo" --clobber
 
+      # The guard job found the tap and checked that the token can push to it.
       - name: Update the Homebrew tap
+        if: needs.guard.outputs.tap == 'present'
         env:
           GH_TOKEN: ${{ secrets.RELEASES_REPOSITORY_TOKEN }}
+          tap: ${{ steps.target.outputs.tap }}
         run: |
           set -euo pipefail
           version="$BETA_VERSION"
-          tap=$(node -e "const {homebrewTap, stableRepository, betaRepository}=require('./scripts/channels'); if (homebrewTap===stableRepository || homebrewTap===betaRepository) process.exit(1); process.stdout.write(homebrewTap)")
-          if ! gh repo view "$tap" --json name >/dev/null 2>&1; then
-            echo "Homebrew tap $tap is absent. The Mac and Windows files are already published."
-            exit 0
-          fi
           arm=$(sha256sum "dist/media-art-for-windows-darwin-arm64-${version}.zip" | awk '{print $1}')
           intel=$(sha256sum "dist/media-art-for-windows-darwin-x64-${version}.zip" | awk '{print $1}')
           node scripts/beta-cask.js "$version" "$arm" "$intel" > dist/binary-media-art-beta.rb

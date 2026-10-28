@@ -3,8 +3,8 @@
 // Usage:
 //   node scripts/release-target.js stable <owner/repo> <X.Y.Z>
 //   node scripts/release-target.js beta <X.Y.Z-beta.N>
-// `beta` prints key=value lines (the repository and tag to publish to), the
-// format a workflow appends to $GITHUB_OUTPUT.
+// `beta` prints key=value lines (the repository and tag to publish to, and the
+// Homebrew tap), the format a workflow appends to $GITHUB_OUTPUT.
 const {
   BETA_VERSION,
   STABLE_VERSION,
@@ -48,17 +48,18 @@ function assertBetaVersion(version) {
   return `v${version}`;
 }
 
-// Where a beta goes: only ever the beta repository, under the beta's own tag.
+// Where a beta goes: only ever the beta repository, under the beta's own tag,
+// plus the tap that carries its Mac cask.
 function betaTarget(version) {
-  return { repository: betaRepository, tag: assertBetaVersion(version) };
+  return { repository: betaRepository, tag: assertBetaVersion(version), tap: homebrewTap };
 }
 
 if (require.main === module) {
   const [channel, first, second] = process.argv.slice(2);
   if (channel === 'stable') assertStableTarget(first, second);
   else if (channel === 'beta') {
-    const { repository, tag } = betaTarget(first);
-    process.stdout.write(`repository=${repository}\ntag=${tag}\n`);
+    const { repository, tag, tap } = betaTarget(first);
+    process.stdout.write(`repository=${repository}\ntag=${tag}\ntap=${tap}\n`);
   } else {
     console.error('Usage: node scripts/release-target.js <stable|beta> ...');
     process.exit(1);
