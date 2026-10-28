@@ -1,7 +1,9 @@
 name: Publish beta
 
 # Manual only. Builds a Windows beta and a Mac beta (Apple Silicon and Intel)
-# and publishes them to BSSMAscending/media-art-beta. It does not run on pushes
+# and publishes both to BSSMAscending/media-art-beta. The Homebrew tap is
+# updated when that repository exists; a missing tap does not block the files.
+# It does not run on pushes
 # to main, does not change package.json on main, and cannot upload to the
 # exhibit repository media-art-for-windows-releases. Exhibit PCs keep updating
 # from that repository alone.
@@ -35,7 +37,7 @@ jobs:
       - name: Accept only a beta version aimed away from the exhibit
         run: node scripts/release-target.js beta "${{ inputs.version }}"
 
-      - name: Require the beta repository and the Homebrew tap
+      - name: Require the beta repository
         env:
           BETA_VERSION: ${{ inputs.version }}
         run: |
@@ -49,8 +51,12 @@ jobs:
           const { betaRepository, homebrewTap } = require('./scripts/channels');
           const { assertBetaVersion } = require('./scripts/release-target');
           const tag = assertBetaVersion(process.env.BETA_VERSION);
-          for (const repo of [betaRepository, homebrewTap]) {
-            execFileSync('gh', ['repo', 'view', repo, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
+          execFileSync('gh', ['repo', 'view', betaRepository, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
+          try {
+            execFileSync('gh', ['repo', 'view', homebrewTap, '--json', 'visibility,isPrivate'], { stdio: 'inherit' });
+          } catch (error) {
+            if (error.status === undefined) throw error;
+            console.warn(`Homebrew tap ${homebrewTap} is absent. The Mac and Windows files still publish.`);
           }
           try {
             execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
@@ -189,10 +195,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$BETA_VERSION"
-          arm=$(sha256sum "dist/media-art-for-windows-darwin-arm64-${version}.zip" | awk '{print $1}')
-          intel=$(sha256sum "dist/media-art-for-windows-darwin-x64-${version}.zip" | awk '{print $1}')
-          node scripts/beta-cask.js "$version" "$arm" "$intel" > dist/binary-media-art-beta.rb
-          printf 'Beta %s. Not published to the exhibit repository.\n' "$version" > dist/notes.md
+          printf 'Beta %s. Windows installer and Mac zips. Not published to the exhibit repository.\n' "$version" > dist/notes.md
           # betaPublishArgs throws unless the version is X.Y.Z-beta.N and the
           # repository it returns is the beta repository, never the exhibit one.
           repo=$(node -e "const {betaPublishArgs}=require('./scripts/release-target'); process.stdout.write(betaPublishArgs(process.env.BETA_VERSION, [])[1])")
@@ -201,7 +204,7 @@ jobs:
             gh release create "$tag" --repo "$repo" --title "$tag beta" --notes-file dist/notes.md
           fi
           shopt -s nullglob
-          files=(dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES dist/binary-media-art-beta.rb)
+          files=(dist/*.zip dist/*.exe dist/*.nupkg dist/RELEASES)
           test "${#files[@]}" -gt 0
           gh release upload "$tag" "${files[@]}" --repo "$repo" --clobber
 
@@ -212,6 +215,13 @@ jobs:
           set -euo pipefail
           version="$BETA_VERSION"
           tap=$(node -e "const {homebrewTap, stableRepository, betaRepository}=require('./scripts/channels'); if (homebrewTap===stableRepository || homebrewTap===betaRepository) process.exit(1); process.stdout.write(homebrewTap)")
+          if ! gh repo view "$tap" --json name >/dev/null 2>&1; then
+            echo "Homebrew tap $tap is absent. The Mac and Windows files are already published."
+            exit 0
+          fi
+          arm=$(sha256sum "dist/media-art-for-windows-darwin-arm64-${version}.zip" | awk '{print $1}')
+          intel=$(sha256sum "dist/media-art-for-windows-darwin-x64-${version}.zip" | awk '{print $1}')
+          node scripts/beta-cask.js "$version" "$arm" "$intel" > dist/binary-media-art-beta.rb
           rm -rf tap-repo
           gh repo clone "$tap" tap-repo
           mkdir -p tap-repo/Casks

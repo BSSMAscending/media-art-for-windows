@@ -72,18 +72,18 @@ Electron의 공개 업데이트 서비스는 최신 GitHub Release의 Squirrel `
 
 Actions의 **Publish beta**(`publish-beta.yml`)를 수동으로 실행하고 버전을 `1.1.0-beta.1`처럼 넣습니다. 워크플로가 그 번호로 Windows와 Mac(Apple Silicon, Intel)을 만들어 공개 저장소 `BSSMAscending/media-art-beta`에만 올립니다. 올리기 전에 `scripts/release-target.js`가 대상 저장소를 검사하고, 대상이 정식 저장소이거나 버전이 `X.Y.Z`이면 업로드 전에 멈춥니다. 정식 배포 워크플로도 반대로, 베타 버전은 `media-art-for-windows-releases`에 올리지 않고 멈춥니다. Windows 베타 설치본만 베타 저장소를 업데이트 피드로 봅니다. 이미 설치된 정식 버전은 `media-art-for-windows-releases`만 보므로 베타를 받지 않습니다.
 
-Mac 베타는 서명하지 않아 앱이 스스로 업데이트하지 않습니다. 같은 워크플로가 Homebrew 탭 `BSSMAscending/homebrew-tap`의 `binary-media-art-beta` 캐스크를 그 버전으로 바꿉니다. 받는 명령은 다음과 같습니다.
+베타 Release에는 Windows 설치 파일과 Mac 압축 파일 두 종류가 함께 있습니다. Mac은 Apple Silicon과 Intel로 나뉩니다. 받는 주소는 `https://github.com/BSSMAscending/media-art-beta/releases/latest`입니다. Mac은 서명하지 않아 앱이 스스로 업데이트하지 않고, 압축을 풀어 처음 열 때 Mac이 막을 수 있습니다. 소개 사이트의 베타 버튼이 이 배포를 가리킵니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
+
+Homebrew는 같은 Mac 파일을 더 쉽게 받는 선택입니다. 탭 `BSSMAscending/homebrew-tap`이 있으면 워크플로가 `binary-media-art-beta` 캐스크도 그 버전으로 바꿉니다. 탭이 없어도 베타 Release는 올라갑니다. 받는 명령은 다음과 같습니다.
 
 ```bash
 brew tap BSSMAscending/tap
 brew install --cask binary-media-art-beta
 ```
 
-다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 소개 사이트의 베타 버튼이 이 경로를 안내합니다. 첫 화면의 Windows 설치 버튼은 정식 Release를 그대로 가리킵니다.
+다음 베타는 `brew upgrade --cask binary-media-art-beta`입니다. 캐스크의 `postflight_steps`는 설치가 끝난 뒤 그 Mac에서 두 명령을 실행합니다. `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시를 지우고, `/usr/bin/codesign --force --deep -s -`로 그 자리에서 ad-hoc 서명을 합니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 서명되지 않은 앱의 이 처리를 받지 않습니다.
 
-캐스크의 `postflight_steps`는 설치가 끝난 뒤 그 Mac에서 두 명령을 실행합니다. `/usr/bin/xattr -dr com.apple.quarantine`로 격리 표시를 지우고, `/usr/bin/codesign --force --deep -s -`로 그 자리에서 ad-hoc 서명을 합니다. 받는 사람이 속성을 직접 지우거나 컨트롤-클릭으로 열 필요는 없습니다. 애플 개발자 계정, 공증, 별도의 서버는 없습니다. 공식 `homebrew/cask`는 서명되지 않은 앱의 이 처리를 받지 않으므로 탭은 비공식인 `BSSMAscending/homebrew-tap`입니다.
-
-이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`와 `homebrew-tap` 두 공개 저장소에 릴리스와 푸시가 가능해야 합니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
+이 워크플로가 쓰는 `RELEASES_REPOSITORY_TOKEN`은 `media-art-beta`에 릴리스를 만들 수 있어야 합니다. 탭을 같이 갱신하려면 `homebrew-tap`에도 푸시할 수 있어야 합니다. 베타 Release는 Pre-release로 만들지 않습니다. 업데이트 서버가 Pre-release를 건너뛰어 Windows 베타도 다음 버전을 받지 못합니다.
 
 ## 변경 기록 쓰기
 

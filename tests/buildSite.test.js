@@ -112,8 +112,10 @@ describe('patch notes', () => {
     expect(home).toContain(
       'https://github.com/BSSMAscending/media-art-for-windows-releases/releases/latest'
     );
-    expect(home).toContain('https://github.com/BSSMAscending/media-art-beta/releases/latest');
+    expect(home.match(/https:\/\/github.com\/BSSMAscending\/media-art-beta\/releases\/latest/g)).toHaveLength(2);
+    expect(home).toContain('Windows 베타 받기');
     expect(home).toContain('brew tap BSSMAscending/tap');
+    expect(home).toContain('Mac 베타 받기');
     expect(home).toContain('brew install --cask binary-media-art-beta');
     expect(home).toContain('quarantine');
     expect(home).not.toContain('Control-click');

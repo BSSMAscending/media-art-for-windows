@@ -624,12 +624,20 @@
             <div class="panel">
               <h3>Mac</h3>
               <p data-l="ko">
-                Homebrew로 받습니다. 설치할 때 캐스크가 Mac의 격리 표시를 지우므로 바로 열립니다.
-                다음 베타는 앱이 아니라 Homebrew가 가져옵니다.
+                같은 베타 배포의 Mac 압축 파일입니다. Apple Silicon과 Intel이 나뉘어 있습니다.
+                서명하지 않아 처음 열 때 Mac이 막을 수 있습니다. Homebrew로 받으면 그 확인을
+                설치할 때 대신 합니다.
               </p>
               <p data-l="en">
-                Install it with Homebrew. The cask clears quarantine during install, so the beta
-                opens. The next beta comes from Homebrew, not the app.
+                The Mac zip is on the same beta release: one for Apple Silicon, one for Intel. It
+                is unsigned, so the first open may be blocked. Homebrew is the easier install and
+                clears quarantine.
+              </p>
+              <p>
+                <a class="button" href="{{BETA_URL}}"
+                  ><span data-l="ko">Mac 베타 받기</span
+                  ><span data-l="en">Download the Mac beta</span></a
+                >
               </p>
               <pre class="command"><code>brew tap BSSMAscending/tap
 brew install --cask binary-media-art-beta</code></pre>
