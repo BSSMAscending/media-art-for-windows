@@ -1,6 +1,8 @@
-const { app, autoUpdater, BrowserWindow, protocol, net, ipcMain } = require('electron');
+const { app, autoUpdater, BrowserWindow, protocol, net, ipcMain, shell } = require('electron');
+const { execFile, spawn } = require('node:child_process');
+const fs = require('node:fs');
 const path = require('node:path');
-const { createUpdateController } = require('./updater');
+const { createMacBetaUpdateController, createUpdateController } = require('./updater');
 const { createMainWindow, getFullscreenState, toggleFullscreen } = require('./window');
 
 if (require('electron-squirrel-startup')) {
@@ -70,11 +72,23 @@ app.whenReady().then(() => {
 
   createWindow();
 
-  updateController = createUpdateController({
-    app,
-    autoUpdater,
-    sendStatus: sendUpdateStatus,
-  });
+  // Windows updates through Squirrel. A Mac beta looks at GitHub and updates through brew.
+  updateController =
+    process.platform === 'darwin'
+      ? createMacBetaUpdateController({
+          app,
+          sendStatus: sendUpdateStatus,
+          shell,
+          fetchFn: (url, options) => net.fetch(url, options),
+          execFile,
+          spawn,
+          fs,
+        })
+      : createUpdateController({
+          app,
+          autoUpdater,
+          sendStatus: sendUpdateStatus,
+        });
   updateController.start();
 
   app.on('activate', () => {
