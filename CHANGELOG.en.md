@@ -3,9 +3,58 @@
 English patch notes for the project site. CHANGELOG.md (Korean) is the source of
 the Release notes; each version here mirrors its entry, and a version missing from
 this file is shown in Korean on the site. Beta headings such as `2.0.0-beta.1`
-belong here too, under the same heading. They are not exhibit Release notes.
+belong here too, under the same heading. They are not exhibit Release notes; the
+beta Release notes come from the Korean entry in CHANGELOG.md.
 
 ## [Unreleased]
+
+### New
+
+- The exhibit now has four modes: Media Art, RGB Color, Brightness and Image Math.
+- RGB Color: the camera is shown as pixel cells with their numbers. Pressing `R`, `G` or `B` separates the red, green and blue layers of light and keeps the one you picked, with its strength (0~255) in every cell. Press it again to return to full color, where large cells show all three numbers.
+- Brightness: the camera's brightness is cut into 2, 10 or 256 steps, with the step number in every cell.
+- Cell size lever: every mode can use 8~48px cells. It starts at 24px.
+- Threshold lever: in 2 steps, move the 0~255 point that separates 0 from 1.
+- 한국어 / English: a switch in the first row of the controls changes every word to English, keeping the mode and lever values.
+- Magnifier: press and hold the picture and a 3× lens floats above your finger, so even small numbers are readable. It stays for 2 seconds after you let go, so a short tap on the radar sensor is enough. It outlines the pressed cell and writes its calculation beside the lens; for blur and sharpen it also marks the neighbours that are averaged and their weights.
+- Image Math: pick brighten (add), contrast (multiply), blur (Gaussian weighted average) or sharpen (boost the difference) and see how every number changes. A lever sets the strength; brighten and contrast are drawn as linear function graphs (`y = x + 60`), blur and sharpen as a 3×3 example.
+- Rule card: each mode shows its name, its rule as one calculation with the lever's value, and one picture.
+- Marked cell: one cell of the picture is outlined, and the card right under the levers puts its real numbers into the rule (`(140 − 128) × 2 + 128 = 152`). Moving a lever changes the calculation, and pressing the picture moves the mark to that cell.
+- Media Art: the magnifier shows the AI's chance that the pressed cell is a person (63% or more becomes 1), and the marked-cell card shows how much of the screen is 1.
+- Blur tip: picking blur briefly shows "① Shrink cells to 12px ② Then change the blur size" under the levers and makes the lever to move next glow. Small cells drop their digits, so the blur shows clearly.
+
+### Changed
+
+- Media Art: cells with a person are 1 and every other cell is 0, filling the whole screen. An empty room is a screen of zeros.
+- Every touch control now sits at the vertical middle of the screen.
+- Media Art draws into the same fixed screen as the other modes.
+- The side column is narrower so the picture fills the screen height: 1320×984 at 1920×1080. Mode and calculation buttons sit in two rows.
+- Brightness steps are taken from the whole-number 0~255 brightness written on screen.
+- The F-key filter panel is gone.
+
+### Fixed
+
+- Buttons no longer shift by 7px when switching modes.
+
+## [2.0.0-beta.2] - 2026-10-29 - Mac update notice, camera permission kept
+
+### New
+
+- Mac beta update notice: shortly after launch, and every 6 hours, the app checks for a new beta. If you installed with Homebrew, `Update now` in the notice closes the app and reopens it on the new beta. Otherwise `Open page` opens the download page.
+
+### Changed
+
+- Mac betas are always signed with the same certificate. From this beta on, macOS no longer asks for the camera again after an update.
+- The Homebrew cask no longer re-signs the app on the installing Mac; it only clears quarantine.
+
+### Good to know
+
+- On 2.0.0-beta.1 on a Mac, update once by hand with `brew upgrade --cask binary-media-art-beta`. The signature changes, so macOS asks for the camera once more then.
+- The Windows beta has no new features and updates from 2.0.0-beta.1 by itself.
+
+## [2.0.0-beta.1] - 2026-10-28 - First beta
+
+The first beta of the next release, 2.0.0. It has every change since 1.0.2.
 
 ### New
 
