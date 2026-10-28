@@ -21,6 +21,7 @@ module.exports = [
         __dirname: 'readonly',
         process: 'readonly',
         URL: 'readonly',
+        AbortSignal: 'readonly',
         setTimeout: 'readonly',
       },
     },
