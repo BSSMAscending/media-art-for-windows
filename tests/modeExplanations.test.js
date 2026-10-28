@@ -1,10 +1,15 @@
-const { modeExplanations, getModeExplanation } = require('../src/renderer/data/modeExplanations');
+const {
+  modeExplanations,
+  getModeExplanation,
+  getRule,
+  PERSON_PERCENT,
+} = require('../src/renderer/data/modeExplanations');
 const {
   PERSON_BITMAP,
   MATH_EXAMPLE,
   formatMathOperator,
 } = require('../src/renderer/ui/explainAnimations');
-const { formatGridMetric } = require('../src/renderer/ui/mathPanel');
+const { formatGridMetric } = require('../src/renderer/ui/cellCard');
 
 const VIEWS = [
   ['original', undefined],
@@ -23,40 +28,51 @@ const VIEWS = [
 ];
 
 describe('mode explanations', () => {
-  it.each(VIEWS)(
-    'gives %s (%s) a headline, one short line, terms and an animation in both languages',
-    (mode, option) => {
-      const explanation = getModeExplanation(mode, option);
-      for (const field of ['title', 'headline', 'body']) {
-        expect(explanation[field].ko).toBeTruthy();
-        expect(explanation[field].en).toBeTruthy();
-      }
-      // Visitors take this in at a glance, so the copy stays one short line.
-      expect(explanation.body.ko.length).toBeLessThanOrEqual(45);
-      expect(explanation.body.en.length).toBeLessThanOrEqual(64);
-      expect(explanation.terms.length).toBeGreaterThan(0);
-      expect(explanation.animation.type).toBeTruthy();
+  it.each(VIEWS)('gives %s (%s) a title, one rule and a picture', (mode, option) => {
+    const explanation = getModeExplanation(mode, option);
+    expect(Object.keys(explanation).sort()).toEqual(
+      expect.arrayContaining(['rule', 'title', 'visual'])
+    );
+    for (const text of [explanation.title, getRule(explanation, 2)]) {
+      expect(text.ko).toBeTruthy();
+      expect(text.en).toBeTruthy();
     }
-  );
+    // The card above the controls is narrow: the rule stays one or two short lines.
+    expect(getRule(explanation, 120).ko.length).toBeLessThanOrEqual(40);
+    expect(explanation.visual.type).toBeTruthy();
+  });
+
+  it('writes the lever value into each calculation', () => {
+    const rule = (option, value) => getRule(getModeExplanation('math', option), value);
+    expect(rule('brightness', 60).ko).toBe('새 값 = 값 + 60');
+    expect(rule('brightness', -40).en).toBe('new = value − 40');
+    expect(rule('contrast', 1.5).ko).toBe('새 값 = (값 − 128) × 1.5 + 128');
+    expect(rule('blur', 2).ko).toBe('새 값 = 주변 5×5칸의 무게 평균');
+    expect(rule('sharpen', 3).en).toBe('new = value + (value − average) × 3');
+    expect(getRule(getModeExplanation('levels', 2), 90).ko).toBe('밝기가 90 이상이면 1, 아니면 0');
+  });
+
+  it('states the AI person threshold the segmentation really uses', () => {
+    expect(PERSON_PERCENT).toBe(63);
+    expect(getRule(getModeExplanation('original'))).toMatchObject({
+      ko: expect.stringContaining('63%'),
+      en: expect.stringContaining('63%'),
+    });
+  });
 
   it('matches each level view to its own step count', () => {
     for (const levels of [2, 10, 256]) {
-      expect(getModeExplanation('levels', levels).animation).toEqual({
-        type: 'level-steps',
-        levels,
-      });
+      expect(getModeExplanation('levels', levels).visual).toEqual({ type: 'level-steps', levels });
     }
   });
 
   it('names the selected light in each channel view', () => {
-    expect(getModeExplanation('rgb', 'R').headline).toMatchObject({
-      ko: expect.stringContaining('빨간'),
-    });
-    expect(getModeExplanation('rgb', 'G').headline.en).toContain('green');
-    expect(getModeExplanation('rgb', 'B').headline.en).toContain('blue');
+    expect(getRule(getModeExplanation('rgb', 'R')).ko).toContain('빨간');
+    expect(getRule(getModeExplanation('rgb', 'G')).en).toContain('green');
+    expect(getModeExplanation('rgb', 'B').title.en).toContain('blue');
   });
 
-  it('returns null for modes without a metaphor card', () => {
+  it('returns null for modes without a card', () => {
     expect(getModeExplanation('busan')).toBeNull();
     expect(getModeExplanation('rgb', 'X')).toBeNull();
     expect(Object.keys(modeExplanations)).toEqual(['original', 'rgb', 'levels', 'math']);

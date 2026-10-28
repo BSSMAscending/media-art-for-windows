@@ -66,10 +66,6 @@ body {
   --type-control-label: clamp(0.875rem, 1.09375vw, 1.25rem);
   --type-control: clamp(0.9375rem, 1vw, 1.25rem);
   --type-control-meta: clamp(0.75rem, 0.9375vw, 1.125rem);
-  --type-panel-title: clamp(1.125rem, 1.40625vw, 1.75rem);
-  --type-panel-body: clamp(1rem, 1.25vw, 1.5rem);
-  --type-panel-note: clamp(0.8125rem, 1.015625vw, 1.125rem);
-  --type-panel-eyebrow: clamp(0.75rem, 0.9375vw, 1.125rem);
   --type-panel-mode: clamp(1.0625rem, 1.328125vw, 1.625rem);
   --side-column-inset: clamp(1rem, 2vw, 2.5rem);
   /* The 4:3 camera picture fills the screen height; the column takes what is left. */
@@ -79,7 +75,7 @@ body {
     34rem
   );
   --ui-cluster-gap: clamp(0.5rem, 1vw, 1rem);
-  --live-panel-padding: clamp(0.75rem, 1vw, 1.5rem);
+  --card-padding: clamp(0.625rem, 0.75vw, 1.125rem);
   --live-control-padding: clamp(0.75rem, 1vw, 1.25rem);
   --live-control-height: clamp(3.75rem, 3.6vw, 4.75rem);
   --option-control-height: clamp(3.5rem, 3.4vw, 4.5rem);
@@ -402,16 +398,18 @@ body {
 
 .mode-slider-label {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--type-control-label);
+  font-size: var(--type-control-meta);
   font-weight: 700;
-  word-break: keep-all;
+  white-space: nowrap;
 }
 
 .mode-slider-value {
   color: var(--accent-primary);
+  font-size: var(--type-control-label);
   font-variant-numeric: tabular-nums;
 }
 
@@ -495,7 +493,9 @@ body {
   pointer-events: none;
 }
 
-/* Equal flex above and below keeps the controls exactly at mid screen height. */
+/* The cards share the height left around the control block. The rule card above
+   holds a picture, so it gets a little more than the cell card below; the controls
+   stay in the middle of the screen height, give or take 3%. */
 .panel-cards {
   display: flex;
   flex: 1 1 0;
@@ -503,124 +503,24 @@ body {
   min-height: 0;
 }
 
-.detail-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.panel-cards--rule {
+  flex-grow: 1.4;
 }
 
+/* Quiet frames, so the picture of the visitor stays the brightest thing on screen. */
 .math-panel,
 .detail-card {
   position: relative;
-  padding: var(--live-panel-padding);
-  border: 1px solid var(--border-default);
-  background: var(--surface-panel);
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.detail-card {
-  flex: 1;
-  gap: var(--space-3);
-  overflow: hidden;
-}
-
-.explain-details,
-.explain-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* How every mode is made: a quiet footer of the detail card. */
-.info-panel {
-  display: flex;
-  flex-direction: column;
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
-}
-
-.math-panel {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  max-height: none;
-  overflow-y: auto;
-  transform: none;
-}
-
-.panel-eyebrow {
-  margin-bottom: var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--type-panel-eyebrow);
-  letter-spacing: 0.14em;
-}
-
-.info-mode {
-  margin-bottom: var(--space-2);
-  color: var(--text-primary);
-  font-size: clamp(0.875rem, 1.0156vw, 1.25rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.info-desc {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: clamp(0.8125rem, 0.8854vw, 1.0625rem);
-  line-height: 1.6;
-  word-break: keep-all;
-}
-
-/* Camera → cells → numbers → picture, lit one step at a time. */
-.info-pipeline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-6);
-  margin-top: var(--space-3);
-  padding: 0;
-  list-style: none;
-}
-
-.info-pipeline li {
-  position: relative;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--card-padding);
   border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: var(--type-control-meta);
-  white-space: nowrap;
-  animation: pipeline-step 4s ease-in-out infinite;
-  animation-delay: calc(var(--step) * 1s);
-}
-
-.info-pipeline li:not(:last-child)::after {
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  width: var(--space-6);
-  color: var(--text-muted);
-  content: '→';
-  text-align: center;
-  transform: translateY(-50%);
-}
-
-@keyframes pipeline-step {
-  0%,
-  22% {
-    border-color: var(--accent-primary);
-    background: var(--accent-soft);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.35);
-    color: var(--text-primary);
-  }
-  28%,
-  100% {
-    border-color: var(--border-subtle);
-    background: transparent;
-    box-shadow: none;
-    color: var(--text-secondary);
-  }
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: 14px;
+  overflow: hidden;
 }
 
 .explain-content {
@@ -638,11 +538,13 @@ body {
   word-break: keep-all;
 }
 
-.explain-headline {
-  margin-top: var(--space-1);
+/* The view's rule as one calculation, with the lever's value written in. */
+.explain-rule {
+  margin: var(--space-1) 0 0;
   color: var(--text-primary);
   font-size: var(--type-control-label);
   font-weight: 700;
+  line-height: 1.35;
   word-break: keep-all;
 }
 
@@ -661,26 +563,18 @@ body {
   container-type: size;
 }
 
-.explain-body {
-  margin: 0;
+/* One short fact under the picture, such as 256 × 256 × 256. */
+.explain-note {
+  margin-top: var(--space-2);
   color: var(--text-secondary);
-  font-size: var(--type-panel-note);
-  line-height: 1.5;
+  font-size: var(--type-control-meta);
   word-break: keep-all;
 }
 
-.explain-terms {
+.cell-card {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-2);
-}
-
-.explain-term {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-default);
-  background: var(--accent-soft);
-  color: var(--text-primary);
-  font-size: var(--type-control-meta);
 }
 
 .math-metric {
@@ -1274,13 +1168,6 @@ body {
   }
 }
 
-/* Short windows: give the explanation card the room the project note used. */
-@media (max-height: 820px) {
-  .info-panel {
-    display: none;
-  }
-}
-
 @media (max-width: 720px) {
   .side-column {
     top: auto;
@@ -1289,10 +1176,6 @@ body {
     bottom: 16px;
     width: auto;
     max-height: 60vh;
-  }
-
-  .info-panel {
-    display: none;
   }
 
   .mode-controls {

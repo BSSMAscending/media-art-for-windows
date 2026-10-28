@@ -2,8 +2,8 @@ const { ipcRenderer } = require('electron');
 const { openCameraStream } = require('./core/camera');
 const { loadModel } = require('./core/segmentation');
 const { createFrameLoop } = require('./core/frameLoop');
-const { createInfoPanel } = require('./ui/infoPanel');
 const { createMathPanel } = require('./ui/mathPanel');
+const { createCellCard } = require('./ui/cellCard');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const { createMagnifier } = require('./ui/magnifier');
@@ -168,6 +168,12 @@ function getModeOption() {
   return subOptions ? state[subOptions.stateKey] : undefined;
 }
 
+// The right lever's value, which the explanation's rule is written with.
+function getLeverValue() {
+  const spec = getModeSlider(state);
+  return spec ? state[spec.stateKey] : undefined;
+}
+
 function renderModeOptions(onSelect) {
   const container = document.getElementById('modeOptions');
   const label = document.getElementById('modeOptionsLabel');
@@ -224,7 +230,7 @@ function updateModeUI(mathPanel) {
   const floor = getCellSizeFloor(state);
   cellSizeLever?.setFloor(floor.size, floor.note);
   renderModeSlider(mathPanel);
-  mathPanel.updateMode(state.selectedVersion, getModeOption(), getMathSettings(state).amount);
+  mathPanel.updateMode(state.selectedVersion, getModeOption(), getLeverValue());
 }
 
 function setupUpdateNotice() {
@@ -294,10 +300,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const hiddenCanvasEl = document.getElementById('hiddenCanvas');
   const bgCanvasEl = document.getElementById('bgCanvas');
 
-  const panelCards = document.getElementById('panelCards');
-  const detailCard = document.getElementById('detailCard');
-  const mathPanel = createMathPanel(panelCards, detailCard);
-  createInfoPanel(detailCard);
+  const mathPanel = createMathPanel(document.getElementById('panelCards'));
+  const cellCard = createCellCard(document.getElementById('detailCard'));
   // 손하트 안내 패널은 필요할 때 아래 코드를 다시 활성화해 복원할 수 있습니다.
   // const heartOverlay = createHeartOverlay();
 
@@ -321,6 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // The view, its options and lever values stay; only the words change.
   onLanguageChange(() => {
     renderControls();
+    cellCard.render();
     updateNotice.render();
     if (lastError) showError(lastError.message, lastError.detail);
   });
@@ -362,14 +367,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     state.model = await loadModel();
-    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel);
+    await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, cellCard);
   } catch (err) {
     console.error('Failed to load model:', err);
     showError(ERRORS.modelFailed, String(err.message || err));
   }
 });
 
-async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
+async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, cellCard) {
   if (!state.model) {
     showError(ERRORS.modelLoading);
     return;
@@ -394,7 +399,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
     document.getElementById('modeControls').style.display = 'block';
     canvasEl.style.display = 'block';
     resizeCanvases(canvasEl, document.getElementById('bgCanvas'));
-    mathPanel.updateMode(state.selectedVersion, getModeOption(), getMathSettings(state).amount);
+    mathPanel.updateMode(state.selectedVersion, getModeOption(), getLeverValue());
     canvasEl.style.display = 'block';
 
     state.loop = createFrameLoop({
@@ -409,9 +414,7 @@ async function startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel) {
       getMathSettings: () => getMathSettings(state),
       getArtworkArea: () => getStageArtworkArea(canvasEl),
       getCellSize: () => state.cellSize,
-      onStats: (stats) => {
-        mathPanel.update(stats);
-      },
+      onStats: (stats) => cellCard.updateGrid(stats.cols, stats.rows),
       onDrawn: () => state.magnifier?.render(),
       // 손하트 감지 및 안내 패널 호출은 현재 비활성화했습니다.
       // onGesture: () => heartOverlay.show(),

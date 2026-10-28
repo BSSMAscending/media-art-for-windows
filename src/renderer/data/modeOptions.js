@@ -141,7 +141,7 @@ const MATH_SLIDERS = {
   },
   contrast: {
     stateKey: 'mathContrast',
-    label: { ko: '곱할 수', en: 'Multiply by' },
+    label: { ko: '곱할 수', en: 'Multiply' },
     values: [0, 0.5, 1, 1.5, 2, 2.5, 3],
     format: (value) => `× ${value}`,
     ends: [
@@ -155,7 +155,7 @@ const MATH_SLIDERS = {
     values: [1, 2, 3],
     format: (radius) => {
       const size = `${radius * 2 + 1}×${radius * 2 + 1}`;
-      return { ko: `${size}칸`, en: `${size} cells` };
+      return { ko: `${size}칸`, en: size };
     },
     ends: [
       { ko: '조금', en: 'Less' },
