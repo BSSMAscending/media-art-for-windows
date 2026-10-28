@@ -8,6 +8,7 @@ const {
   PERSON_BITMAP,
   MATH_EXAMPLE,
   formatMathOperator,
+  formatFunction,
 } = require('../src/renderer/ui/explainAnimations');
 const { formatGridMetric, getCellColor } = require('../src/renderer/ui/cellCard');
 
@@ -93,6 +94,16 @@ describe('explanation helpers', () => {
     expect(formatMathOperator('blur', 2)).toBe('5×5 무게 평균');
     expect(formatMathOperator('sharpen', 1.5)).toBe('차이 × 1.5');
     expect(MATH_EXAMPLE).toHaveLength(9);
+  });
+
+  it('writes brightness and contrast as linear functions of x', () => {
+    expect(formatFunction('brightness', 60)).toBe('y = x + 60');
+    expect(formatFunction('brightness', -80)).toBe('y = x − 80');
+    expect(formatFunction('contrast', 2)).toBe('y = 2(x − 128) + 128');
+    expect(getModeExplanation('math', 'contrast').visual).toEqual({
+      type: 'math-graph',
+      effect: 'contrast',
+    });
   });
 
   it('paints the card swatch the colour the marked cell has on screen', () => {

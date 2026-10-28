@@ -112,7 +112,7 @@ const modeExplanations = {
           ko: `새 값 = 값 ${signed(amount)}`,
           en: `new = value ${signed(amount)}`,
         }),
-        visual: { type: 'math-op', effect: 'brightness' },
+        visual: { type: 'math-graph', effect: 'brightness' },
       },
       contrast: {
         title: { ko: '대비: 곱하기', en: 'Contrast: multiply' },
@@ -120,7 +120,7 @@ const modeExplanations = {
           ko: `새 값 = (값 − 128) × ${amount} + 128`,
           en: `new = (value − 128) × ${amount} + 128`,
         }),
-        visual: { type: 'math-op', effect: 'contrast' },
+        visual: { type: 'math-graph', effect: 'contrast' },
       },
       blur: {
         title: { ko: '블러: 무게 평균', en: 'Blur: weighted average' },

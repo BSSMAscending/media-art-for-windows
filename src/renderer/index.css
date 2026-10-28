@@ -555,6 +555,7 @@ body {
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
+  position: relative;
   min-height: 4rem;
   margin-top: var(--space-2);
   border: 1px solid var(--border-subtle);
@@ -1164,8 +1165,19 @@ body {
   font-weight: 700;
 }
 
+/* Marks the 3×3 as an example, apart from the visitor's own marked cell. */
+.explain-math::before {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-2);
+  color: var(--text-muted);
+  content: attr(data-label);
+  font-size: var(--type-control-meta);
+  line-height: 1.2;
+}
+
 /* Gaussian weight of each neighbour, as a small badge in the cell's corner. */
-.explain-math-cell[data-weight]::after {
+.explain-math.shows-weights .explain-math-cell[data-weight]::after {
   position: absolute;
   top: 1px;
   right: 2px;
@@ -1208,6 +1220,97 @@ body {
 .explain-math-op::after {
   margin-left: var(--space-1);
   content: '→';
+}
+
+/* 밝기 · 대비: the calculation as a function graph beside its formula. */
+.explain-graph {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.explain-graph-plot {
+  flex: none;
+  height: calc(100cqh - var(--space-3));
+  aspect-ratio: 1;
+  overflow: visible;
+}
+
+.graph-frame {
+  fill: rgba(0, 255, 255, 0.04);
+  stroke: rgba(0, 255, 255, 0.35);
+}
+
+.graph-mid {
+  stroke: rgba(0, 255, 255, 0.16);
+}
+
+/* y = x: what "no change" would look like. */
+.graph-identity {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-dasharray: 4 4;
+}
+
+.graph-line {
+  fill: none;
+  stroke: var(--accent-primary);
+  stroke-linejoin: round;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px rgba(0, 255, 255, 0.7));
+}
+
+.graph-guide {
+  fill: none;
+  stroke: #ffffff;
+  stroke-dasharray: 3 3;
+  opacity: 0.75;
+}
+
+.graph-frame,
+.graph-mid,
+.graph-identity,
+.graph-line,
+.graph-guide {
+  vector-effect: non-scaling-stroke;
+}
+
+.graph-frame,
+.graph-mid,
+.graph-identity,
+.graph-guide {
+  stroke-width: 1.5px;
+}
+
+.graph-dot {
+  fill: #ffffff;
+  stroke: #000000;
+  stroke-width: 4;
+}
+
+.explain-graph-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.explain-graph-formula {
+  color: var(--accent-primary);
+  font-size: var(--type-control-label);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.explain-graph-cell {
+  color: var(--text-primary);
+  font-size: var(--type-control-meta);
+  font-weight: 700;
+}
+
+.explain-graph-axes {
+  color: var(--text-muted);
+  font-size: var(--type-control-meta);
 }
 
 @keyframes math-cell-in {

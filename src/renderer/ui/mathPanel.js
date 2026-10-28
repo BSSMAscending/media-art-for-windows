@@ -69,7 +69,14 @@ function createMathPanel(container = document.body) {
     animation?.updateAmount?.(value);
   }
 
-  return { updateMode, updateAmount };
+  // The marked cell (cellReadout.js) shows up in the calculation pictures.
+  function updateCell(reading) {
+    if (reading?.kind === 'math' && reading.effect === explanation?.visual.effect) {
+      animation?.updateCell?.(reading);
+    }
+  }
+
+  return { updateMode, updateAmount, updateCell };
 }
 
 module.exports = { createMathPanel };

@@ -319,6 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     getViewKey: () => `${getLanguage()}:${getModeOption()}:${getLeverValue()}`,
     onReading: (reading, frame) => {
       cellCard.update(reading, frame);
+      mathPanel.updateCell(reading);
       state.magnifier?.setCaption(reading ? t(formatCellMath(reading)) : '');
     },
   });
