@@ -4,6 +4,9 @@ const {
   CELL_SIZE_SLIDER,
   COLOR_VALUE_CELL_SIZE,
   getCellSizeFloor,
+  BLUR_CELL_SIZE,
+  BLUR_TIP,
+  getBlurTipStep,
   THRESHOLD_SLIDER,
   MATH_SLIDERS,
   MATH_START_AMOUNTS,
@@ -14,6 +17,7 @@ const {
   selectModeOption,
 } = require('../src/renderer/data/modeOptions');
 const { FONT_SIZE } = require('../src/renderer/config');
+const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../src/renderer/utils');
 
 describe('mode buttons', () => {
   it('offers the four exhibition modes', () => {
@@ -128,6 +132,22 @@ describe('levers', () => {
 
   it('starts at a size where every view shows its numbers', () => {
     expect(FONT_SIZE).toBeGreaterThanOrEqual(COLOR_VALUE_CELL_SIZE);
+  });
+
+  it('asks for cells small enough to drop the digits before the blur size', () => {
+    expect(BLUR_CELL_SIZE).toBe(12);
+    expect(getDigitFontSize(BLUR_CELL_SIZE, 3)).toBeLessThan(MIN_DIGIT_FONT_SIZE);
+    const next = CELL_SIZE_SLIDER.values[CELL_SIZE_SLIDER.values.indexOf(BLUR_CELL_SIZE) + 1];
+    expect(getDigitFontSize(next, 3)).toBeGreaterThanOrEqual(MIN_DIGIT_FONT_SIZE);
+    expect(BLUR_TIP.steps[0].ko).toBe('칸 크기를 12px까지 줄이고');
+
+    const blur = { selectedVersion: 'math', mathEffect: 'blur' };
+    expect(getBlurTipStep({ ...blur, cellSize: FONT_SIZE })).toBe(1);
+    expect(getBlurTipStep({ ...blur, cellSize: 16 })).toBe(1);
+    expect(getBlurTipStep({ ...blur, cellSize: 12 })).toBe(2);
+    expect(getBlurTipStep({ ...blur, cellSize: 8 })).toBe(2);
+    expect(getBlurTipStep({ ...blur, mathEffect: 'sharpen', cellSize: 24 })).toBe(0);
+    expect(getBlurTipStep({ ...blur, selectedVersion: 'levels', cellSize: 24 })).toBe(0);
   });
 
   it('gives every mode a hint for the lever slot it does not use', () => {

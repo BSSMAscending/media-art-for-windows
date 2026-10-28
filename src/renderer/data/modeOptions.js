@@ -1,6 +1,6 @@
 const { CELL_SIZES } = require('../config');
 const { getColorValueFontSize } = require('../modes/rgb');
-const { MIN_DIGIT_FONT_SIZE } = require('../utils');
+const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../utils');
 
 // Visible text is a { ko, en } pair (see i18n.js); digits and symbols are plain strings.
 const MODE_OPTIONS = [
@@ -111,6 +111,28 @@ function getCellSizeFloor(state) {
     };
   }
   return { size: CELL_SIZES[0], note: null };
+}
+
+// At the starting cell size the digits hide what 블러 does. Up to this size cells are
+// plain colour (the 수학 처리 view drops digits below MIN_DIGIT_FONT_SIZE), so the
+// blur shows as a blur. Picking 블러 brings up a tip that walks through shrinking the
+// cells to it and then changing the blur size.
+const BLUR_CELL_SIZE = CELL_SIZES.filter(
+  (size) => getDigitFontSize(size, 3) < MIN_DIGIT_FONT_SIZE
+).at(-1);
+
+const BLUR_TIP = {
+  title: { ko: '블러를 잘 보려면', en: 'To see the blur' },
+  steps: [
+    { ko: `칸 크기를 ${BLUR_CELL_SIZE}px까지 줄이고`, en: `Shrink cells to ${BLUR_CELL_SIZE}px` },
+    { ko: '흐림 범위를 바꿔 보세요', en: 'Then change the blur size' },
+  ],
+};
+
+/** The tip's step for this view: 1 shrink the cells, 2 change the blur size, 0 no tip. */
+function getBlurTipStep(state) {
+  if (state.selectedVersion !== 'math' || state.mathEffect !== 'blur') return 0;
+  return state.cellSize <= BLUR_CELL_SIZE ? 2 : 1;
 }
 
 // Right lever: the current view's own setting, or this hint when it has none.
@@ -232,6 +254,9 @@ module.exports = {
   CELL_SIZE_SLIDER,
   COLOR_VALUE_CELL_SIZE,
   getCellSizeFloor,
+  BLUR_CELL_SIZE,
+  BLUR_TIP,
+  getBlurTipStep,
   THRESHOLD_SLIDER,
   MATH_SLIDERS,
   MATH_START_AMOUNTS,
