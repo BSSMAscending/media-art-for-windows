@@ -1,7 +1,10 @@
 // Homebrew cask for one beta. The beta workflow fills the version and hashes
 // and commits the result into the tap repository. postflight_steps clears
-// Gatekeeper quarantine and ad-hoc signs the app on the installing Mac.
-// Official homebrew/cask rejects an unsigned app, so this stays on our tap.
+// Gatekeeper quarantine on the installing Mac. The app arrives already signed with
+// the beta certificate (scripts/mac-beta-sign.js), so the cask does not sign it:
+// re-signing ad hoc would change the signature, and macOS would ask for the camera
+// again after every update. Official homebrew/cask rejects an app that is not
+// notarized, so this stays on our tap.
 // Usage: node scripts/beta-cask.js <version> <arm64-sha256> <x64-sha256>
 const { betaRepository, caskName, appBundle, upcomingRelease, BETA_VERSION } = require('./channels');
 
@@ -29,7 +32,7 @@ function renderBetaCask({ version, armSha256, intelSha256 }) {
   end
 
   name "Binary Media Art Beta"
-  desc "Unsigned beta of the exhibit. Not the Windows release used on the floor."
+  desc "Beta of the exhibit. Not the Windows release used on the floor."
   homepage "https://bssmascending.github.io/media-art-for-windows/#beta"
 
   app "${appBundle}"
@@ -37,14 +40,12 @@ function renderBetaCask({ version, armSha256, intelSha256 }) {
   postflight_steps do
     run "/usr/bin/xattr",
         args: ["-dr", "com.apple.quarantine", "{{appdir}}/${appBundle}"]
-    run "/usr/bin/codesign",
-        args: ["--force", "--deep", "-s", "-", "{{appdir}}/${appBundle}"]
   end
 
   caveats <<~EOS
     This is a beta, not the Windows exhibit release.
-    It is not notarized. The cask removes quarantine and ad-hoc signs the app during install.
-    It does not update itself. The next beta is \`brew upgrade --cask ${caskName}\`.
+    It is not notarized. The cask removes quarantine during install.
+    The app offers each new beta and installs it with brew upgrade.
   EOS
 end
 `;
