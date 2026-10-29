@@ -53,7 +53,7 @@ This is an Electron application called "Binary Media Art" that creates real-time
 - `credits.html` lists the makers (the teacher who shaped the project's direction, shown with the school logo and a LinkedIn link, then the BSSM Ascending team with GitHub avatars) and the partners with their logos (`site/assets/credits/`). Logos keep their own colors on a light plate (`--logo-plate`) in both themes.
 - The header menu has four tabs on every page: 프로젝트 (the home page), 패치노트, 기여자 and GitHub, which opens in a new tab and carries an external-link arrow. Below 740px the menu moves to its own row
 - The home page opens with a 3D animation (`site/hero.js`, Three.js 0.160.0 from jsDelivr as an ES module): the drawn scene as 64×48 blocks (`site/assets/scene-64x48.png`, `person-64x48.png`) going photo → brightness as height → R/G/B layers fanned like the app → person as 1. Captions follow one sample cell in both languages; it pauses off screen, shows a still frame for reduced motion, and keeps the hero screenshot if WebGL or the module fails. `window.__heroSeek(seconds)` jumps to a moment for screenshots
-- `forge.config.js` keeps `docs/`, `site/`, `tests/`, `scripts/`, dot folders and root Markdown out of the installer
+- `forge.config.js` keeps `assets/`, `docs/`, `site/`, `tests/`, `scripts/`, dot folders and root Markdown out of the installer
 
 ### Technology Stack
 
@@ -69,6 +69,7 @@ This is an Electron application called "Binary Media Art" that creates real-time
 - Font size: 8px Courier New for text rendering
 - ESC key quits the application
 - Node integration enabled with context isolation disabled for TensorFlow.js access
+- App icon: `assets/icon/` (`icon.icns`, `icon.ico`, `icon.png`) is the site's 3×3 brand mark on a dark rounded plate, drawn by `scripts/build-app-icons.js` (run it on macOS to regenerate); `forge.config.js` hands it to the packager and the Squirrel installer
 
 ### File Structure
 

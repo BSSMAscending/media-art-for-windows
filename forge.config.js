@@ -1,3 +1,4 @@
+const path = require('node:path');
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 const { squirrelVersion } = require('./scripts/channels');
@@ -9,9 +10,17 @@ const { version } = require('./package.json');
 // Forge still lists the unpadded nupkg name in its make result; nothing here reads it.
 const nugetVersion = squirrelVersion(version);
 
+// The site's brand mark, drawn by scripts/build-app-icons.js. Packager adds .icns
+// on macOS and .ico on Windows. Control Panel shows the installed app with
+// iconUrl, which Squirrel downloads, so it points at the file on main.
+const ICON = path.join(__dirname, 'assets', 'icon', 'icon');
+const ICON_URL =
+  'https://raw.githubusercontent.com/BSSMAscending/media-art-for-windows/main/assets/icon/icon.ico';
+
 module.exports = {
   packagerConfig: {
     asar: true,
+    icon: ICON,
     // Ship only what the app runs: docs, the project site, tests and dev tooling
     // stay out of the installer. Replacing Forge's ignore list drops its /out/ rule,
     // so it is listed again here.
@@ -19,7 +28,7 @@ module.exports = {
       /^\/out\//,
       // Root dot files and folders: git, CI, hooks, editor and tool settings.
       /^\/\.[^/]+/,
-      /^\/(docs|site|tests|scripts)(\/|$)/,
+      /^\/(assets|docs|site|tests|scripts)(\/|$)/,
       /^\/[^/]+\.md$/,
       /^\/(eslint\.config\.js|vitest\.config\.mjs|forge\.config\.js)$/,
     ],
@@ -35,7 +44,11 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: nugetVersion === version ? {} : { version: nugetVersion },
+      config: {
+        setupIcon: `${ICON}.ico`,
+        iconUrl: ICON_URL,
+        ...(nugetVersion === version ? {} : { version: nugetVersion }),
+      },
     },
     {
       name: '@electron-forge/maker-zip',

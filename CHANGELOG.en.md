@@ -25,6 +25,7 @@ beta Release notes come from the Korean entry in CHANGELOG.md.
 
 ### Changed
 
+- The app icon is now the project site's logo, a cyan 3×3 grid.
 - Media Art: cells with a person are 1 and every other cell is 0, filling the whole screen. An empty room is a screen of zeros.
 - Every touch control now sits at the vertical middle of the screen.
 - Media Art draws into the same fixed screen as the other modes.
