@@ -37,6 +37,18 @@ beta Release notes come from the Korean entry in CHANGELOG.md.
 
 - Buttons no longer shift by 7px when switching modes.
 
+## [2.0.0-beta.3] - 2026-10-29 - New app icon
+
+### Changed
+
+- The app icon is now the project site's logo, a cyan 3×3 grid. The Windows installer and the Control Panel program list show it too.
+
+### Good to know
+
+- On a Mac with 2.0.0-beta.2 installed through Homebrew, press `Update now` in the app's update notice. From this update on, macOS does not ask for the camera again.
+- On 2.0.0-beta.1 on a Mac, update once by hand with `brew upgrade --cask binary-media-art-beta`.
+- The Dock icon changes when the app is opened again.
+
 ## [2.0.0-beta.2] - 2026-10-29 - Mac update notice, camera permission kept
 
 ### New
