@@ -8,6 +8,28 @@ beta Release notes come from the Korean entry in CHANGELOG.md.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-07 - Three modes and a sharp color view
+
+### New
+
+- The cell size lever now goes down to 2px (2~48px).
+- Magnifier: when cells are too small for their numbers on screen, the lens writes them in and zooms in far enough to read them (up to 16×), in Brightness, RGB Color's R/G/B and Image Math.
+- Buttons and levers glint every few seconds to show they can be pressed.
+
+### Changed
+
+- The Media Art mode is gone. The three modes are Brightness, RGB Color and Image Math: Brightness above RGB Color on the left, Image Math the full height of the right. The app opens on Brightness.
+- The two levers (cell size, blur size and so on) moved above the mode buttons and are now slim rows stacked one above the other instead of side by side. The controls sit at the vertical middle of the screen with the levers in the upper half.
+- Image Math's four calculation buttons share one row.
+- RGB Color's full color is the camera picture itself, sharp and without pixel cells. Picking `R`, `G` or `B` brings in the cells and numbers. The camera is also asked for a sharper 1280×960 picture.
+- Sharpen is explained as unsharp masking: subtract the blurred value to keep only the edges (the mask), then add the mask back, boosted by the lever. The rule card shows a row of cells going blur → mask → result, and the marked cell reads `140 + (140 − blur 134.4) × 1.5 = 148.4 → 148`.
+- The blur tip appears right above the levers.
+- Dragging a finger across the screen no longer selects or drags text.
+
+### Fixed
+
+- The controls no longer shift by 1~3px when the mode or calculation changes.
+
 ## [2.0.0] - 2026-11-07 - New exhibit modes
 
 ### New
