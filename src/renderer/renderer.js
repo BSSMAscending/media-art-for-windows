@@ -17,7 +17,7 @@ const {
   MODE_OPTIONS,
   START_MODE,
   MODE_SUB_OPTIONS,
-  MODE_HINTS,
+  MODE_START_STATE,
   CELL_SIZE_SLIDER,
   MATH_START_AMOUNTS,
   getModeSliderHint,
@@ -37,7 +37,7 @@ const state = {
   rgbChannel: 'N',
   levels: 10,
   threshold: 128,
-  mathEffect: 'none',
+  ...MODE_START_STATE.math,
   ...MATH_START_AMOUNTS,
   cellSize: FONT_SIZE,
   bgMode: 'off',
@@ -69,10 +69,6 @@ const ERRORS = {
 
 // Text that lives in index.html, keyed by selector; `attr` targets an attribute.
 const STATIC_TEXT = [
-  {
-    selector: '#modeCue',
-    text: { ko: '모드를 골라보세요', en: 'Choose a mode' },
-  },
   {
     selector: '.magnifier-hint',
     text: {
@@ -186,18 +182,15 @@ function getLensNeighbours() {
 }
 
 function renderModeOptions(onSelect) {
-  const container = document.getElementById('modeOptions');
-  const label = document.getElementById('modeOptionsLabel');
   const grid = document.getElementById('modeOptionButtons');
   const subOptions = MODE_SUB_OPTIONS[state.selectedVersion];
   grid.replaceChildren();
-  container.classList.toggle('has-options', Boolean(subOptions));
   if (!subOptions) {
-    label.textContent = t(MODE_HINTS[state.selectedVersion]) || '';
+    grid.removeAttribute('aria-label');
     return;
   }
 
-  label.textContent = t(subOptions.label);
+  grid.setAttribute('aria-label', t(subOptions.label));
   subOptions.options.forEach((option) => {
     const button = document.createElement('button');
     const isSelected = state[subOptions.stateKey] === option.value;

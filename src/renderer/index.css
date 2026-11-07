@@ -296,25 +296,13 @@ body {
   opacity: 0.8;
 }
 
-/* The cue and the 한국어 / English switch share the block's first row. */
-.mode-cue-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: 0 0 var(--space-3);
-}
-
-.mode-cue {
-  flex: 1;
-  min-width: 0;
-  color: var(--text-secondary);
-  font-size: var(--type-control-label);
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-  word-break: keep-all;
-}
-
+/* 한국어 / English: a small switch in the top right corner of the marked-cell card,
+   on the row of its title. */
 .language-toggle {
+  position: absolute;
+  top: var(--card-padding);
+  right: var(--card-padding);
+  z-index: 1;
   display: flex;
   flex: none;
   padding: 3px;
@@ -383,25 +371,13 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: var(--space-2);
-  /* Content box: reserve exactly label + gap + one button row, so the control block
-     is the same height whether the mode has four, three or no option buttons. */
+  /* Content box: reserve exactly one button row, so the control block is the same
+     height whether the mode has four, three or no option buttons. */
   box-sizing: content-box;
-  min-height: calc(var(--option-control-height) + var(--type-control-meta) * 1.4 + var(--space-2));
+  min-height: var(--option-control-height);
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
-}
-
-.mode-options-label {
-  color: var(--text-secondary);
-  font-size: var(--type-control-meta);
-  line-height: 1.4;
-  text-align: center;
-  word-break: keep-all;
-}
-
-.mode-options:not(.has-options) .mode-options-label {
-  color: var(--text-muted);
 }
 
 .mode-option-grid {
@@ -421,6 +397,7 @@ body {
 
 .mode-option-grid:has(> :nth-child(4)) .mode-option-button {
   padding-inline: var(--space-1);
+  letter-spacing: 0;
 }
 
 .mode-option-grid:empty {
@@ -766,6 +743,9 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  /* As tall as the language switch beside it, which never covers the numbers. */
+  min-height: calc(2.5rem + 8px);
+  padding-right: 11rem;
   color: var(--text-secondary);
   font-size: var(--type-control-meta);
 }
@@ -784,12 +764,6 @@ body {
 .cell-card-title {
   color: var(--text-primary);
   font-weight: 700;
-}
-
-.cell-card-hint {
-  margin-left: auto;
-  color: var(--text-muted);
-  white-space: nowrap;
 }
 
 /* The marked cell's numbers put into the rule, brightest line of the card. */
@@ -1568,10 +1542,6 @@ body {
   .mode-controls::before {
     right: 10%;
     left: 10%;
-  }
-
-  .mode-cue {
-    font-size: 11px;
   }
 }
 

@@ -86,14 +86,6 @@ const modeExplanations = {
   // 수학 처리: one calculation per card, written as a formula with the lever's value.
   math: {
     variants: {
-      none: {
-        title: { ko: '수학으로 사진 바꾸기', en: 'Changing a photo with math' },
-        rule: {
-          ko: '칸마다 숫자 하나 = 밝기, 0(검정) ~ 255(흰색)',
-          en: 'one number per cell = brightness, 0 (black) ~ 255 (white)',
-        },
-        visual: { type: 'math-op', effect: 'none' },
-      },
       brightness: {
         title: { ko: '밝기: 더하기', en: 'Brightness: add' },
         rule: (amount = 0) => ({

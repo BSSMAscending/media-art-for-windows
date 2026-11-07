@@ -36,14 +36,14 @@ describe('mode buttons', () => {
     expect(captions).toMatchObject({ blur: '가중 평균', sharpen: '언샤프' });
   });
 
-  it('opens 수학 처리 on the original numbers and clears a calculation on a second tap', () => {
+  it('opens 수학 처리 on 밝기 and keeps a calculation selected when tapped again', () => {
     const state = { mathEffect: 'blur' };
     selectMode(state, 'math');
-    expect(state.mathEffect).toBe('none');
+    expect(state.mathEffect).toBe('brightness');
     selectModeOption(state, MODE_SUB_OPTIONS.math, 'blur');
     expect(state.mathEffect).toBe('blur');
     selectModeOption(state, MODE_SUB_OPTIONS.math, 'blur');
-    expect(state.mathEffect).toBe('none');
+    expect(state.mathEffect).toBe('blur');
   });
 
   it('opens RGB on the full colour, even when a light was picked before', () => {
@@ -64,17 +64,20 @@ describe('mode buttons', () => {
 });
 
 describe('mode option buttons', () => {
-  it('lists only the single R, G and B lights for RGB', () => {
-    expect(MODE_SUB_OPTIONS.rgb.options.map(({ value }) => value)).toEqual(['R', 'G', 'B']);
+  it('offers the full colour (원본) before the single R, G and B lights', () => {
+    expect(MODE_SUB_OPTIONS.rgb.options.map(({ value }) => value)).toEqual(['N', 'R', 'G', 'B']);
+    expect(MODE_SUB_OPTIONS.rgb.options[0].label.ko).toBe('원본');
   });
 
-  it('picks a light, switches between lights, and clears on a second tap', () => {
+  it('picks a light, switches between lights, keeps it on a second tap, and 원본 returns', () => {
     const state = { rgbChannel: 'N' };
     selectModeOption(state, MODE_SUB_OPTIONS.rgb, 'R');
     expect(state.rgbChannel).toBe('R');
     selectModeOption(state, MODE_SUB_OPTIONS.rgb, 'G');
     expect(state.rgbChannel).toBe('G');
     selectModeOption(state, MODE_SUB_OPTIONS.rgb, 'G');
+    expect(state.rgbChannel).toBe('G');
+    selectModeOption(state, MODE_SUB_OPTIONS.rgb, 'N');
     expect(state.rgbChannel).toBe('N');
   });
 
@@ -146,8 +149,20 @@ describe('levers', () => {
     expect(getBlurTipStep({ ...blur, selectedVersion: 'levels', cellSize: 24 })).toBe(0);
   });
 
-  it('gives every mode a hint for the lever slot it does not use', () => {
-    for (const { key } of MODE_OPTIONS) expect(MODE_SLIDER_HINTS[key]).toBeTruthy();
+  it('gives every view without a lever of its own a hint for that slot', () => {
+    const views = [
+      { selectedVersion: 'levels', levels: 10 },
+      { selectedVersion: 'rgb', rgbChannel: 'N' },
+      { selectedVersion: 'rgb', rgbChannel: 'B' },
+    ];
+    for (const view of views) {
+      expect(getModeSlider(view)).toBeNull();
+      expect(getModeSliderHint(view)).toBeTruthy();
+    }
+    // 수학 처리 always has a calculation, so always a lever.
+    for (const { value } of MODE_SUB_OPTIONS.math.options) {
+      expect(getModeSlider({ selectedVersion: 'math', mathEffect: value })).toBeTruthy();
+    }
   });
 
   it('tells the RGB full colour that a light brings the pixel numbers', () => {

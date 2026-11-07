@@ -18,16 +18,19 @@ const MODE_OPTIONS = [
 const START_MODE = MODE_OPTIONS[0].key;
 
 // Second row of touch buttons, shown under the mode buttons for modes that have them.
-// `noneValue` lets a second tap on the selected option clear it back to that view.
+// Tapping the selected button again keeps it; RGB returns to the full colour with
+// its own 원본 button. `label` names the row for screen readers only.
 const MODE_SUB_OPTIONS = {
   rgb: {
     stateKey: 'rgbChannel',
-    label: {
-      ko: '빛을 하나 골라보세요 (다시 누르면 전체 색)',
-      en: 'Pick a light (tap again to undo)',
-    },
-    noneValue: 'N',
+    label: { ko: '빛 고르기', en: 'Pick a light' },
     options: [
+      {
+        value: 'N',
+        label: { ko: '원본', en: 'Original' },
+        caption: 'R+G+B',
+        swatch: 'conic-gradient(#ff3b3b 0 33%, #36ff6b 0 67%, #3b8bff 0)',
+      },
       { value: 'R', label: 'R', caption: { ko: '빨강', en: 'Red' }, swatch: '#ff3b3b' },
       { value: 'G', label: 'G', caption: { ko: '초록', en: 'Green' }, swatch: '#36ff6b' },
       { value: 'B', label: 'B', caption: { ko: '파랑', en: 'Blue' }, swatch: '#3b8bff' },
@@ -35,7 +38,7 @@ const MODE_SUB_OPTIONS = {
   },
   levels: {
     stateKey: 'levels',
-    label: { ko: '밝기를 몇 단계로 나눌까요?', en: 'How many brightness steps?' },
+    label: { ko: '밝기 단계 수', en: 'Brightness steps' },
     options: [
       { value: 2, label: { ko: '2단계', en: '2 steps' }, caption: '0 · 1' },
       { value: 10, label: { ko: '10단계', en: '10 steps' }, caption: '0 ~ 9' },
@@ -44,11 +47,7 @@ const MODE_SUB_OPTIONS = {
   },
   math: {
     stateKey: 'mathEffect',
-    label: {
-      ko: '계산을 하나 골라보세요 (다시 누르면 원본)',
-      en: 'Pick a calculation (tap again to undo)',
-    },
-    noneValue: 'none',
+    label: { ko: '계산 고르기', en: 'Pick a calculation' },
     options: [
       {
         value: 'brightness',
@@ -74,10 +73,7 @@ const MODE_SUB_OPTIONS = {
   },
 };
 
-// A line shown in place of the option buttons for views that have none.
-const MODE_HINTS = {};
-
-// Left lever: the cell size, shared by every mode.
+// Top lever: the cell size, shared by every mode.
 const CELL_SIZE_SLIDER = {
   stateKey: 'cellSize',
   label: { ko: '칸 크기', en: 'Cell size' },
@@ -111,7 +107,7 @@ function getBlurTipStep(state) {
   return state.cellSize <= BLUR_CELL_SIZE ? 2 : 1;
 }
 
-// Right lever: the current view's own setting, or this hint when it has none.
+// Bottom lever: the current view's own setting, or a hint (getModeSliderHint) when it has none.
 const THRESHOLD_SLIDER = {
   stateKey: 'threshold',
   label: { ko: '흑백 경계값', en: 'Threshold' },
@@ -193,7 +189,6 @@ const MODE_SLIDER_HINTS = {
     ko: '2단계를 고르면 흑백 경계값을 옮길 수 있어요',
     en: 'Pick 2 steps to move the threshold',
   },
-  math: { ko: '계산을 고르면 세기를 바꿀 수 있어요', en: 'Pick a calculation to set its strength' },
 };
 
 /** What the right lever slot says when the view has no lever of its own. */
@@ -216,10 +211,11 @@ function getMathSettings(state) {
   };
 }
 
-// Pressing a mode button opens its starting view; RGB always starts on the full colour.
+// Pressing a mode button opens its starting view: RGB on the full colour, 수학 처리 on
+// its first calculation (밝기).
 const MODE_START_STATE = {
   rgb: { rgbChannel: 'N' },
-  math: { mathEffect: 'none' },
+  math: { mathEffect: MODE_SUB_OPTIONS.math.options[0].value },
 };
 
 function selectMode(state, mode) {
@@ -228,16 +224,14 @@ function selectMode(state, mode) {
 }
 
 function selectModeOption(state, subOptions, value) {
-  const { stateKey, noneValue } = subOptions;
-  const clearsSelection = noneValue !== undefined && state[stateKey] === value;
-  state[stateKey] = clearsSelection ? noneValue : value;
+  state[subOptions.stateKey] = value;
 }
 
 module.exports = {
   MODE_OPTIONS,
   START_MODE,
   MODE_SUB_OPTIONS,
-  MODE_HINTS,
+  MODE_START_STATE,
   CELL_SIZE_SLIDER,
   BLUR_CELL_SIZE,
   BLUR_TIP,

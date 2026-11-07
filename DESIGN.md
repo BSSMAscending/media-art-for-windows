@@ -130,7 +130,7 @@ All spacing derives from a base of `4px`.
 ### Mode Option Buttons
 
 - **Structure**: a label and one row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels, 밝기/대비/블러/선명 for 수학 처리. A view without options shows a hint line in the same space.
-- **Selection**: the RGB mode button always opens the full colour with no light selected; tapping the selected R/G/B again clears it back to the full colour. 수학 처리 opens on the original numbers and works the same way: tapping the selected calculation again turns it off. A brightness step stays selected when tapped again.
+- **Selection**: the RGB mode button always opens the full colour (원본, the first button); R/G/B pick one light and 원본 brings the full colour back. 수학 처리 opens on 밝기. Every option stays selected when tapped again. The row has no label line; its name is only an `aria-label`.
 - **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
 - **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
 
