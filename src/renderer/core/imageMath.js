@@ -64,25 +64,60 @@ function gaussianAt(input, cols, rows, x, y, radius) {
   return sum / total;
 }
 
-// 블러: each cell becomes the Gaussian weighted average of its neighbours.
-function gaussianBlur(input, output, cols, rows, radius) {
+// Scratch rows for gaussianAverages, grown when the grid grows.
+let rowSums = new Float64Array(0);
+let averages = new Float64Array(0);
+
+/**
+ * The unrounded Gaussian average of every cell, the same numbers gaussianAt gives,
+ * worked out a row then a column at a time: the weights are a row times a column
+ * (Pascal's triangle), so summing across and then down adds up the same products in
+ * (2r + 1) × 2 steps per cell instead of (2r + 1)². The sums are whole numbers well
+ * inside a double's exact range, so no rounding creeps in.
+ */
+function gaussianAverages(input, cols, rows, radius) {
+  const count = cols * rows;
+  if (rowSums.length < count) {
+    rowSums = new Float64Array(count);
+    averages = new Float64Array(count);
+  }
+  const row = GAUSSIAN_ROWS[radius];
+  const total = getGaussianTotal(radius);
   for (let y = 0; y < rows; y++) {
+    const offset = y * cols;
     for (let x = 0; x < cols; x++) {
-      output[y * cols + x] = clampByte(gaussianAt(input, cols, rows, x, y, radius));
+      let sum = 0;
+      for (let d = -radius; d <= radius; d++) {
+        sum += row[d + radius] * input[offset + Math.max(0, Math.min(cols - 1, x + d))];
+      }
+      rowSums[offset + x] = sum;
     }
   }
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      let sum = 0;
+      for (let d = -radius; d <= radius; d++) {
+        sum += row[d + radius] * rowSums[Math.max(0, Math.min(rows - 1, y + d)) * cols + x];
+      }
+      averages[y * cols + x] = sum / total;
+    }
+  }
+  return averages;
+}
+
+// 블러: each cell becomes the Gaussian weighted average of its neighbours.
+function gaussianBlur(input, output, cols, rows, radius) {
+  const average = gaussianAverages(input, cols, rows, radius);
+  for (let i = 0; i < cols * rows; i++) output[i] = clampByte(average[i]);
   return output;
 }
 
-// 선명 (unsharp mask): push each cell away from its 3×3 Gaussian average by
-// `amount` times the difference.
+// 선명 (unsharp masking): blur a copy (the 3×3 Gaussian average), take the mask,
+// cell − blur, which only lives at edges, and add it back `amount` times.
 function sharpen(input, output, cols, rows, amount) {
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const i = y * cols + x;
-      const average = gaussianAt(input, cols, rows, x, y, 1);
-      output[i] = clampByte(input[i] + amount * (input[i] - average));
-    }
+  const average = gaussianAverages(input, cols, rows, 1);
+  for (let i = 0; i < cols * rows; i++) {
+    output[i] = clampByte(input[i] + amount * (input[i] - average[i]));
   }
   return output;
 }

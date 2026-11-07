@@ -6,7 +6,6 @@ const { reinforceGridHandMask } = require('./handRefinement');
 const { FrameBuffers } = require('./frameBuffers');
 const { createChannelOverlay } = require('./channelOverlay');
 const { getFullFrameGrid } = require('./renderGeometry');
-const { renderOriginal } = require('../modes/original');
 const { renderBusan } = require('../modes/busan');
 const { renderPixelValue } = require('../modes/pixelvalue');
 const { renderColorRgb } = require('../modes/colorrgb');
@@ -74,13 +73,16 @@ function createFrameLoop({
   let frameCount = 0;
   let ctx = null;
   let hiddenCtx = null;
+  // The camera picture at the camera's own resolution, for the RGB full colour.
+  const photoCanvas = document.createElement('canvas');
+  let photoCtx = null;
   const buffers = new FrameBuffers();
   const updateChannelTransition = createChannelTransition();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const artworkGrid = {};
   // What the last frame drew and with which settings, so single cells can be read
   // back with the same numbers (cellReadout.js). Handed to `onDrawn`.
-  const frame = { mode: null, grid: artworkGrid, pixels: null, grey: null, person: null };
+  const frame = { mode: null, grid: artworkGrid, pixels: null, grey: null };
   let channelOverlay = null;
   const renderInterval = 1000 / RENDERING_CONFIG.targetFps;
   const segmentationInterval = 1000 / RENDERING_CONFIG.segmentationFps;
@@ -202,6 +204,22 @@ function createFrameLoop({
     return hiddenCtx.getImageData(0, 0, cols, rows).data;
   }
 
+  // Copies the cropped camera frame, mirrored, without shrinking it to cells.
+  function samplePhoto(crop) {
+    const width = Math.max(1, Math.round(crop.width));
+    const height = Math.max(1, Math.round(crop.height));
+    if (photoCanvas.width !== width || photoCanvas.height !== height) {
+      photoCanvas.width = width;
+      photoCanvas.height = height;
+    }
+    photoCtx ||= photoCanvas.getContext('2d', { alpha: false });
+    photoCtx.save();
+    photoCtx.scale(-1, 1);
+    photoCtx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, -width, 0, width, height);
+    photoCtx.restore();
+    return photoCanvas;
+  }
+
   function resizeSampling(cols, rows) {
     if (hiddenCanvasEl.width !== cols || hiddenCanvasEl.height !== rows) {
       hiddenCanvasEl.width = cols;
@@ -227,7 +245,9 @@ function createFrameLoop({
     frame.grey = null;
     if (mode === 'rgb') {
       frame.channel = getRgbChannel ? getRgbChannel() : 'N';
-      renderRgb(ctx, overlay, grid, pixels, frame.channel, layers);
+      // The cells are still sampled in the full colour: the marked cell reads them.
+      const photo = frame.channel === 'N' ? samplePhoto(crop) : null;
+      renderRgb(ctx, overlay, grid, pixels, frame.channel, layers, photo);
     } else if (mode === 'levels') {
       frame.levels = getLevels();
       frame.threshold = getThreshold?.();
@@ -251,7 +271,7 @@ function createFrameLoop({
     return { cols: grid.cols, rows: grid.rows, pixelStats: null };
   }
 
-  // Faint backdrop so the silhouette modes read as the same fixed screen as the
+  // Faint backdrop so the legacy silhouette views read as the same fixed screen as the
   // camera modes even when only a few cells are lit.
   function drawArtworkBackdrop(grid) {
     const width = grid.cols * grid.cellSize;
@@ -328,10 +348,9 @@ function createFrameLoop({
     drawArtworkBackdrop(grid);
 
     const found = findPerson(cols, rows);
-    frame.person = found && { ...found, mask: found.mask.data };
     const person = found?.found ? found : null;
-    // 미디어 아트 always fills the screen with bits; the legacy modes draw only the person.
-    if (!person && mode !== 'original') return null;
+    // The legacy views draw only the person.
+    if (!person) return null;
 
     ctx.save();
     ctx.translate(grid.x, grid.y);
@@ -339,10 +358,8 @@ function createFrameLoop({
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    const pixels = person?.pixels;
-    const mask = person?.mask ?? null;
-    if (mode === 'original') renderOriginal(ctx, cols, rows, fontSz, mask, pixels, cols);
-    else if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, mask, pixels, cols);
+    const { pixels, mask } = person;
+    if (mode === 'busan') renderBusan(ctx, cols, rows, fontSz, mask, pixels, cols);
     else if (mode === 'pixelvalue') renderPixelValue(ctx, cols, rows, fontSz, mask, pixels, cols);
     else if (mode === 'colorrgb') renderColorRgb(ctx, cols, rows, fontSz, mask, pixels, cols);
     else if (mode === 'grayscale8bit')
@@ -350,8 +367,7 @@ function createFrameLoop({
     else if (mode === 'color4k') renderColor4k(ctx, cols, rows, fontSz, mask, pixels, cols);
     ctx.restore();
 
-    const pixelStats = person ? computePixelStats(pixels, mask.data, cols, rows) : null;
-    return { cols, rows, pixelStats };
+    return { cols, rows, pixelStats: computePixelStats(pixels, mask.data, cols, rows) };
   }
 
   return {

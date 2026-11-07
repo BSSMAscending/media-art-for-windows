@@ -9,6 +9,11 @@ function getLevel(grey, levels, threshold) {
   return Math.min(levels - 1, Math.floor((grey * levels) / 255));
 }
 
+// Digits are black on the light half of the steps and white on the dark half.
+function isDarkLevelText(level, maxLevel) {
+  return level / maxLevel >= 0.5;
+}
+
 /**
  * Quantizes every cell's brightness, writes the matching grey into `output` for
  * the GPU layer, and labels the cell with its step number. Computing both here
@@ -35,10 +40,10 @@ function renderLevels(ctx, grid, pixels, levels, output, threshold) {
       output[i + 3] = 255;
       if (!showDigits) continue;
 
-      ctx.fillStyle = level / maxLevel >= 0.5 ? '#000000' : '#ffffff';
+      ctx.fillStyle = isDarkLevelText(level, maxLevel) ? '#000000' : '#ffffff';
       ctx.fillText(String(level), originX + (x + 0.5) * cellSize, originY + (y + 0.5) * cellSize);
     }
   }
 }
 
-module.exports = { getLevel, renderLevels };
+module.exports = { getLevel, renderLevels, isDarkLevelText };

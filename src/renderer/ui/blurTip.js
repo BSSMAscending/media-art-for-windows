@@ -13,9 +13,9 @@ function element(tag, className, text) {
 }
 
 /**
- * A small card that floats right under the levers when 블러 is picked: first shrink
- * the cells, then change the blur size. It points at the lever to move next and
- * makes that lever glow (`levers` are the two lever slots, left then right). It
+ * A small card that floats right above the levers when 블러 is picked: first shrink
+ * the cells, then change the blur size. It points down at the levers and makes the
+ * one to move next glow (`levers` are the two lever slots, top then bottom). It
  * never takes touches and goes away by itself, once the blur size is changed with
  * small cells, or when the view changes.
  */

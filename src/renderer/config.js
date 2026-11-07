@@ -8,7 +8,8 @@ function toLocalURL(relPath) {
 
 // 기본 칸(문자) 크기(px). 전시 화면에서는 칸 크기 레버로 CELL_SIZES 사이를 고릅니다.
 const FONT_SIZE = 24;
-const CELL_SIZES = [8, 12, 16, 20, 24, 32, 40, 48];
+// 2px cells are fine enough to read as a picture; the magnifier still writes their numbers.
+const CELL_SIZES = [2, 4, 8, 12, 16, 20, 24, 32, 40, 48];
 const MIN_FONT_SIZE = 4;
 const MAX_FONT_SIZE = 32;
 const VISION_TASKS_CONFIG = {
@@ -56,15 +57,6 @@ const HAND_GRID_REFINEMENT = {
   minOverlapAnchors: 1,
   overlapAnchorRadius: 2,
 };
-const COLORS = {
-  cyan: '#00ffff',
-  darkBg: '#020205',
-  binaryBg: '#0a0a0a',
-  black: '#000000',
-  white: '#ffffff',
-};
-const LUMINANCE_GLOW_THRESHOLD = 0.7;
-const CYAN_INFLUENCE = 0.8;
 const BUSAN_CHARS = ['부', '산', '수', '학', '문', '화', '관'];
 
 module.exports = {
@@ -78,8 +70,5 @@ module.exports = {
   RENDERING_CONFIG,
   HAND_REFINEMENT,
   HAND_GRID_REFINEMENT,
-  COLORS,
-  LUMINANCE_GLOW_THRESHOLD,
-  CYAN_INFLUENCE,
   BUSAN_CHARS,
 };

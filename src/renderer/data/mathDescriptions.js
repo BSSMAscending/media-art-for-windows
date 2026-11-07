@@ -1,12 +1,4 @@
 const mathDescriptions = {
-  original: {
-    title: '이진 표현 (Binary)',
-    desc: '픽셀 밝기를 임계값과 비교하여 0 또는 1로 표현합니다.',
-    shortDesc: '사람의 형태를 0과 1로 나누어 보여줍니다.',
-    metric: '1bit · 2가지 값',
-    formula: 'f(x) = x > θ ? 1 : 0',
-    colorDepth: '1bit (2색)',
-  },
   rgb: {
     title: '빛의 삼원색 (RGB)',
     desc: '카메라 화면의 모든 색은 빨강(R)·초록(G)·파랑(B) 세 빛을 겹쳐 만듭니다.',

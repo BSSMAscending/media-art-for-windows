@@ -1,10 +1,4 @@
-const {
-  readCell,
-  getNeighbourhood,
-  formatCellMath,
-  formatScreenShare,
-  countOnes,
-} = require('../src/renderer/core/cellReadout');
+const { readCell, getNeighbourhood, formatCellMath } = require('../src/renderer/core/cellReadout');
 const { applyImageMath, toGrey } = require('../src/renderer/core/imageMath');
 
 const ko = (reading) => formatCellMath(reading).ko;
@@ -52,24 +46,6 @@ describe('reading a cell back', () => {
   it('repeats the edge cell past the border, as the blur does', () => {
     expect(getNeighbourhood(GREYS, 3, 3, 0, 0)).toEqual([60, 60, 90, 60, 60, 90, 80, 80, 140]);
   });
-
-  it('reads a person cell from the camera-side mask, mirrored like the picture', () => {
-    // The mask is stored the camera's way round: column 0 is the visitor's right.
-    const mask = Uint8Array.from([1, 0]);
-    const segmentation = { width: 2, height: 1, probability: Uint8Array.from([230, 20]) };
-    const person = {
-      mask,
-      raw: mask,
-      segmentation,
-      crop: { x: 0, y: 0, width: 2, height: 1 },
-      sourceWidth: 2,
-      sourceHeight: 1,
-    };
-    const frame = { mode: 'original', grid: { cols: 2, rows: 1 }, person };
-    expect(readCell(frame, 1, 0)).toMatchObject({ bit: 1, probability: 230 });
-    expect(readCell(frame, 0, 0)).toMatchObject({ bit: 0, probability: 20 });
-    expect(readCell({ ...frame, person: null }, 0, 0)).toMatchObject({ bit: 0, probability: null });
-  });
 });
 
 describe('writing a cell as arithmetic', () => {
@@ -88,14 +64,14 @@ describe('writing a cell as arithmetic', () => {
 
   it('divides the weighted sum by the total weight', () => {
     const reading = readCell(mathFrame('blur', 1), 1, 1);
-    expect(ko(reading)).toBe('무게×값의 합 2,150 ÷ 16 = 134.4 → 134');
+    expect(ko(reading)).toBe('가중치×값의 합 2,150 ÷ 16 = 134.4 → 134');
     expect(en(reading)).toBe('sum of weight × value 2,150 ÷ 16 = 134.4 → 134');
   });
 
-  it('pushes a cell away from its average when sharpening', () => {
-    expect(ko(readCell(mathFrame('sharpen', 1.5), 1, 1))).toBe(
-      '140 + (140 − 134.4) × 1.5 = 148.4 → 148'
-    );
+  it('adds back the unsharp mask, the cell minus its blur, when sharpening', () => {
+    const reading = readCell(mathFrame('sharpen', 1.5), 1, 1);
+    expect(ko(reading)).toBe('140 + (140 − 블러 134.4) × 1.5 = 148.4 → 148');
+    expect(en(reading)).toBe('140 + (140 − blur 134.4) × 1.5 = 148.4 → 148');
   });
 
   it('names the brightness of an untouched cell', () => {
@@ -132,22 +108,5 @@ describe('writing a cell as arithmetic', () => {
     expect(ko({ ...cell, channel: 'R' })).toBe('빨간 빛 230 ÷ 255 ≈ 90%');
     expect(en({ ...cell, channel: 'G' })).toBe('green light 255 ÷ 255 = 100%');
     expect(ko({ ...cell, channel: 'B' })).toBe('파란 빛 0 ÷ 255 = 0%');
-  });
-
-  it("compares the AI's person probability with its 63% threshold", () => {
-    const person = (probability, bit, raw = bit) => ({ kind: 'person', probability, bit, raw });
-    expect(ko(person(230, 1))).toBe('사람일 확률 90% ≥ 63% → 1');
-    expect(en(person(20, 0))).toBe('person 8% < 63% → 0');
-    expect(ko(person(159, 0))).toBe('사람일 확률 62% < 63% → 0');
-    expect(ko(person(160, 1))).toBe('사람일 확률 63% ≥ 63% → 1');
-    expect(ko(person(100, 1, 0))).toBe('사람일 확률 39% < 63%, 손 보정 → 1');
-    expect(ko(person(200, 0, 1))).toBe('사람일 확률 78% ≥ 63%, 작은 조각 → 0');
-    expect(ko(person(null, 0))).toBe('사람 없음 → 0');
-  });
-
-  it('shows how much of the screen is 1', () => {
-    expect(countOnes(Uint8Array.from([1, 0, 1, 1]))).toBe(3);
-    expect(formatScreenShare(412, 2255).ko).toBe('1인 칸 412 ÷ 2,255 ≈ 18%');
-    expect(formatScreenShare(0, 2255).en).toBe('cells that are 1: 0 ÷ 2,255 = 0%');
   });
 });

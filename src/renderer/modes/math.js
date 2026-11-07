@@ -1,5 +1,10 @@
 const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../utils');
 
+// Black digits on light greys, white on dark ones.
+function isDarkGreyText(value) {
+  return value >= 128;
+}
+
 /**
  * Draws the computed grey values: each cell's grey goes into `output` for the GPU
  * layer and its 0-255 number on top, so visitors watch the numbers change as the
@@ -25,10 +30,10 @@ function renderMath(ctx, grid, values, output) {
       output[i + 3] = 255;
       if (!showDigits) continue;
 
-      ctx.fillStyle = value >= 128 ? '#000000' : '#ffffff';
+      ctx.fillStyle = isDarkGreyText(value) ? '#000000' : '#ffffff';
       ctx.fillText(String(value), originX + (x + 0.5) * cellSize, originY + (y + 0.5) * cellSize);
     }
   }
 }
 
-module.exports = { renderMath };
+module.exports = { renderMath, isDarkGreyText };

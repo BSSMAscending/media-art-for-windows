@@ -129,7 +129,7 @@ All spacing derives from a base of `4px`.
 
 ### Mode Option Buttons
 
-- **Structure**: a label and a row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels, 밝기/대비/블러/선명 for 수학 처리; the original mode shows a hint line in the same space.
+- **Structure**: a label and one row of buttons under the mode buttons: R/G/B for RGB, 2/10/256단계 for brightness levels, 밝기/대비/블러/선명 for 수학 처리. A view without options shows a hint line in the same space.
 - **Selection**: the RGB mode button always opens the full colour with no light selected; tapping the selected R/G/B again clears it back to the full colour. 수학 처리 opens on the original numbers and works the same way: tapping the selected calculation again turns it off. A brightness step stays selected when tapped again.
 - **States**: same selected treatment as mode buttons; R/G/B carry a colour dot.
 - **Layout**: the row's height is reserved in every mode so the explanation card does not jump.
@@ -137,7 +137,7 @@ All spacing derives from a base of `4px`.
 ### Magnifier
 
 - **Structure**: the artwork area is a press-and-hold target with a quiet hint chip below the picture (`화면을 꾹 누르고 있으면 돋보기로 크게 보여요`). Holding shows a round lens (`clamp(15rem, 18vw, 22rem)`, cyan border and glow, `× 3` badge) and a cyan ring on the magnified spot.
-- **Behaviour**: fixed 3× zoom; the lens floats 28px above the finger (below it near the top edge), follows while held and disappears on release. The side column is never covered by the touch area.
+- **Behaviour**: 3× zoom, or closer (up to 16×, badge follows) when the cells are too small for their numbers on screen; the lens then writes each cell's number itself; the lens floats 28px above the finger (below it near the top edge), follows while held and disappears on release. The side column is never covered by the touch area.
 
 ### Language Switch
 

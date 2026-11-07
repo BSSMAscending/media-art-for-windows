@@ -5,6 +5,7 @@ const {
   addBrightness,
   scaleContrast,
   getGaussianWeights,
+  gaussianAt,
   gaussianBlur,
   sharpen,
   applyImageMath,
@@ -86,5 +87,34 @@ describe('image math on grey cells', () => {
     expect(applyImageMath('contrast', 2, grid, output, 3, 3)[4]).toBe(152);
     expect(applyImageMath('blur', 1, grid, output, 3, 3)[4]).toBe(134);
     expect(applyImageMath('sharpen', 1.5, grid, output, 3, 3)[4]).toBe(148);
+  });
+});
+
+describe('blurring a whole grid at once', () => {
+  // Uneven noise with hard edges, odd sizes and edge cells, to catch any mismatch.
+  const cols = 13;
+  const rows = 7;
+  const input = Uint8ClampedArray.from(
+    { length: cols * rows },
+    (_, i) => (i * 97 + (i % 5) * 61) % 256
+  );
+
+  it.each([1, 2, 3])('gives every cell the same %s-radius average as gaussianAt', (radius) => {
+    const output = gaussianBlur(input, new Uint8ClampedArray(cols * rows), cols, rows, radius);
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        expect(output[y * cols + x]).toBe(clampByte(gaussianAt(input, cols, rows, x, y, radius)));
+      }
+    }
+  });
+
+  it('sharpens against the same 3×3 average', () => {
+    const output = sharpen(input, new Uint8ClampedArray(cols * rows), cols, rows, 1.5);
+    for (let i = 0; i < cols * rows; i++) {
+      const x = i % cols;
+      const y = Math.floor(i / cols);
+      const average = gaussianAt(input, cols, rows, x, y, 1);
+      expect(output[i]).toBe(clampByte(input[i] + 1.5 * (input[i] - average)));
+    }
   });
 });

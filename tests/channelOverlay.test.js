@@ -12,6 +12,7 @@ function createGl() {
     FRAGMENT_SHADER: 2,
     TEXTURE_MIN_FILTER: 'min-filter',
     NEAREST: 'nearest',
+    LINEAR: 'linear',
     createShader: (type) => ({ type }),
     shaderSource() {},
     compileShader() {},
@@ -57,7 +58,13 @@ function createGl() {
       uniforms[name] = values;
     },
     texImage2D(...args) {
-      gl.uploads.push({ resize: true, width: args[3], height: args[4], pixels: args[8] });
+      gl.uploads.push({
+        resize: true,
+        width: args[3],
+        height: args[4],
+        pixels: args[8],
+        source: args.at(-1),
+      });
     },
     texSubImage2D(...args) {
       gl.uploads.push({ resize: false, width: args[4], height: args[5], pixels: args[8] });
@@ -73,6 +80,7 @@ function createOverlay() {
   const gl = createGl();
   const canvas = {
     style: {},
+    dataset: {},
     setAttribute() {},
     addEventListener() {},
     getContext: () => gl,
@@ -139,8 +147,24 @@ describe('channel overlay', () => {
   });
 
   it('keeps every cell a crisp block', () => {
-    const { overlay, gl } = createOverlay();
+    const { overlay, gl, canvas } = createOverlay();
     overlay.renderFlat(grid, pixels);
     expect(gl.current.filter).toBe('nearest');
+    expect(canvas.dataset.smooth).toBe('false');
+  });
+
+  it('draws a camera picture smoothly, on its own texture, over the same grid', () => {
+    const { overlay, gl, canvas } = createOverlay();
+    const photo = { width: 1280, height: 960 };
+    overlay.renderLayers(grid, photo, createChannelTransition()('N', 0));
+    expect(gl.current.filter).toBe('linear');
+    expect(gl.uploads.at(-1).source).toBe(photo);
+    expect(canvas.dataset.smooth).toBe('true');
+    expect(canvas.style).toEqual({ left: '30px', top: '40px', width: '64px', height: '32px' });
+
+    // Back to cells: the cell texture again, sharp.
+    overlay.renderFlat(grid, pixels);
+    expect(gl.current.filter).toBe('nearest');
+    expect(canvas.dataset.smooth).toBe('false');
   });
 });

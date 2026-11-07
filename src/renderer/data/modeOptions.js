@@ -1,22 +1,21 @@
 const { CELL_SIZES } = require('../config');
-const { getColorValueFontSize } = require('../modes/rgb');
 const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../utils');
 
 // Visible text is a { ko, en } pair (see i18n.js); digits and symbols are plain strings.
+// The buttons sit in two columns: 밝기 단계 over 색 RGB on the left, 수학 처리 the
+// full height of the right column (index.css), so this order is also the keys 1-3.
 const MODE_OPTIONS = [
-  {
-    key: 'original',
-    label: { ko: '미디어 아트', en: 'Media Art' },
-    caption: { ko: '0 / 1 실루엣', en: '0 / 1 shape' },
-  },
+  { key: 'levels', label: { ko: '밝기 단계', en: 'Brightness' }, caption: '2·10·256' },
   {
     key: 'rgb',
     label: { ko: '색 RGB', en: 'RGB Color' },
     caption: { ko: '빛의 삼원색', en: 'R · G · B' },
   },
-  { key: 'levels', label: { ko: '밝기 단계', en: 'Brightness' }, caption: '2·10·256' },
   { key: 'math', label: { ko: '수학 처리', en: 'Image Math' }, caption: '+ − × ÷' },
 ];
+
+// The view the exhibit opens on.
+const START_MODE = MODE_OPTIONS[0].key;
 
 // Second row of touch buttons, shown under the mode buttons for modes that have them.
 // `noneValue` lets a second tap on the selected option clear it back to that view.
@@ -64,23 +63,19 @@ const MODE_SUB_OPTIONS = {
       {
         value: 'blur',
         label: { ko: '블러', en: 'Blur' },
-        caption: { ko: '무게 평균', en: 'Weighted' },
+        caption: { ko: '가중 평균', en: 'Weighted' },
       },
       {
         value: 'sharpen',
         label: { ko: '선명', en: 'Sharpen' },
-        caption: { ko: '차이 키우기', en: 'Boost edges' },
+        caption: { ko: '언샤프', en: 'Unsharp' },
       },
     ],
   },
 };
 
-const MODE_HINTS = {
-  original: {
-    ko: '화면 앞에 서면 내가 있는 칸이 1로 켜져요',
-    en: 'Stand in front of the screen and your cells turn into 1',
-  },
-};
+// A line shown in place of the option buttons for views that have none.
+const MODE_HINTS = {};
 
 // Left lever: the cell size, shared by every mode.
 const CELL_SIZE_SLIDER = {
@@ -93,25 +88,6 @@ const CELL_SIZE_SLIDER = {
     { ko: '크게', en: 'Large' },
   ],
 };
-
-// The combined RGB view needs room for three stacked numbers per cell, so its
-// lever stops at the first size where they are readable (24px).
-const COLOR_VALUE_CELL_SIZE = CELL_SIZES.find(
-  (size) => getColorValueFontSize(size) >= MIN_DIGIT_FONT_SIZE
-);
-
-function getCellSizeFloor(state) {
-  if (state.selectedVersion === 'rgb' && state.rgbChannel === 'N') {
-    return {
-      size: COLOR_VALUE_CELL_SIZE,
-      note: {
-        ko: `${COLOR_VALUE_CELL_SIZE}px부터`,
-        en: `From ${COLOR_VALUE_CELL_SIZE}px`,
-      },
-    };
-  }
-  return { size: CELL_SIZES[0], note: null };
-}
 
 // At the starting cell size the digits hide what 블러 does. Up to this size cells are
 // plain colour (the 수학 처리 view drops digits below MIN_DIGIT_FONT_SIZE), so the
@@ -186,7 +162,7 @@ const MATH_SLIDERS = {
   },
   sharpen: {
     stateKey: 'mathSharpen',
-    label: { ko: '차이 키우기', en: 'Edge boost' },
+    label: { ko: '마스크 세기', en: 'Mask amount' },
     values: [0, 0.5, 1, 1.5, 2, 3],
     format: (value) => `× ${value}`,
     ends: [
@@ -204,10 +180,14 @@ const MATH_START_AMOUNTS = {
 };
 
 const MODE_SLIDER_HINTS = {
-  original: { ko: '칸이 작을수록 내 모습이 또렷해져요', en: 'Smaller cells show you more clearly' },
   rgb: {
     ko: '칸을 키우면 숫자가 더 잘 보여요',
     en: 'Bigger cells make the numbers easier to read',
+  },
+  // The full colour is the camera picture itself; cells and numbers come with a light.
+  rgbFull: {
+    ko: 'R·G·B를 고르면 픽셀 칸과 숫자가 보여요',
+    en: 'Pick R, G or B to see the pixel numbers',
   },
   levels: {
     ko: '2단계를 고르면 흑백 경계값을 옮길 수 있어요',
@@ -215,6 +195,12 @@ const MODE_SLIDER_HINTS = {
   },
   math: { ko: '계산을 고르면 세기를 바꿀 수 있어요', en: 'Pick a calculation to set its strength' },
 };
+
+/** What the right lever slot says when the view has no lever of its own. */
+function getModeSliderHint(state) {
+  if (state.selectedVersion === 'rgb' && state.rgbChannel === 'N') return MODE_SLIDER_HINTS.rgbFull;
+  return MODE_SLIDER_HINTS[state.selectedVersion] ?? null;
+}
 
 function getModeSlider(state) {
   if (state.selectedVersion === 'levels' && state.levels === 2) return THRESHOLD_SLIDER;
@@ -249,11 +235,10 @@ function selectModeOption(state, subOptions, value) {
 
 module.exports = {
   MODE_OPTIONS,
+  START_MODE,
   MODE_SUB_OPTIONS,
   MODE_HINTS,
   CELL_SIZE_SLIDER,
-  COLOR_VALUE_CELL_SIZE,
-  getCellSizeFloor,
   BLUR_CELL_SIZE,
   BLUR_TIP,
   getBlurTipStep,
@@ -261,6 +246,7 @@ module.exports = {
   MATH_SLIDERS,
   MATH_START_AMOUNTS,
   MODE_SLIDER_HINTS,
+  getModeSliderHint,
   getModeSlider,
   getMathSettings,
   selectMode,

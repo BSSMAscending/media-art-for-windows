@@ -1,6 +1,7 @@
 // Press-and-hold magnifier for the artwork (#40). Pressing the artwork shows a round
-// lens with a fixed 3× view of the cells under the finger; it follows the finger
-// while held, so small numbers can be read up close. After release it stays on the
+// lens with a 3× view of the cells under the finger (closer when the cells are too
+// small for their numbers, see lensDigits.js); it follows the finger while held, so
+// small numbers can be read up close. After release it stays on the
 // last spot for HOLD_AFTER_RELEASE: the exhibit's radar sensor turns a touch into a
 // short press, which would otherwise close the lens before anyone could read it.
 
@@ -119,8 +120,9 @@ function mapLayer(region, rect, backing, zoom, ratio) {
 }
 
 // `onPoint` hears every point the lens shows, so the cards can calculate that cell;
-// `decorate(ctx, toLens, scale)` draws over the magnified picture (see drawLensMarks).
-function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate }) {
+// `decorate(ctx, toLens, scale, region)` draws over the magnified picture (see
+// drawLensMarks); `getZoom` picks the zoom for each frame (ZOOM when left out).
+function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate, getZoom }) {
   const lens = document.createElement('div');
   lens.className = 'magnifier-lens';
   lens.hidden = true;
@@ -142,6 +144,7 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
 
   let pointerId = null;
   let holdTimer = null;
+  let zoom = ZOOM;
   const point = { x: 0, y: 0 };
 
   function lensSize() {
@@ -155,7 +158,7 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
       height: window.innerHeight,
     });
     lens.style.transform = `translate(${left}px, ${top}px)`;
-    const region = getSourceRegion(point, size);
+    const region = getSourceRegion(point, size, zoom);
     marker.style.transform = `translate(${region.left}px, ${region.top}px)`;
     marker.style.width = `${region.size}px`;
     marker.style.height = `${region.size}px`;
@@ -229,18 +232,26 @@ function createMagnifier({ area, getLayers, getArtworkRect, onPoint, decorate })
     if (canvas.height !== backing) canvas.height = backing;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, backing, backing);
-    const region = getSourceRegion(point, size);
+    const nextZoom = getZoom?.() ?? ZOOM;
+    if (nextZoom !== zoom) {
+      zoom = nextZoom;
+      badge.textContent = `× ${zoom}`;
+      // The outline on the picture shows the smaller square the lens now covers.
+      place();
+    }
+    const region = getSourceRegion(point, size, zoom);
     for (const layer of getLayers()) {
       if (layer.hidden || !layer.width || !layer.height) continue;
-      const mapped = mapLayer(region, layer.getBoundingClientRect(), layer, ZOOM, ratio);
+      const mapped = mapLayer(region, layer.getBoundingClientRect(), layer, zoom, ratio);
       if (!mapped) continue;
-      // Cells stay crisp blocks; the digit layer is smoothed so numbers stay legible.
+      // Cells stay crisp blocks; the digit layer and the RGB camera picture are
+      // smoothed (`data-smooth`).
       ctx.imageSmoothingEnabled = layer.dataset.smooth === 'true';
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(layer, ...mapped.source, ...mapped.target);
     }
-    const scale = ZOOM * ratio;
-    decorate?.(ctx, (x, y) => [(x - region.left) * scale, (y - region.top) * scale], scale);
+    const scale = zoom * ratio;
+    decorate?.(ctx, (x, y) => [(x - region.left) * scale, (y - region.top) * scale], scale, region);
   }
 
   area.addEventListener('pointerdown', show);

@@ -2,18 +2,18 @@ const {
   modeExplanations,
   getModeExplanation,
   getRule,
-  PERSON_PERCENT,
 } = require('../src/renderer/data/modeExplanations');
 const {
-  PERSON_BITMAP,
   MATH_EXAMPLE,
+  UNSHARP_ROW,
   formatMathOperator,
   formatFunction,
+  stepPath,
 } = require('../src/renderer/ui/explainAnimations');
+const { applyImageMath } = require('../src/renderer/core/imageMath');
 const { formatGridMetric, getCellColor } = require('../src/renderer/ui/cellCard');
 
 const VIEWS = [
-  ['original', undefined],
   ['rgb', 'N'],
   ['rgb', 'R'],
   ['rgb', 'G'],
@@ -48,17 +48,17 @@ describe('mode explanations', () => {
     expect(rule('brightness', 60).ko).toBe('새 값 = 값 + 60');
     expect(rule('brightness', -40).en).toBe('new = value − 40');
     expect(rule('contrast', 1.5).ko).toBe('새 값 = (값 − 128) × 1.5 + 128');
-    expect(rule('blur', 2).ko).toBe('새 값 = 주변 5×5칸의 무게 평균');
-    expect(rule('sharpen', 3).en).toBe('new = value + (value − average) × 3');
+    expect(rule('blur', 2).ko).toBe('새 값 = 주변 5×5칸의 가중 평균');
+    expect(rule('sharpen', 3).ko).toBe('새 값 = 값 + (값 − 블러) × 3');
+    expect(rule('sharpen', 3).en).toBe('new = value + (value − blur) × 3');
     expect(getRule(getModeExplanation('levels', 2), 90).ko).toBe('밝기가 90 이상이면 1, 아니면 0');
   });
 
-  it('states the AI person threshold the segmentation really uses', () => {
-    expect(PERSON_PERCENT).toBe(63);
-    expect(getRule(getModeExplanation('original'))).toMatchObject({
-      ko: expect.stringContaining('63%'),
-      en: expect.stringContaining('63%'),
-    });
+  it('explains 선명 as unsharp masking: blur, subtract, add back', () => {
+    const sharpen = getModeExplanation('math', 'sharpen');
+    expect(sharpen.title.ko).toBe('선명: 언샤프 마스킹');
+    expect(sharpen.visual).toEqual({ type: 'unsharp-profile' });
+    expect(getModeExplanation('math', 'blur').title.ko).toBe('블러: 가중 평균');
   });
 
   it('matches each level view to its own step count', () => {
@@ -76,23 +76,35 @@ describe('mode explanations', () => {
   it('returns null for modes without a card', () => {
     expect(getModeExplanation('busan')).toBeNull();
     expect(getModeExplanation('rgb', 'X')).toBeNull();
-    expect(Object.keys(modeExplanations)).toEqual(['original', 'rgb', 'levels', 'math']);
+    expect(getModeExplanation('original')).toBeNull();
+    expect(Object.keys(modeExplanations)).toEqual(['rgb', 'levels', 'math']);
   });
 });
 
 describe('explanation helpers', () => {
-  it('draws the scan person on a rectangular bitmap', () => {
-    const width = PERSON_BITMAP[0].length;
-    expect(PERSON_BITMAP.every((row) => row.length === width)).toBe(true);
-    expect(PERSON_BITMAP.join('')).toMatch(/^[.#]+$/);
+  it('crosses one edge in the unsharp picture, so the result overshoots both sides', () => {
+    const width = UNSHARP_ROW.length;
+    const sharp = applyImageMath(
+      'sharpen',
+      1.5,
+      UNSHARP_ROW,
+      new Uint8ClampedArray(width),
+      width,
+      1
+    );
+    const edge = UNSHARP_ROW.findIndex((value) => value !== UNSHARP_ROW[0]);
+    expect(sharp[edge - 1]).toBeLessThan(UNSHARP_ROW[edge - 1]);
+    expect(sharp[edge]).toBeGreaterThan(UNSHARP_ROW[edge]);
+    expect(sharp[0]).toBe(UNSHARP_ROW[0]);
+    expect(stepPath(Uint8ClampedArray.from([255, 0]))).toBe('M 0 6 V 6 H 20 V 70 H 40');
   });
 
   it('names each calculation the way its lever reads', () => {
     expect(formatMathOperator('brightness', 60)).toBe('+ 60');
     expect(formatMathOperator('brightness', -40)).toBe('− 40');
     expect(formatMathOperator('contrast', 2)).toBe('× 2');
-    expect(formatMathOperator('blur', 2)).toBe('5×5 무게 평균');
-    expect(formatMathOperator('sharpen', 1.5)).toBe('차이 × 1.5');
+    expect(formatMathOperator('blur', 2)).toBe('5×5 가중 평균');
+    expect(formatMathOperator('sharpen', 1.5)).toBe('마스크 × 1.5');
     expect(MATH_EXAMPLE).toHaveLength(9);
   });
 

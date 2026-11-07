@@ -1,5 +1,3 @@
-const { BODY_SEGMENTATION_CONFIG } = require('../config');
-
 /**
  * One rule per view for the card above the controls. Visitors get the idea from a
  * short title and a picture; the rule says the same thing as one calculation, with
@@ -10,8 +8,6 @@ const { BODY_SEGMENTATION_CONFIG } = require('../config');
  * Every text is a { ko, en } pair (see i18n.js). `rule` may instead be a function of
  * the right lever's value; `note` is an optional one-line fact under the picture.
  */
-const PERSON_PERCENT = Math.round((BODY_SEGMENTATION_CONFIG.personAlphaThreshold / 255) * 100);
-
 const CHANNEL_VARIANTS = {
   R: { name: { ko: '빨간', en: 'red' }, color: '#ff2a2a' },
   G: { name: { ko: '초록', en: 'green' }, color: '#2aff5a' },
@@ -40,14 +36,6 @@ function channelExplanation(channel) {
 }
 
 const modeExplanations = {
-  original: {
-    title: { ko: '0과 1로 그린 나', en: 'You, drawn in 0s and 1s' },
-    rule: {
-      ko: `AI가 본 사람일 확률이 ${PERSON_PERCENT}% 이상인 칸은 1, 아니면 0`,
-      en: `Cells the AI finds ${PERSON_PERCENT}% or more likely a person are 1, others 0`,
-    },
-    visual: { type: 'scan-person' },
-  },
   rgb: {
     variants: {
       N: {
@@ -123,20 +111,23 @@ const modeExplanations = {
         visual: { type: 'math-graph', effect: 'contrast' },
       },
       blur: {
-        title: { ko: '블러: 무게 평균', en: 'Blur: weighted average' },
+        title: { ko: '블러: 가중 평균', en: 'Blur: weighted average' },
         rule: (radius = 1) => ({
-          ko: `새 값 = 주변 ${blurSize(radius)}칸의 무게 평균`,
+          ko: `새 값 = 주변 ${blurSize(radius)}칸의 가중 평균`,
           en: `new = weighted average of the ${blurSize(radius)} cells around`,
         }),
         visual: { type: 'math-op', effect: 'blur' },
       },
+      // Unsharp masking: blur a copy, subtract it to keep only the edges (the mask),
+      // and add the mask back, stronger. The picture follows a row of cells across an
+      // edge through those steps.
       sharpen: {
-        title: { ko: '선명: 차이 키우기', en: 'Sharpen: boost the difference' },
+        title: { ko: '선명: 언샤프 마스킹', en: 'Sharpen: unsharp masking' },
         rule: (amount = 1) => ({
-          ko: `새 값 = 값 + (값 − 무게 평균) × ${amount}`,
-          en: `new = value + (value − average) × ${amount}`,
+          ko: `새 값 = 값 + (값 − 블러) × ${amount}`,
+          en: `new = value + (value − blur) × ${amount}`,
         }),
-        visual: { type: 'math-op', effect: 'sharpen' },
+        visual: { type: 'unsharp-profile' },
       },
     },
   },
@@ -154,4 +145,4 @@ function getRule(explanation, value) {
   return typeof rule === 'function' ? rule(value) : rule;
 }
 
-module.exports = { modeExplanations, getModeExplanation, getRule, PERSON_PERCENT };
+module.exports = { modeExplanations, getModeExplanation, getRule };

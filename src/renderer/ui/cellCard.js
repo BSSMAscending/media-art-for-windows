@@ -1,5 +1,5 @@
 const { t, getLanguage } = require('../i18n');
-const { formatCellMath, formatScreenShare, countOnes } = require('../core/cellReadout');
+const { formatCellMath } = require('../core/cellReadout');
 
 function formatGridMetric(cols, rows, language = getLanguage()) {
   const number = (value) => value.toLocaleString(language === 'en' ? 'en-US' : 'ko-KR');
@@ -29,7 +29,6 @@ function getCellColor(reading) {
 const TEXT = {
   cell: { ko: '표시한 칸', en: 'Marked cell' },
   pick: { ko: '화면을 누르면 다른 칸', en: 'Press the picture to pick' },
-  you: { ko: '화면 속 나', en: 'You on the screen' },
 };
 
 function element(tag, className, text) {
@@ -42,8 +41,8 @@ function element(tag, className, text) {
 /**
  * The card under the controls, right below the levers: the marked cell's own
  * numbers put into the view's rule ("(140 − 128) × 2 + 128 = 152"), so moving a
- * lever shows the calculation change. 미디어 아트 instead shows how much of the
- * screen the visitor's 1s fill. The last line is the grid the cell size lever sets.
+ * lever shows the calculation change. The last line is the grid the cell size lever
+ * sets.
  */
 function createCellCard(container) {
   const card = element('div', 'cell-card');
@@ -59,18 +58,15 @@ function createCellCard(container) {
   container.appendChild(card);
 
   let reading = null;
-  let ones = null;
   let grid = null;
 
   function render() {
-    const isPerson = reading?.kind === 'person';
     card.classList.toggle('is-empty', !reading);
-    swatch.hidden = !reading || isPerson;
-    if (reading && !isPerson) swatch.style.background = getCellColor(reading);
-    title.textContent = reading ? t(isPerson ? TEXT.you : TEXT.cell) : '';
-    hint.textContent = reading && !isPerson ? t(TEXT.pick) : '';
-    if (isPerson && grid) math.textContent = t(formatScreenShare(ones, grid.cols * grid.rows));
-    else math.textContent = reading ? t(formatCellMath(reading)) : '';
+    swatch.hidden = !reading;
+    if (reading) swatch.style.background = getCellColor(reading);
+    title.textContent = reading ? t(TEXT.cell) : '';
+    hint.textContent = reading ? t(TEXT.pick) : '';
+    math.textContent = reading ? t(formatCellMath(reading)) : '';
     metric.textContent = grid ? formatGridMetric(grid.cols, grid.rows) : '';
   }
 
@@ -78,7 +74,6 @@ function createCellCard(container) {
   function update(nextReading, frame) {
     reading = nextReading;
     grid = frame?.grid ? { cols: frame.grid.cols, rows: frame.grid.rows } : grid;
-    ones = reading?.kind === 'person' && frame.person ? countOnes(frame.person.mask) : 0;
     render();
   }
 

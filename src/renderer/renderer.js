@@ -9,17 +9,18 @@ const { createBlurTip } = require('./ui/blurTip');
 const { getArtworkArea } = require('./core/renderGeometry');
 const { createSlider, createSliderHint } = require('./ui/modeSliders');
 const { createMagnifier, drawLensMarks } = require('./ui/magnifier');
+const { getLensZoom, drawLensDigits } = require('./ui/lensDigits');
 const { formatCellMath } = require('./core/cellReadout');
 const { getGaussianWeights } = require('./core/imageMath');
 const { t, getLanguage, setLanguage, onLanguageChange } = require('./i18n');
 const {
   MODE_OPTIONS,
+  START_MODE,
   MODE_SUB_OPTIONS,
   MODE_HINTS,
   CELL_SIZE_SLIDER,
   MATH_START_AMOUNTS,
-  getCellSizeFloor,
-  MODE_SLIDER_HINTS,
+  getModeSliderHint,
   getModeSlider,
   getMathSettings,
   selectMode,
@@ -32,7 +33,7 @@ const { FONT_SIZE } = require('./config');
 const state = {
   model: null,
   stream: null,
-  selectedVersion: 'original',
+  selectedVersion: START_MODE,
   rgbChannel: 'N',
   levels: 10,
   threshold: 128,
@@ -44,11 +45,9 @@ const state = {
   magnifier: null,
 };
 
+// Keys 1-3 pick the buttons' modes; 4-8 the legacy views.
 const MODES = [
-  'original',
-  'rgb',
-  'levels',
-  'math',
+  ...MODE_OPTIONS.map(({ key }) => key),
   'busan',
   'pixelvalue',
   'colorrgb',
@@ -216,8 +215,9 @@ function renderModeOptions(onSelect) {
   });
 }
 
-let cellSizeLever = null;
 let blurTip = null;
+// The frame loop's last drawn frame; the magnifier writes small cells' numbers from it.
+let lastFrame = null;
 
 // The right lever slot follows the view; the cell size lever on the left never moves.
 function renderModeSlider(mathPanel) {
@@ -229,7 +229,7 @@ function renderModeSlider(mathPanel) {
           mathPanel.updateAmount(value);
           blurTip?.onBlurSize();
         })
-      : createSliderHint(t(MODE_SLIDER_HINTS[state.selectedVersion]) || '')
+      : createSliderHint(t(getModeSliderHint(state)) || '')
   );
 }
 
@@ -243,8 +243,6 @@ function updateModeUI(mathPanel) {
     selectModeOption(state, subOptions, value);
     updateModeUI(mathPanel);
   });
-  const floor = getCellSizeFloor(state);
-  cellSizeLever?.setFloor(floor.size, floor.note);
   renderModeSlider(mathPanel);
   mathPanel.updateMode(state.selectedVersion, getModeOption(), getLeverValue());
   blurTip?.sync(state);
@@ -372,8 +370,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const renderControls = () => {
     renderModeButtons(document.getElementById('liveModeButtons'), onModeSelect);
-    cellSizeLever = createSlider(CELL_SIZE_SLIDER, state, () => blurTip.sync(state));
-    document.getElementById('cellSizeSlider').replaceChildren(cellSizeLever);
+    document
+      .getElementById('cellSizeSlider')
+      .replaceChildren(createSlider(CELL_SIZE_SLIDER, state, () => blurTip.sync(state)));
     updateModeUI(mathPanel);
     applyStaticText();
     renderLanguageToggle();
@@ -400,7 +399,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       [document.querySelector('#visualStage .channel-overlay'), canvasEl].filter(Boolean),
     getArtworkRect: () => magnifierArea.getBoundingClientRect(),
     onPoint: (point) => cellPicker.pick(point),
-    decorate: (ctx, toLens, scale) => {
+    getZoom: () => getLensZoom(lastFrame),
+    decorate: (ctx, toLens, scale, region) => {
+      drawLensDigits(ctx, toLens, scale, region, lastFrame);
       const cell = cellPicker.getCellRect();
       if (cell) drawLensMarks(ctx, toLens, scale, cell, getLensNeighbours());
     },
@@ -424,6 +425,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // A finger dragged across the screen never selects text or drags a picture.
+  for (const type of ['selectstart', 'dragstart']) {
+    document.addEventListener(type, (event) => event.preventDefault());
+  }
+
   window.addEventListener('resize', () => {
     resizeCanvases(canvasEl, bgCanvasEl);
     layoutMagnifierArea(canvasEl);
@@ -432,6 +438,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     state.model = await loadModel();
     await startCamera(videoEl, canvasEl, hiddenCanvasEl, mathPanel, (frame) => {
+      lastFrame = frame;
       state.magnifier?.render();
       cellPicker.update(frame);
     });

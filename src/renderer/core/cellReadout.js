@@ -1,7 +1,5 @@
 const { greyOf, gaussianAt, getGaussianTotal } = require('./imageMath');
-const { getCellMaskIndex } = require('./coverCrop');
 const { getLevel } = require('../modes/levels');
-const { BODY_SEGMENTATION_CONFIG } = require('../config');
 
 /**
  * Reads one cell back from the frame that was just drawn (see frameLoop.js) and
@@ -9,8 +7,6 @@ const { BODY_SEGMENTATION_CONFIG } = require('../config');
  * shown for a cell always match what is written in it. (x, y) is the cell as the
  * visitor sees it, counted from the top left of the mirrored picture.
  */
-
-const PERSON_THRESHOLD = BODY_SEGMENTATION_CONFIG.personAlphaThreshold;
 
 // The 3×3 block around (x, y), row by row; cells past the edge reuse the edge cell,
 // as the blur does.
@@ -47,32 +43,6 @@ function readMath(frame, x, y) {
   return reading;
 }
 
-// The visitor sees the camera mirrored; the mask is stored the camera's way round.
-function readPerson(frame, x, y) {
-  const { cols, rows } = frame.grid;
-  const person = frame.person;
-  const reading = { kind: 'person', bit: 0, raw: 0, probability: null };
-  if (!person) return reading;
-  const maskIndex = y * cols + (cols - 1 - x);
-  reading.bit = person.mask[maskIndex];
-  reading.raw = person.raw[maskIndex];
-  const { segmentation } = person;
-  if (segmentation?.probability) {
-    const index = getCellMaskIndex(
-      segmentation,
-      person.crop,
-      person.sourceWidth,
-      person.sourceHeight,
-      cols,
-      rows,
-      cols - 1 - x,
-      y
-    );
-    reading.probability = segmentation.probability[index];
-  }
-  return reading;
-}
-
 function readCell(frame, x, y) {
   const { mode, grid } = frame;
   if (!grid || x < 0 || y < 0 || x >= grid.cols || y >= grid.rows) return null;
@@ -87,7 +57,6 @@ function readCell(frame, x, y) {
     return { kind: 'levels', levels, threshold, grey, level: getLevel(grey, levels, threshold) };
   }
   if (mode === 'math' && frame.grey) return readMath(frame, x, y);
-  if (mode === 'original') return readPerson(frame, x, y);
   return null;
 }
 
@@ -132,12 +101,16 @@ function describeMath(reading) {
   }
   if (effect === 'blur') {
     const rest = `${number(reading.sum)} ÷ ${number(reading.total)} ${settle(reading.average, result)}`;
-    return { ko: `무게×값의 합 ${rest}`, en: `sum of weight × value ${rest}` };
+    return { ko: `가중치×값의 합 ${rest}`, en: `sum of weight × value ${rest}` };
   }
+  // Unsharp masking: the cell minus its blurred value is the mask, added back × amount.
   if (effect === 'sharpen') {
     const raw = value + (value - reading.average) * amount;
-    const text = `${value} + (${value} − ${decimal(reading.average)}) × ${amount} ${settle(raw, result)}`;
-    return { ko: text, en: text };
+    const rest = `${decimal(reading.average)}) × ${amount} ${settle(raw, result)}`;
+    return {
+      ko: `${value} + (${value} − 블러 ${rest}`,
+      en: `${value} + (${value} − blur ${rest}`,
+    };
   }
   return { ko: `밝기 = ${value}`, en: `brightness = ${value}` };
 }
@@ -158,31 +131,11 @@ function describeLevels({ levels, threshold, grey, level }) {
   return { ko: `밝기 ${text}${top ? top.ko : ''}`, en: `brightness ${text}${top ? top.en : ''}` };
 }
 
-function describePerson({ bit, raw, probability }) {
-  const threshold = Math.round(percent(PERSON_THRESHOLD, 255));
-  if (probability === null) {
-    return bit
-      ? { ko: '사람 → 1', en: 'person → 1' }
-      : { ko: '사람 없음 → 0', en: 'no person → 0' };
-  }
-  const chance = Math.round(percent(probability, 255));
-  const compare = probability >= PERSON_THRESHOLD ? '≥' : '<';
-  const decided = `${chance}% ${compare} ${threshold}%`;
-  // Small specks are wiped and fingers are filled in after the AI decides.
-  if (bit !== raw) {
-    return bit
-      ? { ko: `사람일 확률 ${decided}, 손 보정 → 1`, en: `person ${decided}, hand fix → 1` }
-      : { ko: `사람일 확률 ${decided}, 작은 조각 → 0`, en: `person ${decided}, speck → 0` };
-  }
-  return { ko: `사람일 확률 ${decided} → ${bit}`, en: `person ${decided} → ${bit}` };
-}
-
 /** The reading's calculation as one line of arithmetic, a { ko, en } pair. */
 function formatCellMath(reading) {
   if (!reading) return null;
   if (reading.kind === 'math') return describeMath(reading);
   if (reading.kind === 'levels') return describeLevels(reading);
-  if (reading.kind === 'person') return describePerson(reading);
   const { channel, r, g, b } = reading;
   if (channel === 'N') {
     const text = `(R, G, B) = (${r}, ${g}, ${b})`;
@@ -194,22 +147,8 @@ function formatCellMath(reading) {
   return { ko: `${name.ko} ${text}`, en: `${name.en} ${text}` };
 }
 
-function countOnes(mask) {
-  let ones = 0;
-  for (let i = 0; i < mask.length; i++) ones += mask[i];
-  return ones;
-}
-
-/** 미디어 아트: how much of the screen the visitor's 1s fill, a { ko, en } pair. */
-function formatScreenShare(ones, total) {
-  const text = `${number(ones)} ÷ ${number(total)} ${percentText(ones, total)}`;
-  return { ko: `1인 칸 ${text}`, en: `cells that are 1: ${text}` };
-}
-
 module.exports = {
   readCell,
   getNeighbourhood,
   formatCellMath,
-  formatScreenShare,
-  countOnes,
 };

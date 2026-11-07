@@ -28,8 +28,6 @@ function createSlider(spec, state, onChange) {
 
   const ends = element('span', 'mode-slider-ends');
   spec.ends.forEach((end) => ends.appendChild(element('span', '', t(end))));
-  const lowEnd = ends.firstChild;
-  let floor = Number(input.min);
 
   function read() {
     const position = Number(input.value);
@@ -48,28 +46,8 @@ function createSlider(spec, state, onChange) {
   }
 
   show(read());
-  input.addEventListener('input', () => {
-    // The thumb cannot pass below the floor; the track keeps its full length.
-    if (Number(input.value) < floor) input.value = String(floor);
-    commit();
-  });
+  input.addEventListener('input', commit);
   root.append(head, input, ends);
-
-  /**
-   * Blocks the lever below `value` without shortening it, so the thumb keeps the
-   * same place for the same value in every mode. `note` replaces the low end label.
-   */
-  root.setFloor = (value, note) => {
-    floor = values ? Math.max(0, values.indexOf(value)) : value;
-    const span = Number(input.max) - Number(input.min);
-    root.style.setProperty('--floor', `${((floor - Number(input.min)) / span) * 100}%`);
-    root.classList.toggle('has-floor', floor > Number(input.min));
-    lowEnd.textContent = t(note || spec.ends[0]);
-    if (Number(input.value) < floor) {
-      input.value = String(floor);
-      commit();
-    }
-  };
   return root;
 }
 

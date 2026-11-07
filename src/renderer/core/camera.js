@@ -30,10 +30,13 @@ async function getCameraDevices(selectEl) {
 }
 
 async function openCameraStream(deviceId) {
+  // The RGB full colour shows the camera picture itself, so ask for a sharp one. 4:3
+  // keeps the picture the shape of the artwork area; the cells sample it down anyway.
   const constraints = {
     video: {
-      width: { ideal: 640 },
-      height: { ideal: 480 },
+      width: { ideal: 1280 },
+      height: { ideal: 960 },
+      aspectRatio: { ideal: 4 / 3 },
     },
   };
 

@@ -1,9 +1,8 @@
 const {
   MODE_OPTIONS,
+  START_MODE,
   MODE_SUB_OPTIONS,
   CELL_SIZE_SLIDER,
-  COLOR_VALUE_CELL_SIZE,
-  getCellSizeFloor,
   BLUR_CELL_SIZE,
   BLUR_TIP,
   getBlurTipStep,
@@ -11,6 +10,7 @@ const {
   MATH_SLIDERS,
   MATH_START_AMOUNTS,
   MODE_SLIDER_HINTS,
+  getModeSliderHint,
   getModeSlider,
   getMathSettings,
   selectMode,
@@ -20,13 +20,20 @@ const { FONT_SIZE } = require('../src/renderer/config');
 const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../src/renderer/utils');
 
 describe('mode buttons', () => {
-  it('offers the four exhibition modes', () => {
+  it('offers the three exhibition modes, 밝기 단계 first', () => {
     expect(MODE_OPTIONS.map(({ key, label }) => [key, label.ko])).toEqual([
-      ['original', '미디어 아트'],
-      ['rgb', '색 RGB'],
       ['levels', '밝기 단계'],
+      ['rgb', '색 RGB'],
       ['math', '수학 처리'],
     ]);
+    expect(START_MODE).toBe('levels');
+  });
+
+  it('names blur and sharpen by what they compute', () => {
+    const captions = Object.fromEntries(
+      MODE_SUB_OPTIONS.math.options.map(({ value, caption }) => [value, caption.ko])
+    );
+    expect(captions).toMatchObject({ blur: '가중 평균', sharpen: '언샤프' });
   });
 
   it('opens 수학 처리 on the original numbers and clears a calculation on a second tap', () => {
@@ -88,6 +95,10 @@ describe('levers', () => {
     expect(CELL_SIZE_SLIDER.format(24)).toBe('24px');
   });
 
+  it('shrinks the cells down to 2px', () => {
+    expect(CELL_SIZE_SLIDER.values.slice(0, 3)).toEqual([2, 4, 8]);
+  });
+
   it('offers the threshold lever only in two-level black and white', () => {
     expect(getModeSlider({ selectedVersion: 'levels', levels: 2 })).toBe(THRESHOLD_SLIDER);
     expect(getModeSlider({ selectedVersion: 'levels', levels: 10 })).toBeNull();
@@ -115,23 +126,8 @@ describe('levers', () => {
     expect(getMathSettings(state)).toEqual({ effect: 'none', amount: 0 });
   });
 
-  it('keeps the combined RGB view at sizes where three numbers fit', () => {
-    expect(COLOR_VALUE_CELL_SIZE).toBe(24);
-    expect(getCellSizeFloor({ selectedVersion: 'rgb', rgbChannel: 'N' })).toEqual({
-      size: 24,
-      note: { ko: '24px부터', en: 'From 24px' },
-    });
-    for (const view of [
-      { selectedVersion: 'rgb', rgbChannel: 'R' },
-      { selectedVersion: 'levels', rgbChannel: 'N' },
-      { selectedVersion: 'original', rgbChannel: 'N' },
-    ]) {
-      expect(getCellSizeFloor(view)).toEqual({ size: CELL_SIZE_SLIDER.values[0], note: null });
-    }
-  });
-
   it('starts at a size where every view shows its numbers', () => {
-    expect(FONT_SIZE).toBeGreaterThanOrEqual(COLOR_VALUE_CELL_SIZE);
+    expect(getDigitFontSize(FONT_SIZE, 3)).toBeGreaterThanOrEqual(MIN_DIGIT_FONT_SIZE);
   });
 
   it('asks for cells small enough to drop the digits before the blur size', () => {
@@ -152,5 +148,15 @@ describe('levers', () => {
 
   it('gives every mode a hint for the lever slot it does not use', () => {
     for (const { key } of MODE_OPTIONS) expect(MODE_SLIDER_HINTS[key]).toBeTruthy();
+  });
+
+  it('tells the RGB full colour that a light brings the pixel numbers', () => {
+    expect(getModeSliderHint({ selectedVersion: 'rgb', rgbChannel: 'N' })).toBe(
+      MODE_SLIDER_HINTS.rgbFull
+    );
+    expect(getModeSliderHint({ selectedVersion: 'rgb', rgbChannel: 'R' })).toBe(
+      MODE_SLIDER_HINTS.rgb
+    );
+    expect(getModeSliderHint({ selectedVersion: 'busan' })).toBeNull();
   });
 });

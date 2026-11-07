@@ -1,46 +1,15 @@
-const { applyImageMath, getGaussianWeights } = require('../core/imageMath');
+const { applyImageMath, getGaussianWeights, gaussianAt } = require('../core/imageMath');
 const { t } = require('../i18n');
 
 // Small looping illustrations for the mode explanation card. Each builder returns
 // a DOM element animated purely by CSS; its un-animated styles are the meaningful
 // still picture shown when reduced motion is on.
 
-// 9×11 pixel person: '#' cells are where the AI finds a person (1).
-const PERSON_BITMAP = [
-  '...###...',
-  '...###...',
-  '....#....',
-  '.#######.',
-  '#.#####.#',
-  '#.#####.#',
-  '..#####..',
-  '..##.##..',
-  '..##.##..',
-  '..##.##..',
-  '.###.###.',
-];
-
 function element(tag, className, text) {
   const el = document.createElement(tag);
   if (className) el.className = className;
   if (text !== undefined) el.textContent = text;
   return el;
-}
-
-function createScanPerson() {
-  const root = element('div', 'explain-scan');
-  const grid = element('div', 'explain-scan-grid');
-  grid.style.setProperty('--cols', PERSON_BITMAP[0].length);
-  PERSON_BITMAP.forEach((line, row) => {
-    [...line].forEach((cell) => {
-      const bit = element('span', `explain-bit${cell === '#' ? ' is-person' : ''}`);
-      bit.style.setProperty('--row', row);
-      grid.appendChild(bit);
-    });
-  });
-  grid.appendChild(element('span', 'explain-scan-line'));
-  root.appendChild(grid);
-  return root;
 }
 
 function createLightMix() {
@@ -112,8 +81,8 @@ function formatMathOperator(effect, amount) {
   if (effect === 'brightness') return amount < 0 ? `− ${-amount}` : `+ ${amount}`;
   if (effect === 'contrast') return `× ${amount}`;
   const size = `${amount * 2 + 1}×${amount * 2 + 1}`;
-  if (effect === 'blur') return t({ ko: `${size} 무게 평균`, en: `${size} weighted avg` });
-  if (effect === 'sharpen') return t({ ko: `차이 × ${amount}`, en: `diff × ${amount}` });
+  if (effect === 'blur') return t({ ko: `${size} 가중 평균`, en: `${size} weighted avg` });
+  if (effect === 'sharpen') return t({ ko: `마스크 × ${amount}`, en: `mask × ${amount}` });
   return t({ ko: '그대로', en: 'unchanged' });
 }
 
@@ -244,13 +213,118 @@ function createMathGraph(effect, amount) {
   return root;
 }
 
+// A row of cells across an edge, dark then light, for the unsharp mask picture.
+const UNSHARP_ROW = Uint8ClampedArray.from([70, 70, 70, 70, 70, 180, 180, 180, 180, 180]);
+const UNSHARP_CELL = 20;
+const UNSHARP_PLOT_HEIGHT = 64;
+const UNSHARP_MASK_BASE = 94;
+// Mask bars use half the value scale of the plot, so ±27 fits under it.
+const UNSHARP_MASK_SCALE = 0.6;
+
+// A step line through the row: each cell is one flat stretch at its value.
+function stepPath(values) {
+  const y = (value) => 6 + ((255 - value) * UNSHARP_PLOT_HEIGHT) / 255;
+  let d = `M 0 ${y(values[0])}`;
+  values.forEach((value, index) => {
+    d += ` V ${y(value)} H ${(index + 1) * UNSHARP_CELL}`;
+  });
+  return d;
+}
+
+// 선명 is unsharp masking. Along one row across an edge the picture shows, in turn:
+// ① the blurred copy (the 3×3 weighted average), ② the mask, original − blur, which
+// is zero on flat parts and only lives at the edge, ③ the result, original + mask ×
+// the lever, which overshoots on both sides of the edge so it looks sharper. Every
+// line is calculated with the view's own blur and sharpen.
+function createUnsharpProfile(amount) {
+  const width = UNSHARP_ROW.length * UNSHARP_CELL;
+  const root = element('div', 'explain-graph explain-unsharp');
+  const plot = svgElement('svg', {
+    class: 'explain-graph-plot explain-unsharp-plot',
+    viewBox: `-4 0 ${width + 8} 112`,
+  });
+  const blur = new Uint8ClampedArray(UNSHARP_ROW.length);
+  // Unrounded blur, so the mask bars show the exact difference.
+  const average = [...UNSHARP_ROW].map((_, x) =>
+    gaussianAt(UNSHARP_ROW, UNSHARP_ROW.length, 1, x, 0, 1)
+  );
+  applyImageMath('blur', 1, UNSHARP_ROW, blur, UNSHARP_ROW.length, 1);
+
+  const mask = svgElement('g', { class: 'unsharp-mask' });
+  mask.appendChild(
+    svgElement('line', {
+      class: 'unsharp-mask-base',
+      x1: 0,
+      y1: UNSHARP_MASK_BASE,
+      x2: width,
+      y2: UNSHARP_MASK_BASE,
+    })
+  );
+  UNSHARP_ROW.forEach((value, x) => {
+    const difference = (value - average[x]) * UNSHARP_MASK_SCALE;
+    if (!difference) return;
+    mask.appendChild(
+      svgElement('rect', {
+        x: x * UNSHARP_CELL + 4,
+        y: UNSHARP_MASK_BASE - Math.max(0, difference),
+        width: UNSHARP_CELL - 8,
+        height: Math.abs(difference),
+      })
+    );
+  });
+  const result = svgElement('path', { class: 'unsharp-line unsharp-result' });
+  plot.append(
+    svgElement('rect', {
+      class: 'graph-frame',
+      x: 0,
+      y: 0,
+      width,
+      height: UNSHARP_PLOT_HEIGHT + 12,
+    }),
+    svgElement('path', { class: 'unsharp-line unsharp-original', d: stepPath(UNSHARP_ROW) }),
+    svgElement('path', { class: 'unsharp-line unsharp-blur', d: stepPath(blur) }),
+    mask,
+    result
+  );
+
+  const legend = element('div', 'explain-graph-legend explain-unsharp-legend');
+  const resultLabel = element('div', 'unsharp-key unsharp-key--result');
+  legend.append(
+    element('div', 'unsharp-key unsharp-key--original', t({ ko: '원본', en: 'original' })),
+    element(
+      'div',
+      'unsharp-key unsharp-key--blur',
+      t({ ko: '① 블러 (가중 평균)', en: '① blur (weighted avg)' })
+    ),
+    element(
+      'div',
+      'unsharp-key unsharp-key--mask',
+      t({ ko: '② 마스크 = 원본 − 블러', en: '② mask = original − blur' })
+    ),
+    resultLabel
+  );
+  root.append(plot, legend);
+
+  const output = new Uint8ClampedArray(UNSHARP_ROW.length);
+  root.updateAmount = (value) => {
+    applyImageMath('sharpen', value, UNSHARP_ROW, output, UNSHARP_ROW.length, 1);
+    result.setAttribute('d', stepPath(output));
+    resultLabel.textContent = t({
+      ko: `③ 원본 + 마스크 × ${value}`,
+      en: `③ original + mask × ${value}`,
+    });
+  };
+  root.updateAmount(amount);
+  return root;
+}
+
 function createExplainAnimation(spec) {
-  if (spec?.type === 'scan-person') return createScanPerson();
   if (spec?.type === 'light-mix') return createLightMix();
   if (spec?.type === 'channel-dimmer') return createChannelDimmer(spec.color);
   if (spec?.type === 'level-steps') return createLevelSteps(spec.levels);
   if (spec?.type === 'math-op') return createMathOp(spec.effect, spec.amount ?? 0);
   if (spec?.type === 'math-graph') return createMathGraph(spec.effect, spec.amount ?? 0);
+  if (spec?.type === 'unsharp-profile') return createUnsharpProfile(spec.amount ?? 1);
   return null;
 }
 
@@ -258,6 +332,7 @@ module.exports = {
   createExplainAnimation,
   formatMathOperator,
   formatFunction,
-  PERSON_BITMAP,
+  stepPath,
   MATH_EXAMPLE,
+  UNSHARP_ROW,
 };
