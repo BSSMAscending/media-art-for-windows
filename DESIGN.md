@@ -137,7 +137,7 @@ All spacing derives from a base of `4px`.
 ### Magnifier
 
 - **Structure**: the artwork area is a press-and-hold target with a quiet hint chip below the picture (`화면을 꾹 누르고 있으면 돋보기로 크게 보여요`). Holding shows a round lens (`clamp(15rem, 18vw, 22rem)`, cyan border and glow, `× 3` badge) and a cyan ring on the magnified spot.
-- **Behaviour**: 3× zoom, or closer (up to 16×, badge follows) when the cells are too small for their numbers on screen; the lens then writes each cell's number itself; the lens floats 28px above the finger (below it near the top edge), follows while held and disappears on release. The side column is never covered by the touch area.
+- **Behaviour**: 3× zoom, or closer (up to 24×, badge follows) when the screen leaves the numbers out (small cells, the RGB full colour); the lens then writes each cell's numbers itself, R/G/B as three tinted lines in the full colour; the lens floats 28px above the finger (below it near the top edge), follows while held and disappears on release. The side column is never covered by the touch area.
 
 ### Language Switch
 

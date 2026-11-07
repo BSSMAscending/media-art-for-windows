@@ -72,7 +72,7 @@ describe('renderRgb', () => {
     expect(ctx.draws.map(({ char }) => char)).toEqual(['0', '255', '10']);
   });
 
-  it('shows the full colour as the camera picture itself, with no cells or numbers', () => {
+  it('draws the full colour as plain colour cells, with no numbers on screen', () => {
     const received = [];
     const overlay = {
       renderLayers(_grid, source) {
@@ -80,23 +80,9 @@ describe('renderRgb', () => {
       },
     };
     const ctx = createRecordingContext();
-    const photo = { width: 1280, height: 960 };
     const settled = createChannelTransition()('N', 0);
-    renderRgb(ctx, overlay, { ...grid, cellSize: 32 }, pixels, 'N', settled, photo);
-    expect(received).toEqual([photo]);
-    expect(ctx.draws).toEqual([]);
-  });
-
-  it('turns into pixel cells as soon as a light is picked', () => {
-    const received = [];
-    const overlay = {
-      renderLayers(_grid, source) {
-        received.push(source);
-      },
-    };
-    const update = createChannelTransition();
-    update('N', 0);
-    renderRgb(createRecordingContext(), overlay, grid, pixels, 'B', update('B', 1), null);
+    renderRgb(ctx, overlay, { ...grid, cellSize: 32 }, pixels, 'N', settled);
     expect(received).toEqual([pixels]);
+    expect(ctx.draws).toEqual([]);
   });
 });

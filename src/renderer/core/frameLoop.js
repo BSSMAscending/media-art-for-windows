@@ -73,9 +73,6 @@ function createFrameLoop({
   let frameCount = 0;
   let ctx = null;
   let hiddenCtx = null;
-  // The camera picture at the camera's own resolution, for the RGB full colour.
-  const photoCanvas = document.createElement('canvas');
-  let photoCtx = null;
   const buffers = new FrameBuffers();
   const updateChannelTransition = createChannelTransition();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -204,22 +201,6 @@ function createFrameLoop({
     return hiddenCtx.getImageData(0, 0, cols, rows).data;
   }
 
-  // Copies the cropped camera frame, mirrored, without shrinking it to cells.
-  function samplePhoto(crop) {
-    const width = Math.max(1, Math.round(crop.width));
-    const height = Math.max(1, Math.round(crop.height));
-    if (photoCanvas.width !== width || photoCanvas.height !== height) {
-      photoCanvas.width = width;
-      photoCanvas.height = height;
-    }
-    photoCtx ||= photoCanvas.getContext('2d', { alpha: false });
-    photoCtx.save();
-    photoCtx.scale(-1, 1);
-    photoCtx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, -width, 0, width, height);
-    photoCtx.restore();
-    return photoCanvas;
-  }
-
   function resizeSampling(cols, rows) {
     if (hiddenCanvasEl.width !== cols || hiddenCanvasEl.height !== rows) {
       hiddenCanvasEl.width = cols;
@@ -245,9 +226,7 @@ function createFrameLoop({
     frame.grey = null;
     if (mode === 'rgb') {
       frame.channel = getRgbChannel ? getRgbChannel() : 'N';
-      // The cells are still sampled in the full colour: the marked cell reads them.
-      const photo = frame.channel === 'N' ? samplePhoto(crop) : null;
-      renderRgb(ctx, overlay, grid, pixels, frame.channel, layers, photo);
+      renderRgb(ctx, overlay, grid, pixels, frame.channel, layers);
     } else if (mode === 'levels') {
       frame.levels = getLevels();
       frame.threshold = getThreshold?.();
