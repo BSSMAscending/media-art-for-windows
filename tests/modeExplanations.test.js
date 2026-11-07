@@ -21,7 +21,6 @@ const VIEWS = [
   ['levels', 2],
   ['levels', 10],
   ['levels', 256],
-  ['math', 'none'],
   ['math', 'brightness'],
   ['math', 'contrast'],
   ['math', 'blur'],

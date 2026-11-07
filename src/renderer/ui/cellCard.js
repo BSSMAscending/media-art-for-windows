@@ -28,7 +28,6 @@ function getCellColor(reading) {
 
 const TEXT = {
   cell: { ko: '표시한 칸', en: 'Marked cell' },
-  pick: { ko: '화면을 누르면 다른 칸', en: 'Press the picture to pick' },
 };
 
 function element(tag, className, text) {
@@ -49,8 +48,7 @@ function createCellCard(container) {
   const head = element('div', 'cell-card-head');
   const swatch = element('span', 'cell-card-swatch');
   const title = element('span', 'cell-card-title');
-  const hint = element('span', 'cell-card-hint');
-  head.append(swatch, title, hint);
+  head.append(swatch, title);
   // Not a live region: the numbers follow the camera several times a second.
   const math = element('div', 'cell-card-math');
   const metric = element('div', 'math-metric');
@@ -65,7 +63,6 @@ function createCellCard(container) {
     swatch.hidden = !reading;
     if (reading) swatch.style.background = getCellColor(reading);
     title.textContent = reading ? t(TEXT.cell) : '';
-    hint.textContent = reading ? t(TEXT.pick) : '';
     math.textContent = reading ? t(formatCellMath(reading)) : '';
     metric.textContent = grid ? formatGridMetric(grid.cols, grid.rows) : '';
   }

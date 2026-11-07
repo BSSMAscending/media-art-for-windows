@@ -8,6 +8,15 @@ beta Release notes come from the Korean entry in CHANGELOG.md.
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-11-07 - Original button and roomier cards
+
+### Changed
+
+- RGB Color: an `Original` button now sits before `R`. After picking a light, press `Original` to return to the full color. Pressing the selected button again no longer undoes it.
+- Image Math: the mode button opens straight on `Brighten`. Pressing a calculation again no longer returns to the original numbers.
+- Instruction lines such as "Choose a mode" and "Pick a calculation", and "Press the picture to pick", are gone; the rule card gets the room.
+- The 한국어 / English switch moved to the top right of the marked-cell card.
+
 ## [2.1.1] - 2026-11-07 - Controls on top and RGB in the magnifier
 
 ### Changed

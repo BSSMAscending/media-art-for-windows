@@ -1,7 +1,7 @@
 {
   "name": "media-art-for-windows",
   "productName": "media-art-for-windows",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "My Electron application description",
   "main": "src/main/index.js",
   "private": true,
