@@ -602,11 +602,11 @@ body {
   }
 }
 
-/* 블러 tip: floats over the rule card right above the levers, its arrow on the lever
-   to move next. It never takes touches. */
+/* 블러 tip: floats over the rule card right under the control block, its arrow up
+   toward the levers; the lever to move next glows. It never takes touches. */
 .blur-tip {
   position: absolute;
-  bottom: calc(100% + var(--space-3));
+  top: calc(100% + var(--space-3));
   right: 0;
   left: 0;
   z-index: 5;
@@ -626,17 +626,17 @@ body {
 
 .blur-tip::before {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: calc(50% - 12px);
   border: 12px solid transparent;
-  border-top-color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
   content: '';
 }
 
 @keyframes tip-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(-6px);
   }
 }
 
@@ -677,8 +677,9 @@ body {
   pointer-events: none;
 }
 
-/* The cards share the height left around the control block equally, so the block
-   sits in the middle of the screen height with its levers in the upper half. */
+/* The control block sits at the top of the column; the cards share the height under
+   it. The rule card holds a picture, so it gets a little more than the marked-cell
+   card at the bottom. */
 .panel-cards {
   display: flex;
   flex: 1 1 0;
@@ -687,7 +688,7 @@ body {
 }
 
 .panel-cards--rule {
-  flex-grow: 1;
+  flex-grow: 1.4;
 }
 
 /* Quiet frames, so the picture of the visitor stays the brightest thing on screen. */

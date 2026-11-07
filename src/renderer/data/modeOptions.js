@@ -184,10 +184,10 @@ const MODE_SLIDER_HINTS = {
     ko: '칸을 키우면 숫자가 더 잘 보여요',
     en: 'Bigger cells make the numbers easier to read',
   },
-  // The full colour is the camera picture itself; cells and numbers come with a light.
+  // The full colour writes no numbers on screen; the magnifier shows each cell's three.
   rgbFull: {
-    ko: 'R·G·B를 고르면 픽셀 칸과 숫자가 보여요',
-    en: 'Pick R, G or B to see the pixel numbers',
+    ko: '꾹 누르면 돋보기에 R·G·B 숫자가 보여요',
+    en: 'Press and hold to see R, G, B up close',
   },
   levels: {
     ko: '2단계를 고르면 흑백 경계값을 옮길 수 있어요',

@@ -1,10 +1,23 @@
 const { getDigitFontSize, MIN_DIGIT_FONT_SIZE } = require('../utils');
 
 const CHANNELS = ['R', 'G', 'B'];
+// Light and dark tints of each light, so every line stays readable on any cell colour.
+const LIGHT_TINTS = ['#ff9d9d', '#9dff9d', '#9dc4ff'];
+const DARK_TINTS = ['#7a0000', '#005c00', '#00287a'];
 
 // White digits read on every red and blue cell; bright green cells need black ones.
 function isDarkChannelText(channelIndex, value) {
   return channelIndex === 1 && value > 160;
+}
+
+// Three stacked lines need a third of the cell's height each.
+function getColorValueFontSize(cellSize) {
+  return Math.floor(Math.min(cellSize * 0.3, (cellSize * 0.92) / (3 * 0.6)));
+}
+
+// The tints for a cell's R, G and B lines: dark on bright cells, light on dark ones.
+function getColorValueTints(luminance) {
+  return luminance >= 0.5 ? DARK_TINTS : LIGHT_TINTS;
 }
 
 // Writes the selected channel's 0-255 value into every cell of the full-frame grid.
@@ -29,16 +42,22 @@ function drawChannelValues(ctx, grid, pixels, channel) {
 }
 
 /**
- * The full colour (`channel` 'N') is the camera picture itself at the camera's own
- * resolution (`photo`, a canvas), with no cells or numbers. Picking R, G or B turns
- * it into the numbered pixel cells the lights split into.
+ * Draws the camera cells as additive R/G/B layers. The full colour (`channel` 'N')
+ * is plain colour cells at the cell size lever's size, with no numbers on screen;
+ * the magnifier writes each cell's R, G and B (lensDigits.js). Picking R, G or B
+ * writes that light's value into every cell once the layers have settled.
  */
-function renderRgb(ctx, overlay, grid, pixels, channel, layers, photo) {
-  if (channel === 'N' && photo) overlay.renderLayers(grid, photo, layers);
-  else overlay.renderLayers(grid, pixels, layers);
-  // Numbers appear only after the layers have settled into place.
+function renderRgb(ctx, overlay, grid, pixels, channel, layers) {
+  overlay.renderLayers(grid, pixels, layers);
   if (layers.active || channel === 'N') return;
   drawChannelValues(ctx, grid, pixels, channel);
 }
 
-module.exports = { renderRgb, drawChannelValues, isDarkChannelText, CHANNELS };
+module.exports = {
+  renderRgb,
+  drawChannelValues,
+  isDarkChannelText,
+  getColorValueFontSize,
+  getColorValueTints,
+  CHANNELS,
+};

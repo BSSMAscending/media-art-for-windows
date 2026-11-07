@@ -8,6 +8,15 @@ beta Release notes come from the Korean entry in CHANGELOG.md.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-11-07 - Controls on top and RGB in the magnifier
+
+### Changed
+
+- The levers and mode buttons moved to the top of the side column. The rule card now sits under them, right above the marked cell.
+- The cell size lever now applies to RGB Color's full color too: it is drawn as color cells of that size, with no numbers on screen.
+- Magnifier: in RGB Color's full color, every cell shows its R, G and B as three lines in their own colors. With small cells it zooms in far enough to read them (up to 24×).
+- The blur tip appears right under the controls.
+
 ## [2.1.0] - 2026-11-07 - Three modes and a sharp color view
 
 ### New

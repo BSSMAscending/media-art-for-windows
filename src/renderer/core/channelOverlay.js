@@ -31,8 +31,7 @@ const UNIFORMS = ['offset', 'depth', 'angle', 'scale', 'projection', 'channel', 
 
 /**
  * GPU layer behind the digit canvas. It covers only the artwork grid, so the side
- * column stays visible, and draws grid-sized pixels as crisp cell blocks, or a
- * camera picture (a canvas) smoothly at its own resolution.
+ * column stays visible, and draws grid-sized pixels as crisp cell blocks.
  */
 function createChannelOverlay(stage, beforeEl) {
   const canvas = document.createElement('canvas');
@@ -74,18 +73,11 @@ function createChannelOverlay(stage, beforeEl) {
   for (const name of UNIFORMS) uniforms[name] = gl.getUniformLocation(program, name);
 
   gl.activeTexture(gl.TEXTURE0);
-  // Cells stay hard-edged blocks; the camera picture is filtered so it scales smoothly.
-  function createTexture(filter) {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    return texture;
-  }
-  const cellTexture = createTexture(gl.NEAREST);
-  const photoTexture = createTexture(gl.LINEAR);
+  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.uniform1i(gl.getUniformLocation(program, 'cells'), 0);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   // Additive blending: R + G + B layers sum back to the camera's real colour.
@@ -122,7 +114,6 @@ function createChannelOverlay(stage, beforeEl) {
 
   function bindGridPixels(grid, pixels) {
     beginFrame(grid);
-    gl.bindTexture(gl.TEXTURE_2D, cellTexture);
     if (gridTextureWidth !== grid.cols || gridTextureHeight !== grid.rows) {
       gl.texImage2D(
         gl.TEXTURE_2D,
@@ -152,21 +143,6 @@ function createChannelOverlay(stage, beforeEl) {
     }
   }
 
-  function bindPhoto(grid, photo) {
-    beginFrame(grid);
-    gl.bindTexture(gl.TEXTURE_2D, photoTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, photo);
-  }
-
-  // Binds the cells (an RGBA array, one pixel per cell) or the camera picture (a
-  // canvas). The magnifier smooths the picture when it zooms in but keeps cells sharp.
-  function bindSource(grid, source) {
-    const isPhoto = !ArrayBuffer.isView(source);
-    canvas.dataset.smooth = String(isPhoto);
-    if (isPhoto) bindPhoto(grid, source);
-    else bindGridPixels(grid, source);
-  }
-
   function drawPass(channel, weight, offset, depth, angle, scale) {
     gl.uniform3f(uniforms.channel, channel[0], channel[1], channel[2]);
     gl.uniform1f(uniforms.weight, weight);
@@ -187,12 +163,9 @@ function createChannelOverlay(stage, beforeEl) {
     hide() {
       canvas.hidden = true;
     },
-    /**
-     * Draws the cells, or the camera picture, as three additive R/G/B layers posed
-     * by `layers`.
-     */
-    renderLayers(grid, source, layers) {
-      bindSource(grid, source);
+    /** Draws the cells as three additive R/G/B layers posed by `layers`. */
+    renderLayers(grid, pixels, layers) {
+      bindGridPixels(grid, pixels);
       getProjectionBounds(layers, projectionBounds);
       gl.uniform2f(uniforms.projection, projectionBounds[0], projectionBounds[1]);
       for (let c = 0; c < 3; c++) {
@@ -209,7 +182,7 @@ function createChannelOverlay(stage, beforeEl) {
     },
     /** Draws the cells' precomputed colours flat. */
     renderFlat(grid, pixels) {
-      bindSource(grid, pixels);
+      bindGridPixels(grid, pixels);
       gl.uniform2f(uniforms.projection, 0, 1);
       drawPass([1, 1, 1], 1, 0, 0, 0, 1);
     },
