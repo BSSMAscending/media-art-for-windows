@@ -8,6 +8,8 @@ beta Release notes come from the Korean entry in CHANGELOG.md.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-07 - New exhibit modes
+
 ### New
 
 - The exhibit now has four modes: Media Art, RGB Color, Brightness and Image Math.
